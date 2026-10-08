@@ -338,12 +338,26 @@ Historical structures refer to Resource Objects through a **Resource Reference**
 The generic Resource Reference contains:
 
 - `resource_id` — REQUIRED typed Resource Identifier;
-- `byte_length` — REQUIRED number of bytes in the complete Resource (non-negative);
+- `byte_length` — REQUIRED JSON number whose mathematical value is the exact byte count of the complete Resource and MUST be an integer in the inclusive range `0 ..= 9007199254740991` (`2^53 - 1`);
 - `role` — OPTIONAL semantic role of the Resource in the containing historical state;
 - `media_type` — OPTIONAL intended media/content type;
 - `properties` — OPTIONAL canonical JSON object map containing immutable interpretation metadata explicitly supplied by the relevant schema or Adapter.
 
 Every field present in a Resource Reference is part of the containing historical object's canonical body and contributes to that object's identity. These fields do not contribute to or change the Resource Identifier, which is calculated only from the complete raw Resource bytes under section 6.
+
+The `byte_length` upper bound is the maximum interoperable JSON safe integer used by the RFC 8785/JCS numeric model. Conforming implementations MUST reject negative, fractional/non-integral, and greater-than-`9007199254740991` values, as well as string or other alternate representations. This bound applies to one Resource only, not repository, Project, Storage Endpoint, or aggregate Project size. Implementations MUST NOT widen the accepted domain based on host-language integer capacity. OMVCS 0.1 defines no decimal-string, tagged-big-integer, or alternate representation for larger values. A future version MAY define a larger representation only through an explicit schema/version decision that specifies compatibility and canonical-identity consequences.
+
+Conformance cases for `byte_length`:
+
+| JSON value | Result |
+|---|---|
+| `0` | Accept |
+| `1` | Accept |
+| `9007199254740991` | Accept |
+| `-1` | Reject |
+| `1.5` | Reject |
+| `9007199254740992` | Reject |
+| `"1"` | Reject |
 
 `logical_name`, Friendly Name, and filename are not fields of the generic historical Resource Reference. Chunk structure, Chunk IDs, Chunk Manifest information, Storage Endpoint, Storage Location, Replica information, credentials, provider metadata, and other physical reconstruction or storage details MUST NOT appear in a historical Resource Reference or affect historical object identity. Resource Reference `properties` MUST NOT be used to reintroduce these excluded values.
 

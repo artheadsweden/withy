@@ -460,6 +460,8 @@ expected hash
 operation ID
 ```
 
+The operational byte-length input measures the Resource bytes and is not a historical Resource Reference field or alternate encoding. If the Resource is represented by a historical Resource Reference, its `byte_length` MUST satisfy Core Specification §7.
+
 The Adapter MUST either:
 
 - persist the exact content;
@@ -727,6 +729,8 @@ accessibility
 ```
 
 `StatResource` MUST NOT itself imply cryptographic verification.
+
+The operational byte-length result measures the Resource and is not a historical Resource Reference field or alternate encoding. If the Resource is represented by a historical Resource Reference, its `byte_length` MUST satisfy Core Specification §7.
 
 ---
 
@@ -3266,6 +3270,8 @@ Incorrect MIME metadata does not change content identity, although it may affect
 Expected byte length SHOULD be recorded.
 
 Length mismatch is an immediate integrity warning.
+
+This operational measurement is not a historical Resource Reference field or alternate encoding. If the Resource is represented by a historical Resource Reference, its `byte_length` MUST satisfy Core Specification §7.
 
 Matching length alone is not verification.
 

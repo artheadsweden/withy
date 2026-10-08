@@ -72,4 +72,4 @@ No production objects or implementations are known in this workspace. Draft 0.1 
 
 ## Notes
 
-This ADR resolves DG-0007 only. It does not define chunking algorithms, Chunk Manifest identity, storage metadata schemas, Adapter State naming schemas, or additional Resource Reference properties.
+This ADR resolves DG-0007 only. The exact `byte_length` integer range and invalid forms are specified by ADR-0008. This ADR does not define chunking algorithms, Chunk Manifest identity, storage metadata schemas, Adapter State naming schemas, or additional Resource Reference properties.

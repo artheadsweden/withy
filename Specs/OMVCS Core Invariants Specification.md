@@ -155,7 +155,9 @@ Historical objects MUST NOT depend on provider-specific physical paths or URLs t
 
 Physical location belongs to operational storage metadata.
 
-In OMVCS 0.1, a generic historical Resource Reference MUST contain a typed Resource Identifier and the non-negative byte count of the complete Resource. It MAY contain a semantic role, intended media/content type, or schema/Adapter-supplied immutable interpretation properties. Every present Resource Reference field contributes to the containing historical object's canonical identity, but no such field changes the Resource Identifier derived from the complete raw Resource bytes.
+In OMVCS 0.1, a generic historical Resource Reference MUST contain a typed Resource Identifier and `byte_length`, a JSON number whose mathematical value is the exact byte count of the complete Resource and an integer in the inclusive range `0 ..= 9007199254740991` (`2^53 - 1`). Negative, fractional/non-integral, greater-than-maximum, string, and other alternate representations MUST be rejected. This bound applies to one Resource only and MUST NOT be widened based on host-language numeric capacity. It does not limit repository, Project, Storage Endpoint, or aggregate Project size. A future larger representation requires an explicit schema/version decision defining compatibility and canonical-identity consequences.
+
+The Resource Reference MAY contain a semantic role, intended media/content type, or schema/Adapter-supplied immutable interpretation properties. Every present Resource Reference field contributes to the containing historical object's canonical identity, but no such field changes the Resource Identifier derived from the complete raw Resource bytes.
 
 A historical Resource Reference MUST NOT contain a logical/Friendly Name or filename, Chunk or Chunk Manifest information, Storage Endpoint or Location, Replica information, credentials, provider metadata, or other physical reconstruction/storage details. Such information MUST NOT affect historical object identity.
 
