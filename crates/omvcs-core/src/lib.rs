@@ -1,0 +1,5 @@
+//! OMVCS Core reference implementation.
+//!
+//! Production semantics must come from the normative Specs and approved work packages.
+
+#![forbid(unsafe_code)]

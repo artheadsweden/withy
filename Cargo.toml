@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/omvcs-model",
+    "crates/omvcs-core",
+    "crates/omvcs-storage",
+    "crates/omvcs-storage-local",
+    "crates/omvcs-storage-mock",
+    "crates/omvcs-daw-contract",
+    "crates/omvcs-test-support",
+    "ffi/omvcs-c",
+    "tools/omvcs-cli",
+]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.85"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = "warn"
+pedantic = "warn"
+nursery = "warn"
+unwrap_used = "warn"
+expect_used = "warn"
+panic = "warn"

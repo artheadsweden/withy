@@ -1,0 +1,67 @@
+# Bootstrap File Manifest
+
+Copy these paths into the root of the existing Open Music project.
+
+The existing `Specs/` directory is not included in this package and must remain where it is.
+
+- `.editorconfig`
+- `.gitattributes`
+- `.github/agents/core-engineer.agent.md`
+- `.github/agents/daw-adapter-engineer.agent.md`
+- `.github/agents/omvcs-lead.agent.md`
+- `.github/agents/spec-guardian.agent.md`
+- `.github/agents/storage-engineer.agent.md`
+- `.github/agents/verifier.agent.md`
+- `.github/copilot-instructions.md`
+- `.github/instructions/git.instructions.md`
+- `.github/instructions/rust.instructions.md`
+- `.github/instructions/specs.instructions.md`
+- `.github/instructions/tests.instructions.md`
+- `.github/skills/conformance-test/SKILL.md`
+- `.github/skills/design-gap/SKILL.md`
+- `.github/skills/handover/SKILL.md`
+- `.github/skills/spec-impact-analysis/SKILL.md`
+- `.github/workflows/ci.yml`
+- `.gitignore`
+- `.vscode/extensions.json`
+- `.vscode/settings.json`
+- `AGENTS.md`
+- `Cargo.toml`
+- `README.md`
+- `SETUP-AND-INITIALIZATION.md`
+- `crates/omvcs-core/Cargo.toml`
+- `crates/omvcs-core/src/lib.rs`
+- `crates/omvcs-daw-contract/Cargo.toml`
+- `crates/omvcs-daw-contract/src/lib.rs`
+- `crates/omvcs-model/Cargo.toml`
+- `crates/omvcs-model/src/lib.rs`
+- `crates/omvcs-storage-local/Cargo.toml`
+- `crates/omvcs-storage-local/src/lib.rs`
+- `crates/omvcs-storage-mock/Cargo.toml`
+- `crates/omvcs-storage-mock/src/lib.rs`
+- `crates/omvcs-storage/Cargo.toml`
+- `crates/omvcs-storage/src/lib.rs`
+- `crates/omvcs-test-support/Cargo.toml`
+- `crates/omvcs-test-support/src/lib.rs`
+- `docs/code-ownership.md`
+- `docs/decision-register.md`
+- `docs/decisions/ADR-TEMPLATE.md`
+- `docs/decisions/README.md`
+- `docs/development-workflow.md`
+- `docs/gaps/DG-TEMPLATE.md`
+- `docs/gaps/README.md`
+- `docs/handovers/HANDOVER-TEMPLATE.md`
+- `docs/milestones.md`
+- `docs/plans/WORK-TEMPLATE.md`
+- `docs/project-state.md`
+- `docs/spec-coverage.md`
+- `ffi/omvcs-c/Cargo.toml`
+- `ffi/omvcs-c/src/lib.rs`
+- `rust-toolchain.toml`
+- `schemas/.gitkeep`
+- `tests/conformance/.gitkeep`
+- `tests/failure-injection/.gitkeep`
+- `tests/fixtures/.gitkeep`
+- `tests/scenarios/.gitkeep`
+- `tools/omvcs-cli/Cargo.toml`
+- `tools/omvcs-cli/src/main.rs`
