@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod canonical;
+pub mod hashing;
 
 use std::fmt;
 use std::str::FromStr;
