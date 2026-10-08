@@ -7,6 +7,34 @@ fn component_id() -> CreativeComponentId {
     CreativeComponentId::new()
 }
 
+// Core §9 and ADR-0010: the required identity is a named object field.
+#[test]
+fn creative_component_decoding_rejects_non_object_representations() -> Result<(), serde_json::Error>
+{
+    let id = component_id().to_string();
+    for invalid in [
+        json!([]),
+        json!([id]),
+        json!([{"component_id": id}]),
+        json!([id, id]),
+        json!(id),
+        json!(null),
+        json!(true),
+        json!(7),
+    ] {
+        let text = serde_json::to_string(&invalid)?;
+        assert!(
+            serde_json::from_str::<CreativeComponent>(&text).is_err(),
+            "non-object JSON text was accepted: {text}"
+        );
+        assert!(
+            serde_json::from_value::<CreativeComponent>(invalid).is_err(),
+            "non-object JSON value was accepted: {text}"
+        );
+    }
+    Ok(())
+}
+
 #[test]
 fn creative_component_requires_a_typed_assigned_component_id() -> Result<(), serde_json::Error> {
     let id = component_id();
