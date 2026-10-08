@@ -54,7 +54,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 ## Known Design Gaps
 
-- None affecting this work package. DG-0007 is resolved by ADR-0007.
+- DG-0007 is resolved by ADR-0007. DG-0008 blocks selecting or validating the full `byte_length` representation/range; do not choose a maximum or alternate representation in embedded Resource References.
 
 ## Implementation plan
 

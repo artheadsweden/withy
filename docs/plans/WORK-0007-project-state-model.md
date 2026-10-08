@@ -56,7 +56,7 @@ Represent one complete immutable logical Project State using stable Project iden
 
 ## Known Design Gaps
 
-- None affecting this work package. DG-0006 is resolved by ADR-0006; the Ardour reference schema conforms to the generic map representation.
+- DG-0006 is resolved by ADR-0006; the Ardour reference schema conforms to the generic map representation. DG-0008 blocks selecting or validating the full `byte_length` representation/range for embedded Resource References; do not choose a maximum or alternate representation.
 
 ## Implementation plan
 

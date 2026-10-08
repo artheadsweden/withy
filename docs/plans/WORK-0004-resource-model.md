@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: PLANNED
+Status: BLOCKED ON DG-0008
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -41,24 +41,31 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 - A Resource Object is immutable by identity; changed bytes require a different Resource Identifier.
 - Renaming a Friendly Name does not change Resource identity.
 - Resource References require a typed Resource Identifier and non-negative byte length; optional fields are limited to role, media type, and schema/Adapter-supplied immutable interpretation properties.
-- `byte_length` equals the complete Resource's byte count; changing the canonical value of a present Resource Reference field changes the containing historical object's identity but never changes the Resource Identifier for the same raw bytes.
+- `byte_length` is REQUIRED, non-negative, and equals the complete Resource's byte count. Missing and negative values are rejected. Its canonical representation/range beyond the canonical JSON safe-integer range is blocked by DG-0008; do not choose a maximum or alternate representation.
+- Changing the canonical value of a present Resource Reference field changes the containing historical object's identity but never changes the Resource Identifier for the same raw bytes.
 - Reordering `properties` map insertion without changing its entries does not change the containing identity under RFC 8785/ADR-0005.
+- Changing any Resource Reference descriptive field while keeping raw bytes fixed leaves the Resource Identifier unchanged.
 - Resource References contain no logical/Friendly Name, filename, chunk layout, Chunk Manifest, storage/Replica/provider data, or credentials.
 - A presentation/local rename, storage location or Replica change, and physical chunk-layout variation do not change Resource or historical identity.
 - If exact DAW reconstruction requires a filename, that state is represented in Adapter State rather than Resource Reference.
+- No Resource Manifest identifier type or separate Resource Manifest historical object is introduced for OMVCS 0.1.
 - Physical location, replica count, and availability do not alter Resource identity or historical references.
 - Two physical copies with identical bytes share the same Resource Identifier.
 - Resource Manifest has no independent content-derived historical identifier in OMVCS 0.1.
 
 ## Explicit non-goals
 
-- Chunk sizes, chunk boundaries, chunk manifests, transfer, replicas, or Storage Adapter behavior.
+- Chunking algorithms, chunk sizes/boundaries, Chunk Manifest schemas, Chunk IDs, Storage Maps, Replicas, transfer, Storage Adapters, or other storage behavior.
+- Repository Home, publication transactions, and recovery.
+- Adapter-specific naming rules.
+- A Resource Manifest identifier type or independent Resource Manifest identity.
 - Inventing required media-type, role, or format-specific metadata where not stated as mandatory.
 - Implementing filesystem materialisation or local cache behavior.
 
 ## Known Design Gaps
 
 - DG-0007 is resolved by ADR-0007. Implement only the approved Resource Reference schema and Resource Manifest boundary; do not add fields or identities beyond that decision.
+- DG-0008 blocks implementation/validation of exact `byte_length` canonical representation across the full valid Resource-size range. Do not choose a maximum or alternate representation.
 - Physical Chunk Manifest representation remains outside this package as stated in the explicit non-goals.
 
 ## Implementation plan
