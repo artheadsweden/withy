@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: PLANNED
+Status: BLOCKED ON DG-0009
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -70,6 +70,7 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 
 - DG-0007 is resolved by ADR-0007. Implement only the approved Resource Reference schema and Resource Manifest boundary; do not add fields or identities beyond that decision.
 - DG-0008 is resolved by ADR-0008. Enforce the approved safe-integer range and reject alternate representations.
+- DG-0009 is open and classified `BLOCKS-FEATURE`. Do not claim WORK-0004 complete or verified, and do not begin WORK-0005 or later packages until the Resource Reference `properties` validation/admission contract is resolved, implemented, and independently verified.
 - Physical Chunk Manifest representation remains outside this package as stated in the explicit non-goals.
 
 ## Implementation plan
