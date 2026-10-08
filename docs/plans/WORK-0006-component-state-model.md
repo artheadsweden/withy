@@ -1,9 +1,9 @@
 # WORK-0006 — Component State model
 
-Status: PLANNED
+Status: BLOCKED ON DG-0011
 Owner agent: Core Engineer
 Milestone: M1
-Branch: `work/0006-component-state-model`
+Branch: `work/0006-component-state`
 
 ## Objective
 
@@ -18,6 +18,10 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - ADR-0008 for the exact `byte_length` integer range and rejection rules.
 - ADR-0009 for applicable schema/Adapter validation and historical admission of Resource Reference `properties`.
 - ADR-0010 for the one-field Creative Component object and separation of Component State from Project State membership.
+
+## Blocker
+
+DG-0011 is OPEN. Do not begin implementation or select a Component State field set, requiredness rules, metadata value semantics, extension policy, complete hash preimage, or Resource Reference `properties` validation authority until the human decision is recorded in an ADR and the affected Specs are updated. The accepted rules listed above remain in force and are not reopened by DG-0011.
 
 ## Dependencies
 
@@ -64,12 +68,14 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 - DG-0007 and DG-0008 are resolved by ADR-0007 and ADR-0008; apply the same Resource Reference schema and safe-integer validation to embedded references.
 - DG-0009 is resolved by ADR-0009; apply the same exact-context properties validation and unchecked-to-historical admission boundary to every embedded Resource Reference.
+- DG-0011 is OPEN and blocks this package; its complete Component State schema, metadata semantics, exact hash field set, and properties-authority binding remain undecided.
 
 ## Implementation plan
 
-1. Implement the optional parentage semantics resolved in ADR-0003 without inventing operation-specific mandatory rules.
-2. Model the resolved Component State references and immutable hash preimage.
-3. Add identity, reference-integrity, lineage, and permutation tests from the resolved rules.
+1. BLOCKED: wait for DG-0011 resolution and approved Spec updates; do not implement the missing schema semantics.
+2. After resolution, implement the optional parentage semantics resolved in ADR-0003 without inventing operation-specific mandatory rules.
+3. Model the approved Component State references and immutable hash preimage.
+4. Add identity, reference-integrity, lineage, and permutation tests from the resolved rules.
 
 ## Verification requirements
 
