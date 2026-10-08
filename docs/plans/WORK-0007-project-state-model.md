@@ -20,6 +20,7 @@ Represent one complete immutable logical Project State using stable Project iden
 - WORK-0001, WORK-0002, WORK-0003, WORK-0005, and WORK-0006.
 - ADR-0004 resolves the Adapter State representation: Project State references exactly one canonical Adapter State metadata object, which may reference opaque native-state Resources.
 - ADR-0007 defines the Resource Reference fields used by Adapter State resource entries and excludes names and physical storage/reconstruction data from those references.
+- ADR-0008 defines the exact accepted integer range for each Resource Reference `byte_length`.
 - Hashed JSON object maps follow RFC 8785 member ordering only, and duplicate member names are rejected before hashing/canonical serialization (ADR-0005).
 - `component_bindings` is keyed by Creative Component Identifier and map values carry adapter-specific binding records; the key is not duplicated in the value (ADR-0006).
 - DEC-PLATFORM-016 remains open. Do not add licensing fields to the M1 Project State model unless its ownership/location is decided first.
@@ -41,7 +42,8 @@ Represent one complete immutable logical Project State using stable Project iden
 - A Project State identifies a complete logical state, not merely a delta.
 - Project State references exactly one Adapter State Identifier; a native Resource Identifier is invalid as the complete Adapter State reference.
 - Adapter State is canonical OMVCS metadata and may reference opaque native-state Resource Objects.
-- Each Resource Reference embedded in Adapter State has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count; optional fields and identity effects follow ADR-0007.
+- Each Resource Reference embedded in Adapter State has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count, represented as an integer in `0 ..= 9007199254740991`; reject negative, fractional, greater-than-maximum, string, and other alternate representations (ADR-0008).
+- Embedded Resource Reference length vectors accept `0`, `1`, `9007199254740991` and reject `-1`, `1.5`, `9007199254740992`, and `"1"`.
 - Adapter State `component_bindings` uses a Creative-Component-Identifier-keyed object map whose values contain adapter-specific binding records; values do not repeat the key merely to restate the identifier.
 - Project identity and Component State references are explicit and stable.
 - Storage locations, platform URLs, local paths, and availability do not enter Project State identity.
@@ -56,7 +58,7 @@ Represent one complete immutable logical Project State using stable Project iden
 
 ## Known Design Gaps
 
-- DG-0006 is resolved by ADR-0006; the Ardour reference schema conforms to the generic map representation. DG-0008 blocks selecting or validating the full `byte_length` representation/range for embedded Resource References; do not choose a maximum or alternate representation.
+- DG-0006, DG-0007, and DG-0008 are resolved by ADR-0006, ADR-0007, and ADR-0008; apply the generic binding-map and Resource Reference contracts consistently.
 
 ## Implementation plan
 

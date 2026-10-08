@@ -1,6 +1,6 @@
 # DG-0008 — Canonical representation range for Resource byte length
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead
 Discovered during: WORK-0004 revalidation after DG-0007 resolution
@@ -50,4 +50,6 @@ What exact non-negative byte-length values are valid in OMVCS 0.1, and how MUST 
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human decision recorded in [ADR-0008 — Resource Reference byte-length range](../decisions/ADR-0008-resource-byte-length-range.md).
+
+In OMVCS 0.1, `ResourceReference.byte_length` is a JSON number whose mathematical value MUST be an integer in `0 ..= 9007199254740991` (`2^53 - 1`). It is the exact byte count of one complete Resource. Negative, fractional/non-integral, above-maximum, string, and other alternate representations are rejected regardless of host-language numeric capacity. RFC 8785/JCS remains the canonical serialization rule. The bound is per Resource and does not constrain repository, Project, Storage Endpoint, or aggregate Project size. Storage Adapter byte-length inputs/results are operational measurements and not alternate historical encodings; a Resource represented by a historical Resource Reference must satisfy Core §7. A future wider representation requires an explicit schema/version decision defining compatibility and canonical-identity consequences. Core §7, INV-RES-004, Storage Adapter §§19, 35, 218, affected plans, decision register, and spec coverage have been updated with this decision and boundary test vectors.

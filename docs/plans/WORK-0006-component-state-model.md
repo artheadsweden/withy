@@ -15,6 +15,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - Core Specification, sections 5.1, 7, 10–11, and 23.
 - Core Invariants: INV-HIST-001–003, INV-HIST-006, INV-RES-004, INV-PROJ-002, INV-PROV-003.
 - ADR-0007 for the generic Resource Reference schema and identity boundary.
+- ADR-0008 for the exact `byte_length` integer range and rejection rules.
 
 ## Dependencies
 
@@ -37,7 +38,8 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - A published Component State cannot be changed in place.
 - A changed Resource reference produces a distinct Component State identity.
 - Resource references use immutable Resource identifiers.
-- Each embedded Resource Reference has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count; optional fields and prohibited presentation/physical fields follow ADR-0007.
+- Each embedded Resource Reference has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count, represented as an integer in `0 ..= 9007199254740991`; reject negative, fractional, greater-than-maximum, string, and other alternate representations (ADR-0008).
+- Embedded Resource Reference length vectors accept `0`, `1`, `9007199254740991` and reject `-1`, `1.5`, `9007199254740992`, and `"1"`.
 - Changing a canonical Resource Reference field value changes Component State identity but does not change Resource Identifier for unchanged raw bytes; reordering `properties` map insertion does not change identity.
 - An initial state with zero parents is valid; known derived states SHOULD record one or more parents.
 - An explicit empty `parents` array identifies a known initial state; an omitted field does not imply initial state.
@@ -54,7 +56,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 ## Known Design Gaps
 
-- DG-0007 is resolved by ADR-0007. DG-0008 blocks selecting or validating the full `byte_length` representation/range; do not choose a maximum or alternate representation in embedded Resource References.
+- DG-0007 and DG-0008 are resolved by ADR-0007 and ADR-0008; apply the same Resource Reference schema and safe-integer validation to embedded references.
 
 ## Implementation plan
 
