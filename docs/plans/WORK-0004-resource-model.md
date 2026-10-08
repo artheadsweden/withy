@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: IMPLEMENTED — independent verification pending
+Status: VERIFIED — independent acceptance passed (2026-10-08)
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -101,14 +101,13 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 - Core enforces shapes, duplicate names, and recursive collection normalization without property vocabularies or key-name heuristics. Semantic admissibility remains the exact schema/Adapter authority's responsibility.
 - The prior immutable Resource Object, exact `byte_length` parsing/range, and recursive raw duplicate-member rejection are preserved.
 - Focused tests and the full model suite pass; rustfmt and warnings-denied Clippy pass. See `docs/handovers/HANDOVER-WORK-0004-resource-model.md` for commands and results.
-- No semantics beyond Specs. No new dependencies, Specs edits, Adapter vocabularies, storage/chunking, or WORK-0005+ implementation. Independent Verifier acceptance remains outstanding.
+- Independent final acceptance passed against the normative Specs, invariants, ADRs, actual implementation, and tests. No normative defect was found; no code or Specs were changed during verification.
+- No semantics beyond Specs. No new dependencies, Adapter vocabularies, storage/chunking, or WORK-0005+ implementation.
 
 ## Verification requirements
 
-The Verifier must attempt to disprove any coupling between Resource identity and filename, physical locator, provider, or replica state.
-
-The Verifier must also independently test that unchecked, rejected, unknown-context, or ambiguous-context Resource Reference candidates cannot enter valid historical state or produce a valid historical identity, and that an accepted property map is validated under its exact declared schema/Adapter context without adding validation evidence to canonical bytes.
+Independent acceptance confirmed that Resource identity derives only from complete raw bytes and that the candidate/admitted API boundary, exact-context validation, canonicalization, and historical output checks prevent unchecked property-bearing references from being emitted through the Resource Reference historical API.
 
 ## Completion criteria
 
-Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state are complete. WORK-0005 and later remain unstarted.

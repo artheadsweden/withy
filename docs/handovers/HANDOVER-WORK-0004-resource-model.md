@@ -4,13 +4,13 @@ From agent: Core Engineer
 To agent: Verifier
 Date: 2026-10-08
 Branch: `work/0004-resource-model`
-HEAD: completion commit updating this handover; resolve with `git log -1 --format=%H -- docs/handovers/HANDOVER-WORK-0004-resource-model.md`.
+Core completion commit: `1d5907c670b581f520533d427a174989dce96372`.
 Preparation HEAD: `0bb31e2` (normal integration merge; both prior WORK-0004 and the accepted M1 base are ancestors).
 Accepted base: `983150eadfae597015e6c25ee9ae6023fcfe395d`, `spec/0003-canonical-collection-order`.
 
 ## Completed
 
-WORK-0004 is implemented, **not independently verified**. This supersedes the prior partial/blocked handover now that ADR-0009 is accepted.
+WORK-0004 is implemented and **independently verified**. This supersedes the prior partial/blocked handover now that ADR-0009 is accepted.
 
 - Normally merged the accepted base, without rebase/history rewrite. Conflicts were limited to `docs/decision-register.md`, DG-0009, WORK-0004 planning, and coverage. Superseded OPEN/blocker text was resolved to accepted ADR-0009; prior implementation coverage was retained. Specs and ADR-0009 match the base exactly. WORK-0006/0007 plan changes are inherited from that merge only.
 - Preserved immutable raw-byte Resource Object identity, bounded complete-resource byte length, and the prior recursive duplicate-member rejection fix.
@@ -50,6 +50,16 @@ Earlier WORK-0004 changes preserved: serde derive/raw-value configuration in `cr
 - Four compile-fail doctests enforce the API boundary: candidate lacks historical bytes, candidate cannot be passed as admitted, admitted reference cannot serialize unconditionally, and arbitrary JSON cannot decode directly as admitted.
 - Semantic validators are synthetic test authorities only. Rejection fixtures exercise nested/alternate-key inputs without introducing real Adapter property rules or a Core deny list.
 
+## Independent acceptance result
+
+Accepted by the Verifier on 2026-10-08 against the normative Specs/invariants, ADR-0001/0005/0007/0008/0009, the implementation and tests, current branch history, and integrated base.
+
+- No normative defect was found. No production code, Specs, or gaps were changed during verification.
+- Confirmed exact byte-length bounds and invalid encodings; raw duplicate-member rejection before map decoding; exact-context/version and unique-authority admission; `{}` contextual validation; recursive shape and array classification; candidate/admitted API separation; context-checked historical output; evidence-free canonical bytes; and raw-byte-only Resource identity.
+- Confirmed base `983150eadfae597015e6c25ee9ae6023fcfe395d` is integrated and its Specs plus ADR-0009 are unchanged on this branch.
+- Independently ran `cargo test -p omvcs-model --test resource_model --test canonical_serialization` (34 passed), `cargo test -p omvcs-model` (53 passed, including 4 compile-fail doctests), `cargo fmt --all -- --check`, and `cargo clippy -p omvcs-model --all-targets -- -D warnings`; all passed.
+- Updated only the three WORK-0004 coverage rows from `implemented` to `verified`. WORK-0005 and later remain unstarted.
+
 ## Commands run
 
 - `git switch work/0004-resource-model`
@@ -88,14 +98,14 @@ None in this completion. Previously discovered DG-0009 is now resolved by accept
 - Deep byte verification is optional/separate from reference decoding; `matches_resource` checks exact identity and complete byte count when bytes are available. A missing Resource does not erase the historical reference.
 - Context evidence is checked operationally during historical output but never becomes a Resource Reference schema field or independent property-schema identifier.
 
-## Remaining work
+## Remaining work and boundaries
 
-Independent Verifier must attempt to disprove the admission boundary, exact-context/version checks, byte-length domain, duplicate-member rejection, recursive normalization, identity invariance/exclusions, and absence of evidence in historical bytes. In particular attempt unchecked serialization, wrong-context use, alternate/nested semantic rejection, and ambiguous authority.
-
-Only the Verifier may mark WORK-0004 verified. Real versioned schemas and Adapter conformance suites must enforce their own semantic exclusions when assigned. WORK-0005 and later were not begun and must wait for independent acceptance as required by the integrated planning state.
+- Real versioned schemas and Adapter conformance suites must enforce their own semantic exclusions when those adapters are assigned.
+- Containing Component/Adapter/Project/Revision models, history commits, real validator discovery/registry, and storage/chunking behavior remain outside WORK-0004; future containing-object admission APIs must use validated references and context-checked historical output.
+- WORK-0005 and later have not been started.
 
 ## Git state
 
-Working tree: CLEAN after committing this focused completion.
+Working tree: verification/doc-only changes committed; clean after the verification commit.
 Remote push performed: NO.
 Remote publishing: ENABLED in project-state, but this task requests clean local delivery; no push needed or performed.
