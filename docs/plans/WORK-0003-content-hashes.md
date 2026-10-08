@@ -1,6 +1,6 @@
 # WORK-0003 — Content-derived object hashes
 
-Status: IN_PROGRESS
+Status: COMPLETE
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0003-hashes`
