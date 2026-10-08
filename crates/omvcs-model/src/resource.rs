@@ -8,7 +8,7 @@
 use std::collections::BTreeMap;
 use std::fmt;
 
-use serde::de::Error as _;
+use serde::de::{Error as _, MapAccess, Visitor, value::MapAccessDeserializer};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
 use serde_json::value::RawValue;
@@ -263,11 +263,31 @@ impl<'de> Deserialize<'de> for ResourceReferenceCandidate {
     where
         D: Deserializer<'de>,
     {
+        struct ReferenceVisitor;
+
+        impl<'de> Visitor<'de> for ReferenceVisitor {
+            type Value = ResourceReferenceWire;
+
+            fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+                formatter.write_str("a Resource Reference object with named fields")
+            }
+
+            fn visit_map<M>(self, map: M) -> Result<Self::Value, M::Error>
+            where
+                M: MapAccess<'de>,
+            {
+                ResourceReferenceWire::deserialize(MapAccessDeserializer::new(map))
+            }
+        }
+
         let raw = Box::<RawValue>::deserialize(deserializer)?;
         crate::canonical::validate_unique_json_member_names(raw.get().as_bytes())
             .map_err(D::Error::custom)?;
-        let wire =
-            serde_json::from_str::<ResourceReferenceWire>(raw.get()).map_err(D::Error::custom)?;
+        // Core §7 and ADR-0007 require an object. Only map access reaches
+        // the derived fields; positional structs and enum forms cannot enter.
+        let wire = serde_json::Deserializer::from_str(raw.get())
+            .deserialize_map(ReferenceVisitor)
+            .map_err(D::Error::custom)?;
         Ok(Self {
             resource_id: wire.resource_id,
             byte_length: wire.byte_length,
