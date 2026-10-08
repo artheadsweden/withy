@@ -21,7 +21,19 @@ Do not mark a requirement `done` merely because code exists. `done` means implem
 
 ## M1 planning status
 
-DG-0001 through DG-0005 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, and ADR-0005 respectively, and their M1 requirements are reflected in the applicable Specs, plans, and conformance criteria. M1 is unblocked with respect to unresolved semantic decisions. Implementation and verification remain pending; WORK-0008 follows WORK-0007. DEC-PLATFORM-016 does not block the current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
+DG-0001 through DG-0005 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, and ADR-0005 respectively, and their M1 requirements are reflected in the applicable Specs, plans, and conformance criteria. No remaining open decision blocks the generic M1 model. DG-0006 records a conflicting concrete `component_bindings` representation in the Ardour reference design; it blocks that M8 feature only and does not block WORK-0007's generic map contract. Implementation and verification remain pending; WORK-0008 follows WORK-0007. DEC-PLATFORM-016 does not block the current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
+
+### Recommended M1 implementation sequence
+
+1. WORK-0001 identifiers.
+2. WORK-0002 canonical serialization, followed by WORK-0003 content hashes. The isolated RFC 8785 foundation in WORK-0002 and raw Resource hashing in WORK-0003 may proceed in parallel with WORK-0001 only when file/module ownership is explicitly separated. WORK-0003 metadata hashing waits for WORK-0002.
+3. WORK-0004 Resource model.
+4. WORK-0005 Creative Component identity.
+5. WORK-0006 Component State.
+6. WORK-0007 Project State.
+7. WORK-0008 Revision.
+
+The model work packages share the same crate scope, so do not parallelize whole packages without first confirming non-overlapping module/file ownership. WORK-0008 remains sequential after WORK-0007.
 
 M0 has created work-package acceptance criteria and conformance vectors only. No implementation or executable conformance tests have been started.
 

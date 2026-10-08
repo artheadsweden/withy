@@ -20,6 +20,10 @@ Implement the specified SHA-256 identities for raw Resource bytes and canonical 
 - WORK-0002 for canonical metadata bytes.
 - Hashed object-map identity follows RFC 8785 map canonicalization from ADR-0005; raw Resource hashing can proceed independently of metadata serialization.
 
+## Parallel execution
+
+The raw Resource SHA-256 implementation and byte-sequence property tests may proceed alongside WORK-0001 and WORK-0002 if file/module ownership is disjoint. Typed identifier formatting depends on WORK-0001; metadata-object hashing depends on WORK-0002. Do not assume package-wide parallel implementation when these prerequisites or shared files are involved.
+
 ## Allowed scope
 
 - `crates/omvcs-model/`

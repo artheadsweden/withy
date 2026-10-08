@@ -19,6 +19,10 @@ Provide the specified deterministic UTF-8 JSON Canonicalization Scheme represent
 - WORK-0001 for identifier/schema references.
 - ADR-0005 resolves hashed JSON object maps: RFC 8785 object-member ordering only, with duplicate-name rejection before canonical serialization/hashing and no additional entry sorting.
 
+## Parallel execution
+
+The RFC 8785 JSON canonicalization core and its standalone vectors may be developed alongside WORK-0001 if ownership is separated by files/modules. Integration with typed OMVCS schemas and identifier references follows WORK-0001. Do not assume parallel implementation is safe if both tasks require edits to the same files.
+
 ## Allowed scope
 
 - `crates/omvcs-model/`
@@ -60,7 +64,7 @@ Conformance vectors:
 
 ## Implementation plan
 
-1. Implement the RFC 8785-compatible canonical JSON boundary and reject duplicate member names before canonicalization.
+1. Implement the RFC 8785-compatible canonical JSON boundary and reject duplicate member names before canonicalization; this isolated foundation may proceed alongside WORK-0001 when file ownership is disjoint.
 2. Add published/independently checked serialization vectors for resolved object forms.
 3. Apply the resolved collection classifications and normalization rules in Core Specification §5.1.
 

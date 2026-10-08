@@ -51,7 +51,7 @@ Represent one complete immutable logical Project State using stable Project iden
 
 ## Known Design Gaps
 
-- None affecting this work package.
+- DG-0006 blocks only the concrete Ardour `component_bindings` schema in M8. It does not block this package's generic Adapter State contract: follow Core Specification §5.1 and the generic DAW Adapter Specification, and do not define an Ardour-specific representation here.
 
 ## Implementation plan
 
