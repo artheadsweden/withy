@@ -1,6 +1,6 @@
 # WORK-0007 — Project State model
 
-Status: PLANNED
+Status: VERIFIED — independent Verifier review accepted (2026-10-09)
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0007-project-state`
@@ -39,6 +39,7 @@ Represent one complete immutable logical Project State using stable Project iden
 - Complete Project State references, not a change list.
 - Storage-independent Project and Component State references.
 - Typed reference to exactly one valid/admitted canonical Adapter State metadata object through its `AdapterStateId`; Adapter State internals remain owned by Core §12 and the exact Adapter schema.
+- A trusted `AdmittedAdapterStateResolver` consumption boundary for the already-established exact Core/Adapter admission result; this model neither parses nor defines Adapter State internals.
 
 ## Acceptance tests
 
@@ -75,8 +76,8 @@ Represent one complete immutable logical Project State using stable Project iden
 ## Implementation plan
 
 1. Apply the resolved Component State and Adapter State reference contracts.
-2. Implement the complete-state model without adding adapter/provider fields.
-3. Verify identity independence and complete-state—not-delta—semantics.
+2. Implement the closed complete-state model and schema-owned metadata admission without adding adapter/provider fields.
+3. Derive identity from exactly the five canonical historical members and test every acceptance criterion.
 
 ## Verification requirements
 
@@ -84,4 +85,4 @@ The Verifier must compare Project State references and invariants to the origina
 
 ## Completion criteria
 
-Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+Formatting, focused and full model tests, coverage-map update, independent Verifier review, and handover. Commit/integration/push are not part of this package execution.

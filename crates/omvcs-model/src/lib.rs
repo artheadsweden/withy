@@ -8,10 +8,12 @@ pub mod canonical;
 pub mod component_state;
 pub mod creative_component;
 pub mod hashing;
+pub mod project_state;
 pub mod resource;
 
 pub use component_state::ComponentState;
 pub use creative_component::CreativeComponent;
+pub use project_state::ProjectState;
 
 use std::fmt;
 use std::str::FromStr;
