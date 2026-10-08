@@ -19,6 +19,84 @@ fn reference_json(byte_length: &str) -> String {
     format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":{byte_length}}}"#)
 }
 
+// Core §7 / ADR-0007, consumed by Core §10 / ADR-0011: Resource
+// References are named-field objects, never positional structs or enums.
+fn assert_reference_shape_rejected(value: &Value) {
+    let text = value.to_string();
+    assert!(
+        serde_json::from_str::<ResourceReferenceCandidate>(&text).is_err(),
+        "JSON text accepted {text}"
+    );
+    assert!(
+        serde_json::from_value::<ResourceReferenceCandidate>(value.clone()).is_err(),
+        "owned JSON value accepted {text}"
+    );
+    assert!(
+        <ResourceReferenceCandidate as serde::Deserialize>::deserialize(value).is_err(),
+        "borrowed JSON value accepted {text}"
+    );
+}
+
+#[test]
+fn resource_references_reject_every_positional_prefix_and_extra_fields() {
+    let fields = [
+        serde_json::json!(RESOURCE_ID),
+        serde_json::json!(3),
+        serde_json::json!("primary"),
+        serde_json::json!("audio/wav"),
+        serde_json::json!({}),
+        serde_json::json!("extra"),
+    ];
+    for length in 0..=fields.len() {
+        assert_reference_shape_rejected(&Value::Array(fields[..length].to_vec()));
+    }
+}
+
+#[test]
+fn resource_references_reject_wrappers_enum_forms_and_non_objects() {
+    let object = serde_json::json!({"resource_id": RESOURCE_ID, "byte_length": 3});
+    let sequence = serde_json::json!([RESOURCE_ID, 3]);
+    for invalid in [
+        serde_json::json!([object.clone()]),
+        serde_json::json!([sequence.clone()]),
+        serde_json::json!({"ResourceReference": object}),
+        serde_json::json!({"ResourceReference": sequence}),
+        serde_json::json!(["ResourceReference", sequence]),
+        serde_json::json!("ResourceReference"),
+        serde_json::json!(3),
+        serde_json::json!(true),
+        Value::Null,
+    ] {
+        assert_reference_shape_rejected(&invalid);
+    }
+}
+
+#[test]
+fn resource_reference_objects_preserve_all_optional_field_combinations()
+-> Result<(), Box<dyn Error>> {
+    let optional = [
+        ("role", serde_json::json!("primary")),
+        ("media_type", serde_json::json!("audio/wav")),
+        ("properties", serde_json::json!({})),
+    ];
+    for mask in 0..8 {
+        let mut object = serde_json::json!({"resource_id": RESOURCE_ID, "byte_length": 3});
+        for (index, (name, value)) in optional.iter().enumerate() {
+            if mask & (1 << index) != 0 {
+                object[*name] = value.clone();
+            }
+        }
+        let text_candidate: ResourceReferenceCandidate = serde_json::from_str(&object.to_string())?;
+        let value_candidate: ResourceReferenceCandidate = serde_json::from_value(object.clone())?;
+        let borrowed_candidate =
+            <ResourceReferenceCandidate as serde::Deserialize>::deserialize(&object)?;
+        assert_eq!(text_candidate, value_candidate);
+        assert_eq!(text_candidate, borrowed_candidate);
+        assert_eq!(serde_json::to_value(text_candidate)?, object);
+    }
+    Ok(())
+}
+
 fn resource_reference_schema() -> MetadataSchema {
     MetadataSchema::structure([
         ("resource_id", MetadataSchema::Scalar),
