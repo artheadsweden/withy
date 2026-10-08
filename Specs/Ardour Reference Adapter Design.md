@@ -366,7 +366,7 @@ Logical name might be:
 My Song.ardour
 ```
 
-but identity derives from bytes.
+but Resource identity derives from bytes. If an exact native filename is required for restoration, the required naming state belongs in Adapter State, not the generic historical Resource Reference.
 
 ---
 
@@ -690,6 +690,7 @@ A conceptual Ardour Adapter State:
   "native_state_resources": [
     {
       "resource_id": "omvcs:resource:sha256:...",
+      "byte_length": 4096,
       "role": "ardour-session-state"
     }
   ],

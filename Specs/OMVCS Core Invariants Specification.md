@@ -155,6 +155,10 @@ Historical objects MUST NOT depend on provider-specific physical paths or URLs t
 
 Physical location belongs to operational storage metadata.
 
+In OMVCS 0.1, a generic historical Resource Reference MUST contain a typed Resource Identifier and the non-negative byte count of the complete Resource. It MAY contain a semantic role, intended media/content type, or schema/Adapter-supplied immutable interpretation properties. Every present Resource Reference field contributes to the containing historical object's canonical identity, but no such field changes the Resource Identifier derived from the complete raw Resource bytes.
+
+A historical Resource Reference MUST NOT contain a logical/Friendly Name or filename, Chunk or Chunk Manifest information, Storage Endpoint or Location, Replica information, credentials, provider metadata, or other physical reconstruction/storage details. Such information MUST NOT affect historical object identity.
+
 ---
 
 ## INV-RES-005 — One Resource Object may have many replicas
@@ -227,6 +231,8 @@ Instead, the existing Creative Component normally receives a new Component State
 OMVCS MUST NOT use human-readable filenames as authoritative Resource, Component or Project identities.
 
 Names MAY be used for presentation and local materialisation.
+
+Renaming a Resource for presentation or local working purposes MUST NOT by itself alter historical creative state. If a DAW requires a particular name for exact native reconstruction, that naming state belongs in Adapter State, not the generic historical Resource Reference.
 
 ---
 

@@ -12,8 +12,9 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 ## Normative requirements
 
 - Glossary: Component State.
-- Core Specification, sections 5.1, 10–11, and 23.
+- Core Specification, sections 5.1, 7, 10–11, and 23.
 - Core Invariants: INV-HIST-001–003, INV-HIST-006, INV-RES-004, INV-PROJ-002, INV-PROV-003.
+- ADR-0007 for the generic Resource Reference schema and identity boundary.
 
 ## Dependencies
 
@@ -36,6 +37,8 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - A published Component State cannot be changed in place.
 - A changed Resource reference produces a distinct Component State identity.
 - Resource references use immutable Resource identifiers.
+- Each embedded Resource Reference has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count; optional fields and prohibited presentation/physical fields follow ADR-0007.
+- Changing a canonical Resource Reference field value changes Component State identity but does not change Resource Identifier for unchanged raw bytes; reordering `properties` map insertion does not change identity.
 - An initial state with zero parents is valid; known derived states SHOULD record one or more parents.
 - An explicit empty `parents` array identifies a known initial state; an omitted field does not imply initial state.
 - Unknown historical lineage is never fabricated.
@@ -51,7 +54,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 ## Known Design Gaps
 
-- None affecting this work package.
+- None affecting this work package. DG-0007 is resolved by ADR-0007.
 
 ## Implementation plan
 

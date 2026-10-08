@@ -333,7 +333,21 @@ If one byte changes, the Resource Identifier changes.
 
 # 7. Resource Reference
 
-Historical structures refer to Resource Objects through a **Resource Reference**.
+Historical structures refer to Resource Objects through a **Resource Reference** embedded directly in the containing historical object. OMVCS 0.1 does not define Resource Manifest as a separate content-addressed historical object.
+
+The generic Resource Reference contains:
+
+- `resource_id` — REQUIRED typed Resource Identifier;
+- `byte_length` — REQUIRED number of bytes in the complete Resource (non-negative);
+- `role` — OPTIONAL semantic role of the Resource in the containing historical state;
+- `media_type` — OPTIONAL intended media/content type;
+- `properties` — OPTIONAL canonical JSON object map containing immutable interpretation metadata explicitly supplied by the relevant schema or Adapter.
+
+Every field present in a Resource Reference is part of the containing historical object's canonical body and contributes to that object's identity. These fields do not contribute to or change the Resource Identifier, which is calculated only from the complete raw Resource bytes under section 6.
+
+`logical_name`, Friendly Name, and filename are not fields of the generic historical Resource Reference. Chunk structure, Chunk IDs, Chunk Manifest information, Storage Endpoint, Storage Location, Replica information, credentials, provider metadata, and other physical reconstruction or storage details MUST NOT appear in a historical Resource Reference or affect historical object identity. Resource Reference `properties` MUST NOT be used to reintroduce these excluded values.
+
+Renaming a Resource for presentation or local working purposes MUST NOT by itself alter historical creative state. If a DAW requires a particular filename or equivalent naming state for exact native reconstruction, that information belongs in Adapter State.
 
 Conceptually:
 
@@ -342,7 +356,6 @@ Conceptually:
   "resource_id": "omvcs:resource:sha256:...",
   "byte_length": 183829331,
   "media_type": "audio/wav",
-  "logical_name": "Bass.wav",
   "role": "primary-audio",
   "properties": {
     "sample_rate": 48000,
@@ -351,11 +364,7 @@ Conceptually:
 }
 ```
 
-Only `resource_id` identifies the Resource Object.
-
-Other fields describe its intended interpretation.
-
-A logical name MUST NOT be used to locate the Resource physically.
+Only `resource_id` identifies the Resource Object. The other fields describe the Resource's length or intended interpretation and do not act as physical locators.
 
 ---
 
@@ -435,6 +444,8 @@ A Chunk Manifest is storage/reconstruction information.
 
 Historical objects MUST NOT depend upon a particular chunking representation.
 
+Chunk Manifest information is operational physical-reconstruction data. It MUST NOT appear in a historical Resource Reference or affect historical object identity. Different Replicas or Endpoints MAY use different physical chunk layouts for the same Resource without changing its Resource Identifier or creative history.
+
 A Storage Adapter MAY store the same Resource differently while preserving Resource identity.
 
 OMVCS 0.1 SHOULD initially support simple deterministic fixed-size chunking for the reference implementation.
@@ -512,7 +523,6 @@ Canonical conceptual structure:
   "resources": [
     {
       "resource_id": "omvcs:resource:sha256:...",
-      "logical_name": "Bass.wav",
       "role": "primary-audio",
       "byte_length": 183829331,
       "media_type": "audio/wav"
@@ -584,6 +594,7 @@ Conceptually:
   "resources": [
     {
       "resource_id": "omvcs:resource:sha256:...",
+      "byte_length": 4096,
       "role": "native-session-state"
     }
   ],
@@ -1918,7 +1929,7 @@ validate canonical object hashes
 validate Revision references
 validate Project State references
 validate Component State references
-validate Resource manifests
+validate Resource References and applicable operational reconstruction manifests
 validate Release targets
 validate Line targets
 validate provenance references

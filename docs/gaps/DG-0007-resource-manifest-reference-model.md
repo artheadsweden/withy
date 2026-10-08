@@ -1,6 +1,6 @@
 # DG-0007 — Resource Manifest and Resource Reference model boundary
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead
 Discovered during: WORK-0004 Resource model revalidation
@@ -55,4 +55,6 @@ For OMVCS 0.1, is Resource Manifest a distinct object, the schema of Resource Re
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human decision recorded in [ADR-0007 — Resource Reference and Resource Manifest boundary](../decisions/ADR-0007-resource-reference-boundary.md).
+
+OMVCS 0.1 uses an embedded Resource Reference with required typed `resource_id` and non-negative complete-resource `byte_length`, and optional `role`, `media_type`, and immutable schema/Adapter-supplied `properties`. Every present field contributes to the containing historical object's canonical body and identity but does not change the raw-byte-derived Resource Identifier. Friendly/logical names and all chunk/storage/reconstruction details are excluded from historical Resource References and historical identity. A Resource Manifest is descriptive Resource-oriented metadata/reconstruction terminology only and has no separate content-derived historical identifier in 0.1. The affected Specs and work packages have been updated.

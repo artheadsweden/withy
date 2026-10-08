@@ -478,21 +478,11 @@ A Resource Object may conceptually remain one object even though its physical st
 
 ## Resource Manifest
 
-A **Resource Manifest** is immutable metadata describing a Resource Object.
+In OMVCS 0.1, a **Resource Manifest** is descriptive terminology for a Resource-oriented metadata/reconstruction view. It MAY combine information from a historical Resource Reference with operational reconstruction information.
 
-It MAY include:
+A Resource Manifest is not a separate content-addressed historical object and has no independent content-derived historical identifier in OMVCS 0.1. Historical OMVCS objects refer directly to immutable Resource Objects through an embedded Resource Reference as defined in the Core Specification.
 
-- Resource Identifier;
-- content length;
-- media type;
-- chunk structure;
-- original/friendly filename;
-- technical format;
-- sample rate;
-- channel count;
-- other format-specific metadata.
-
-The Resource Manifest MUST NOT contain mutable physical storage location as part of content identity.
+Operational chunk structure, Chunk IDs, Chunk Manifest information, storage locations, Replicas, and provider metadata are not fields of the historical Resource Reference and MUST NOT affect historical object identity. A future formal Resource Manifest object requires an explicit schema/version decision and MUST NOT change existing Resource Identifiers.
 
 ---
 
@@ -507,6 +497,8 @@ Example:
 Friendly Names are not Resource Identifiers.
 
 Different Resource Objects MAY use the same Friendly Name at different points in history.
+
+Friendly Names, logical names, and filenames are not fields of the generic historical Resource Reference in OMVCS 0.1. Renaming a Resource for presentation or local working purposes MUST NOT by itself alter historical creative state. If a DAW requires a particular name for exact native reconstruction, that naming state belongs in Adapter State.
 
 ---
 

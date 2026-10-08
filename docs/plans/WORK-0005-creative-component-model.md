@@ -18,7 +18,7 @@ Represent a Creative Component as a stable, semantically identified Project enti
 ## Dependencies
 
 - WORK-0001 for assigned Project and Component identifiers.
-- WORK-0004 for the distinction between Components and Resources.
+- WORK-0004 for the distinction between Components and Resources and the resolved generic Resource Reference model (ADR-0007).
 - The actual Component State relationship is addressed by WORK-0006.
 
 ## Allowed scope

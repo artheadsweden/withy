@@ -482,6 +482,8 @@ These fields describe capture.
 
 The eventual OMVCS Resource Object identity is determined by Core from content.
 
+This Adapter-level capture classification is not the generic historical Resource Reference. Logical names and paths MUST NOT be copied into a generic Resource Reference. If a particular name is required for exact native reconstruction, that naming state belongs in Adapter State.
+
 ---
 
 # 17. Required versus optional Resources

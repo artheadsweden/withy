@@ -210,7 +210,7 @@ These MUST NOT be:
 
 - embedded in Revision objects;
 - embedded in Project State;
-- embedded in Resource manifests;
+- embedded in historical Resource References or Resource Manifest views;
 - copied into Platform Mirror metadata.
 
 ---
@@ -2435,7 +2435,7 @@ It MUST preserve privacy and access-control requirements.
 
 # 162. Chunk manifest storage
 
-Chunk Manifests MAY live in Repository metadata or Storage Endpoint representation depending on Core design. Whenever a Chunk Manifest is included in hashed metadata, its `chunks` collection is an ordered sequence in reconstruction order, as defined in the Core Specification and Glossary.
+Chunk Manifests are operational physical-reconstruction information and MAY live in Repository metadata or Storage Endpoint representation. They MUST NOT be included in a historical Resource Reference or affect historical object identity. Their `chunks` collection is an ordered sequence in reconstruction order, as defined in the Core Specification and Glossary; this ordering requirement is for reconstruction and does not make the Chunk Manifest part of historical identity.
 
 Regardless, a Replica using chunked representation MUST expose enough information to reconstruct the complete Resource.
 
