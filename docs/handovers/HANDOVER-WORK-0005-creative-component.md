@@ -68,11 +68,12 @@ No new Design Gap. DG-0010 is resolved by ADR-0010. Other gaps concerning later 
 ## Known limitations
 
 - No Component State, Project State, membership logic, historical parentage, Adapter State, storage, repository operation, or lifecycle behavior is implemented.
-- The coverage entry is `implemented`, not `verified`; independent Verifier acceptance remains pending.
+- The original coverage entry was `implemented`; the independent acceptance below
+  supersedes the pending-verification status and marks only WORK-0005 `verified`.
 
 ## Remaining work
 
-- Verifier: independently compare the model and tests against WORK-0005 requirements and cited normative text.
+- Independent Verifier acceptance is complete as recorded below; no WORK-0005 blocker remains.
 - Do not treat this handover as authorization to start WORK-0006 or any later work package.
 
 ## Git state
@@ -80,3 +81,47 @@ No new Design Gap. DG-0010 is resolved by ADR-0010. Other gaps concerning later 
 Working tree: CLEAN (after the handover commit; the implementation commit is `8d3a639386ad1c2fe87d04e9880e12ccc20cdca1`)
 Remote push performed: NO
 Remote publishing enabled: YES (per `docs/project-state.md`)
+
+## Independent Verifier acceptance — 2026-10-08
+
+Accepted implementation `8d3a639386ad1c2fe87d04e9880e12ccc20cdca1` with remediation
+`947fa4e76ab9af6a2f5933b58c35aec843321e56`. The initial gate at `95d618d`
+found that derived decoding accepted a positional array lacking the required named
+`component_id` field. The committed map-only visitor fixes that defect and preserves
+required typed identity and unknown-field rejection. No test was weakened.
+
+The Verifier inspected the two retained, uncommitted evidence files before editing:
+the WORK-0005 failure note in `docs/spec-coverage.md` and the three-test
+`crates/omvcs-model/tests/creative_component_acceptance.rs`. The test file is
+preserved unchanged in the verification commit; the coverage note now records acceptance.
+
+Fresh checks run independently:
+
+- `cargo test --locked -p omvcs-model --test creative_component --test creative_component_acceptance`
+  — passed, 6 implementation tests and 3 reviewer tests.
+- `cargo test --locked -p omvcs-model` — passed, 7 unit, 16 canonical, 8 hashing,
+  6 Component, 3 acceptance, 18 Resource tests and 4 compile-fail doctests (62 total).
+- `cargo fmt --package omvcs-model -- --check` — passed.
+- `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings` — passed.
+- `git diff --check` and `git diff --check b1106ee..HEAD` — passed.
+
+Positional arrays and other non-object forms fail through both JSON text and value
+decoding. The retained regression passes; 256 generated IDs round-trip through
+exactly `{"component_id":"<assigned-id>"}` without assigning a replacement ID.
+Missing/invalid IDs and the WORK-0005 excluded fields remain rejected.
+
+The model still contains exactly one required `CreativeComponentId`. Resource and
+Component IDs remain distinct types/namespaces. Resource replacement, presentation
+rename and other external-context changes do not alter the assigned identity.
+No Component State, Project State/membership logic, parentage, Adapter State,
+storage/repository operations, or clone/fork/copy/import/move/cross-Project semantics
+were added. Semantic decisions beyond Specs/ADR-0010: `None`; no new Design Gap.
+
+Branch history is scoped to WORK-0005. Base `b1106ee6966351d57a448d90c6e2980ee4275549`
+and ADR-0010 merge `509dbba` are ancestors; no `Specs/` changes occurred on this
+implementation branch. Only the retained acceptance test and WORK-0005 verification
+documentation are included in the verification commit.
+
+WORK-0006 and all later packages remain unstarted. No push or integration performed.
+The verification commit is the commit introducing this acceptance record; the final
+HEAD and clean working-tree check are reported in the Verifier's gate response.
