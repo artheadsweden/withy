@@ -269,7 +269,7 @@ This normalization is recursive: any collection-valued field within an element M
 
 JSON object maps are unordered mappings rather than array-valued collections. Map insertion order has no semantic significance. Before hashing or canonical serialization, maps MUST have unique member names; duplicate names are invalid and MUST be rejected. Their canonical serialization MUST use RFC 8785 object-member ordering solely. OMVCS MUST NOT apply the set-like array element-byte sorting rule, or any other additional entry-sorting transformation, to map entries. Their schemas MUST identify them as maps and define the meaning of their keys; their values are normalized according to their own schemas.
 
-The following collection fields in the OMVCS 0.1 conceptual object models have these semantics:
+The following collection fields in OMVCS 0.1 schemas have these semantics:
 
 | Object and field | Semantics |
 |---|---|
@@ -281,12 +281,14 @@ The following collection fields in the OMVCS 0.1 conceptual object models have t
 | Adapter State `resources` | Set-like collection of native Resource References. |
 | Adapter State `component_bindings` | JSON object map keyed by Creative Component Identifier; each value is an adapter-specific binding record. |
 | Adapter State `metadata` | JSON object map keyed by metadata property name. |
-| Project State `components` | JSON object map keyed by Creative Component Identifier. |
-| Project State `project_metadata` | JSON object map keyed by metadata property name. |
+| Project State `components` | REQUIRED JSON object map from canonical Creative Component Identifier text to typed Component State Identifier; the referenced Component State MUST identify the same Component Identifier as its map key. |
+| Project State `project_metadata` | REQUIRED JSON object map keyed by metadata property name; the exact versioned Project State schema owns permitted keys, requiredness, value shapes, meanings, nested schemas, and nested collection classifications. |
 | Revision `parents` | Set-like collection of direct parent Revisions. |
 | Revision `provenance` | Set-like collection of provenance relationships. |
 
 Every additional array-valued collection included in a hashed Core object, Adapter State, or namespaced extension MUST declare its ordering semantics in the schema that defines it. A schema that does not make this declaration is not valid for hashing.
+
+`Project State.components` and `Project State.project_metadata` are required JSON object maps and MAY be empty. The exact versioned Project State schema MUST validate each `project_metadata` key, value shape, meaning, nested schema, and nested collection classification. Project metadata MUST NOT be treated as an unrestricted container for presentation/UI, local-path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational information. Such information is admissible only when an approved Project State schema explicitly defines it as historical Project state and it does not conflict with another Core invariant or ADR.
 
 Resource Reference `properties` values MUST be validated under the exact versioned schema or Adapter context that governs their use in the containing historical object. The applicable context MUST be determinable from the containing object's schema and, where applicable, its Adapter State schema and Adapter identifier; a Resource Reference MUST NOT introduce an independent property-schema identifier for this purpose. Core validates the generic JSON shape, duplicate member names, canonical form, schema-declared value shapes, and nested collection classifications. The applicable schema or Adapter authority validates the semantic admissibility of property values. Core MUST NOT infer semantic admissibility from property names, deny lists, heuristics, or DAW-specific knowledge.
 
@@ -686,40 +688,54 @@ The DAW Adapter Specification will define exactly how adapters create and restor
 
 A Project State defines one complete logical creative state.
 
-The `components` member is a JSON object map keyed by Creative Component Identifier, with each value referencing the corresponding Component State Identifier. This Project State membership/reference is the association between the Project and the participating Creative Components; the Creative Component object has no `project_id` back-reference. A Project State therefore determines which Creative Components and corresponding Component States participate in that historical Project State. Its canonical serialization uses RFC 8785 object-member ordering solely, as specified in section 5.1.
+The OMVCS 0.1 Project State is a closed JSON object containing exactly these REQUIRED top-level members:
 
-Conceptual structure:
+- `schema`
+- `project_id`
+- `components`
+- `adapter_state_id`
+- `project_metadata`
+
+No additional top-level members are permitted. The exact versioned Project State schema identified by `schema` MUST be known and available before the candidate can be admitted as valid historical state.
+
+`project_id` is the typed assigned Project Identifier of the Project whose state the object represents. Project State identity is Project-specific: `project_id` participates in canonical identity and is not derived from Component membership, Adapter State, Resource content, storage, Platform identity, or location.
+
+`components` is a REQUIRED JSON object map from canonical typed Creative Component Identifier text to typed Component State Identifier. The map MAY be empty; omission is invalid. Object member ordering and duplicate-member rejection follow section 5.1 and ADR-0005; no set-like array sorting applies to the map. Every referenced Component State MUST be valid and admitted, and its required `component_id` MUST equal the map key. A mismatch prevents Project State historical admission. The Component State metadata object MUST be resolvable and valid, but its underlying Resource bytes need not be locally materialised. This consistency rule does not define clone, copy, import, fork, move, ownership, or cross-Project identity-preservation semantics.
+
+Normative OMVCS 0.1 body example:
 
 ```json
 {
   "schema": "omvcs.project-state/0.1",
-
-  "project_id": "019aa...",
-
+  "project_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
   "components": {
-    "019-bass": "omvcs:component-state:sha256:BASS4...",
-    "019-drums": "omvcs:component-state:sha256:DRUM7...",
-    "019-vocal": "omvcs:component-state:sha256:VOC3..."
+    "019cc17d-1b22-7a41-9fe9-c345c468f82d": "omvcs:component-state:sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "019cc17d-1b22-7a41-9fe9-c345c468f82e": "omvcs:component-state:sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "019cc17d-1b22-7a41-9fe9-c345c468f82f": "omvcs:component-state:sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"
   },
-
-  "adapter_state":
-    "omvcs:adapter-state:sha256:ARDOUR12...",
-
-  "project_metadata": {
-    "title": "Example Song"
-  }
+  "adapter_state_id":
+    "omvcs:adapter-state:sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "project_metadata": {}
 }
 ```
 
-The Project State Identifier is content-derived.
+This shape example illustrates the complete OMVCS 0.1 top-level body; identifier strings are illustrative valid-format values, not conformance vectors. The `components` and `project_metadata` maps MAY be empty; all five top-level members remain required.
+
+`adapter_state_id` is a REQUIRED typed Adapter State Identifier. It MUST identify exactly one resolvable, valid/admitted canonical Adapter State metadata object under section 12. It MUST NOT identify a native Resource Object as the complete Adapter State. The referenced Adapter State metadata object MUST be resolvable and valid, but Resource bytes beneath it need not be locally materialised.
+
+`project_metadata` is a REQUIRED JSON object map and MAY be empty. Its exact versioned Project State schema owns permitted keys, required and optional keys, value shapes and types, semantic meanings, nested object schemas, and ordered-versus-set-like classification of every nested array. Core enforces generic structure and canonical rules but MUST NOT infer Project metadata semantics. Unknown keys or invalid shapes prevent historical admission unless that exact schema explicitly permits them. Every nested array MUST have an explicit ordering classification under section 5.1; an unclassified nested array prevents historical admission. Project metadata is for schema-approved historical Project-level state only; presentation/UI metadata, local paths, storage/Replica information, credentials, Platform indexing/account information, validation evidence, timestamps, and other operational values MUST NOT enter the Project State merely as generic metadata.
+
+The canonical Project State historical body and hash preimage contain exactly `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. Every member participates in identity. The Project State Identifier is `SHA-256(canonical Project State historical-body bytes)` under sections 5 and 55; no type/domain prefix is included in the digest input. Changing any member's canonical value changes the canonical body and, barring cryptographic collision, the identifier. Map insertion order alone does not change identity.
+
+Validation evidence, validator implementations, timestamps, presentation/UI metadata, local DAW state, storage information, Resource Replica state, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the hash preimage. OMVCS 0.1 defines no arbitrary top-level Project State extension mechanism. Adding a top-level member requires an explicit future schema/version and compatibility decision.
 
 A Project State does not describe only what changed.
 
 It describes the complete state.
 
-The `adapter_state` member MUST reference exactly one canonical Adapter State metadata object by its Adapter State Identifier. It MUST NOT reference a native Resource Object directly as the complete Adapter State.
+The Project State membership map is the association between the Project and participating Creative Components. The generic Creative Component object has no `project_id` back-reference.
 
-A Project State MUST NOT treat an unchecked Adapter State as a valid historical object. The referenced Adapter State must first satisfy the validation and admission requirements in section 12.
+A Project State candidate MUST NOT be admitted as valid history unless the exact Project State schema validates the body; `project_id`, every component-map key/value, and `adapter_state_id` are correctly typed; each referenced Component State is resolvable, valid/admitted, and has a matching `component_id`; the referenced Adapter State is resolvable and valid/admitted under section 12; `project_metadata` validates under the exact Project State schema; and no unknown top-level member is present. Failed validation MUST NOT produce a valid Project State Identifier. Missing Resource bytes alone do not invalidate otherwise valid Resource References or metadata-complete history.
 
 ---
 
@@ -1889,7 +1905,7 @@ The DAW Adapter determines reproducibility details.
 
 # 53. Reference Render
 
-A Revision MAY include a Reference Render Resource as part of its Project State publication.
+A Revision MAY include a Reference Render Resource in its publication. This section does not define a Reference Render field in the Project State body: OMVCS 0.1 Project State has only the members defined in section 13. A Reference Render may participate in Project State identity only through a member explicitly defined as historical by the exact applicable versioned Project State schema. The remaining Reference Render policy and association rules are tracked by DEC-CORE-002.
 
 Where present it MUST itself be an immutable Resource Object.
 
@@ -1992,6 +2008,10 @@ A full Project validation MAY include:
 validate canonical object hashes
 validate Revision references
 validate Project State references
+validate each Project State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
+resolve and validate every Component State referenced by Project State, including equality between each map key and the referenced state's `component_id`
+resolve the referenced Adapter State and require its valid/admitted status under section 12
+validate `project_metadata` under the exact Project State schema, including nested collection classifications
 validate Component State references
 validate each Component State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
 validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
@@ -2003,6 +2023,8 @@ verify available Resource content
 ```
 
 Metadata validation MUST NOT require downloading every historical Resource unless deep Resource verification is requested.
+
+The full Project validation above is optional as a repository-wide operation. However, an implementation MUST perform the Project State schema, member, reference-resolution, and admission checks listed above whenever it admits a Project State as valid historical state or calculates its valid Project State Identifier.
 
 ---
 
@@ -2473,6 +2495,8 @@ It MUST NOT reinterpret unknown versions according to a guessed older schema.
 
 For Component State, an unknown or unavailable schema version MAY be preserved only as uninterpreted candidate data. Such preservation MUST NOT establish a valid historical Component State or a valid Component State Identifier.
 
+For Project State, an unknown or unavailable schema version MAY be preserved only as unchecked, uninterpreted candidate data where supported. Such preservation MUST NOT establish a valid historical Project State or a valid Project State Identifier. A Project State MUST be validated against the exact available versioned schema before admission, including validation of `project_metadata` keys, values, nested schemas, and collection classifications.
+
 Preserving an unknown or unavailable schema version does not make a candidate Resource Reference with `properties` valid for historical admission. Such a candidate MUST remain unchecked and MUST NOT be used to produce or commit a valid historical object until the exact applicable schema or Adapter context can validate it under section 7.
 
 ---
@@ -2488,6 +2512,8 @@ A new semantic interpretation requires a new schema version.
 Changing the admissibility or interpretation of Resource Reference `properties` requires a new version of the applicable containing schema or Adapter schema. Implementations MUST NOT apply a newer property's validation rules to an older historical schema version.
 
 The OMVCS 0.1 Component State top-level member set is closed. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Component State members as 0.1.
+
+The OMVCS 0.1 Project State top-level member set is closed and contains exactly required `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Project State members as 0.1. All five members participate in Project State identity.
 
 This ensures old creative history remains interpretable.
 
@@ -2996,7 +3022,7 @@ The central OMVCS Core model can therefore be stated very compactly:
 
 > A Revision is an immutable historical statement that a particular complete Project State existed.
 
-> A Project State is composed of immutable Component States and DAW Adapter State.
+> A Project State contains its Project identity, Component-to-Component-State map, Adapter State reference, and schema-defined Project metadata; it identifies immutable Component States and DAW Adapter State.
 
 > Those states refer to immutable Resource Objects by content identity.
 

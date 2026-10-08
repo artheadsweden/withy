@@ -3,7 +3,7 @@
 Status: PLANNED
 Owner agent: Core Engineer
 Milestone: M1
-Branch: `work/0007-project-state-model`
+Branch: `work/0007-project-state`
 
 ## Objective
 
@@ -13,20 +13,21 @@ Represent one complete immutable logical Project State using stable Project iden
 
 - Glossary: Project State.
 - Core Specification, sections 5.1, 7, 12–13, 24, 56, and 76–77.
-- Core Invariants: INV-HIST-003, INV-RES-004, INV-RES-008, INV-PROJ-004, INV-DAW-004.
+- Core Invariants: INV-HIST-003, INV-HIST-006, INV-HIST-008, INV-RES-004, INV-RES-008, INV-PROJ-004, INV-DAW-004.
 
 ## Dependencies
 
-- WORK-0001, WORK-0002, WORK-0003, WORK-0005, and WORK-0006.
+- WORK-0001 through WORK-0006. WORK-0001 supplies typed Project, Component, Component State, Adapter State, and Project State identifiers; WORK-0002/0003 supply canonical serialization and hashing; WORK-0004/0006 supply the admitted Resource Reference and Component State boundaries; WORK-0005 supplies the Creative Component identity boundary.
 - ADR-0004 resolves the Adapter State representation: Project State references exactly one canonical Adapter State metadata object, which may reference opaque native-state Resources.
 - ADR-0007 defines the Resource Reference fields used by Adapter State resource entries and excludes names and physical storage/reconstruction data from those references.
 - ADR-0008 defines the exact accepted integer range for each Resource Reference `byte_length`.
 - ADR-0009 defines the versioned schema/Adapter validation authority and historical admission boundary for Resource Reference `properties`.
 - Hashed JSON object maps follow RFC 8785 member ordering only, and duplicate member names are rejected before hashing/canonical serialization (ADR-0005).
-- `component_bindings` is keyed by Creative Component Identifier and map values carry adapter-specific binding records; the key is not duplicated in the value (ADR-0006).
 - ADR-0010 defines Project State membership/reference as the Project-to-Component association; do not add a `project_id` back-reference or infer cross-Project ownership/reuse behavior.
 - ADR-0011 defines the closed Component State historical body and valid identity that Project State component references consume.
+- ADR-0012 defines the closed Project State body, admission rules, and exact hash preimage.
 - DEC-PLATFORM-016 remains open. Do not add licensing fields to the M1 Project State model unless its ownership/location is decided first.
+- DG-0012 is resolved by ADR-0012; implement only its approved closed Project State contract.
 
 ## Allowed scope
 
@@ -37,35 +38,39 @@ Represent one complete immutable logical Project State using stable Project iden
 
 - Complete Project State references, not a change list.
 - Storage-independent Project and Component State references.
-- Typed reference to exactly one canonical Adapter State metadata object; native-state Resources remain referenced through that object.
-- Adapter State `component_bindings` maps Creative Component Identifiers to adapter-specific binding records without repeating the key in the value.
+- Typed reference to exactly one valid/admitted canonical Adapter State metadata object through its `AdapterStateId`; Adapter State internals remain owned by Core §12 and the exact Adapter schema.
 
 ## Acceptance tests
 
 - A Project State identifies a complete logical state, not merely a delta.
-- Project State references exactly one Adapter State Identifier; a native Resource Identifier is invalid as the complete Adapter State reference.
-- Adapter State is canonical OMVCS metadata and may reference opaque native-state Resource Objects.
-- Each Resource Reference embedded in Adapter State has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count, represented as an integer in `0 ..= 9007199254740991`; reject negative, fractional, greater-than-maximum, string, and other alternate representations (ADR-0008).
-- Embedded Resource Reference length vectors accept `0`, `1`, `9007199254740991` and reject `-1`, `1.5`, `9007199254740992`, and `"1"`.
-- Every Adapter State Resource Reference with `properties`, including an empty map, is validated under the exact applicable versioned Adapter context before historical admission; unknown, unavailable, or non-unique context cannot yield valid Adapter State history.
-- Unchecked candidates, if preserved, cannot be embedded in a valid Project State/Revision or used to produce a valid historical identity; validation evidence is not part of canonical metadata identity.
-- Adapter schema validation rejects ADR-0007-excluded semantics under alternate keys and nested values; Core performs generic structure, duplicate-name, canonicalization, and nested collection validation without interpreting Adapter-specific values.
-- Adapter State `component_bindings` uses a Creative-Component-Identifier-keyed object map whose values contain adapter-specific binding records; values do not repeat the key merely to restate the identifier.
-- Project identity and Component State references are explicit and stable.
+- The closed OMVCS 0.1 body contains exactly required `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`; missing required members and any unknown top-level member are rejected.
+- Exact Project State schema is known and available before admission; unknown/unavailable schema candidates cannot produce a valid Project State or Project State Identifier.
+- `project_id` is the typed assigned Project Identifier and participates in identity; otherwise identical bodies with different Project IDs have different canonical bytes.
+- `components` is a required Creative-Component-ID-to-Component-State-ID map, accepts an empty map, rejects omission, validates canonical typed keys and typed values, rejects duplicate raw keys, and is invariant under member insertion-order permutations.
+- Every referenced Component State is resolvable and valid/admitted, and its `component_id` matches the map key; reject mismatch. Missing Resource bytes under a valid Component State do not by themselves prevent Project State admission.
+- `adapter_state_id` is a required typed Adapter State Identifier; the referenced canonical Adapter State is resolvable and valid/admitted. Native Resource IDs, unchecked Adapter State candidates, or unavailable references cannot satisfy it. Missing Resource bytes beneath otherwise valid Adapter State do not by themselves prevent Project State admission.
+- `project_metadata` is required, accepts an empty map, rejects omission, and validates keys, values, nested schemas, and ordered/set-like nested arrays under the exact Project State schema; reject unknown/disallowed keys, invalid shapes, and unclassified arrays.
+- Identical canonical five-member bodies produce identical Project State IDs. Changing `schema`, `project_id`, component membership or state ID, `adapter_state_id`, or any present canonical `project_metadata` value changes canonical identity.
+- Component-map and metadata-map insertion order alone does not change identity; duplicate raw member names are rejected under ADR-0005.
+- Canonical bytes contain only the exact five-member historical body; operational, presentation, storage, validation, wrapper, signature, credential, Platform, and Resource Replica fields are excluded.
+- Project identity and Component State references are explicit and stable under the approved Project State schema.
 - Project State membership determines which Creative Components and corresponding Component States participate in that historical Project State; the Creative Component object itself has no `project_id`.
 - Storage locations, platform URLs, local paths, and availability do not enter Project State identity.
 - Different creative-object references yield different Project State identities.
-- Component, Adapter State binding, and project-metadata map insertion-order permutations yield identical canonical bytes/identities; duplicate member names are rejected; no additional entry sorting is applied.
+- Component-map and project-metadata map insertion-order permutations yield identical canonical bytes/identities; duplicate member names are rejected; no additional entry sorting is applied.
+- The model consumes a valid/admitted Adapter State reference at the Core §12 / DAW Adapter §20 boundary; it does not define or implement a generic Adapter State schema, Adapter State hash body, or Adapter State `component_bindings` model.
 
 ## Explicit non-goals
 
 - Working State, materialisation, DAW restoration, Resource retrieval, or storage maps.
 - Inferring missing component states or choosing defaults not defined by the Specs.
+- Adapter State schema/model implementation, Adapter-specific metadata or Resource Reference property validation, and Adapter State `component_bindings`.
 - DAW-specific fields in the Core model.
 
 ## Known Design Gaps
 
 - DG-0006, DG-0007, DG-0008, and DG-0009 are resolved by ADR-0006, ADR-0007, ADR-0008, and ADR-0009; apply the generic binding-map, Resource Reference, and property-admission contracts consistently.
+- DG-0012 is resolved by ADR-0012. No additional generic Adapter State body or cross-Project ownership semantics were introduced.
 
 ## Implementation plan
 

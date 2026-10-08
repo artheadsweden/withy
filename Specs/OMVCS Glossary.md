@@ -143,7 +143,13 @@ Parentage is optional. An initial state has zero parents. A derived state SHOULD
 
 A **Project State** is an immutable description of the complete logical creative state represented by a Revision.
 
-It identifies exactly which Component States, the canonical Adapter State metadata object, and other relevant objects constitute that creative state. The Adapter State may in turn reference opaque Resource Objects containing native DAW state.
+In OMVCS 0.1, its closed historical body contains exactly five required members: `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. Its content-derived identity is the SHA-256 hash of the canonical body containing all five members. The exact versioned Project State schema must be known and available for historical admission and owns the keys, value shapes, meanings, nested schemas, and nested collection classifications in `project_metadata`.
+
+`components` is a required JSON object map from typed Creative Component Identifiers to typed Component State Identifiers; it may be empty. Each referenced Component State must be admitted and identify the same Component as its map key. `adapter_state_id` is a required typed Adapter State Identifier referring to exactly one valid/admitted canonical Adapter State metadata object. These referenced metadata objects must be resolvable, but their underlying Resource bytes need not be locally materialised.
+
+`project_id` identifies the Project whose state is represented and participates in Project State identity. Project State identity is Project-specific. Project membership does not add a `project_id` field to the Creative Component object.
+
+`project_metadata` is a required map that may be empty. It is not a generic container for presentation/UI, local-path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational data. Such a value may enter only when the exact approved Project State schema defines it as historical Project state and it does not conflict with another Core invariant or ADR. OMVCS 0.1 permits no additional Project State top-level members; unknown members cannot be admitted as valid history or enter its identity.
 
 Example:
 

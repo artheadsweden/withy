@@ -68,6 +68,8 @@ Every Project State MUST reference exactly one canonical Adapter State metadata 
 
 Delta storage MAY be used internally for efficiency, but the semantics of a Revision MUST always be equivalent to a complete state.
 
+In OMVCS 0.1, every Project State MUST be a closed object containing exactly the required `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata` members. The exact available versioned Project State schema MUST validate the object before historical admission. `components` MUST be a map from canonical Creative Component Identifiers to typed Component State Identifiers; every referenced admitted Component State MUST identify the same Component as its map key. Each referenced Component State metadata object and the referenced valid/admitted Adapter State metadata object MUST be resolvable, but their underlying Resource bytes need not be locally materialised. The generic Creative Component object MUST NOT carry a `project_id` back-reference.
+
 ---
 
 ## INV-HIST-004 — Parent relationships are immutable
@@ -108,13 +110,21 @@ Ordered array collections MUST preserve their semantic order. Set-like array col
 
 The OMVCS 0.1 Component State historical body MUST contain exactly `schema`, `component_id`, `resources`, and `metadata`, and MAY contain `parents`; no other top-level members are permitted. `schema`, `component_id`, `resources`, and `metadata` are required; `resources` MAY be empty and `metadata` MAY be an empty object map. The Component State Identifier MUST be derived from the canonical body containing all and only these members, including `parents` only when present. The exact versioned Component State schema owns metadata keys, value shapes, meanings, and nested array classifications.
 
----
-
 ## INV-HIST-007 — Actor identity is stable and independent of accounts and keys
 
 An ActorId in OMVCS 0.1 MUST be an assigned UUIDv7 in lowercase canonical textual form.
 
 Display-name, email, username, Platform-account, and signing-key changes, including signing-key rotation, MUST NOT change an ActorId or rewrite historical authorship. Platform/account linkage and proof of control are separate from ActorId.
+
+## INV-HIST-008 — Project State has a closed Project-specific identity
+
+The OMVCS 0.1 Project State historical body MUST contain exactly the required members `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. No other top-level members are permitted. The exact versioned Project State schema MUST be known and available and MUST validate the body before historical admission or identity calculation. Unknown or unavailable schema candidates MAY be preserved as unchecked data, but MUST NOT produce a valid Project State or Project State Identifier.
+
+`project_id` MUST be the typed assigned identifier of the Project represented and MUST participate in identity. `components` MUST be a required JSON object map from canonical Creative Component Identifier text to typed Component State Identifiers; it MAY be empty. Each referenced Component State MUST be admitted and its `component_id` MUST equal the map key. The referenced Component State and canonical Adapter State metadata objects MUST be resolvable and valid/admitted; the underlying Resource bytes need not be locally materialised. `adapter_state_id` MUST be a typed Adapter State Identifier.
+
+`project_metadata` MUST be a required JSON object map and MAY be empty. The exact versioned Project State schema owns its permitted keys, requiredness, value shapes, meanings, nested schemas, and nested collection classifications. Unclassified nested arrays, invalid shapes, or disallowed keys prevent admission. It MUST NOT serve as an unrestricted container for presentation/UI, local path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational data.
+
+The Project State Identifier MUST be SHA-256 over the canonical historical body containing all and only those five members; no type/domain prefix is included in the digest input. Every member participates in identity. Validation evidence, operational data, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage. Map insertion order MUST NOT affect identity; maps use RFC 8785 member ordering solely and duplicate member names MUST be rejected.
 
 ---
 

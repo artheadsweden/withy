@@ -20,6 +20,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 - WORK-0001 through WORK-0003 and WORK-0007.
 - ADR-0010: Component identity is separate from Project State membership; a Revision continues to identify its Project State, which determines the participating Components and Component States.
 - ADR-0011: Component State references consumed through Project State use the closed 0.1 body and canonical identity contract.
+- ADR-0012: the Revision's Project State reference MUST resolve to a valid/admitted closed OMVCS 0.1 Project State whose identity hashes all five required historical members.
 
 ## Allowed scope
 
@@ -35,6 +36,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 ## Acceptance tests
 
 - Every Revision references exactly one complete Project State.
+- The referenced Project State is resolvable and valid/admitted under ADR-0012; invalid or unchecked Project State candidates cannot be referenced as valid historical state.
 - Initial Revisions accept zero parents; parent relationships of a published Revision cannot be changed.
 - A changed creative state requires a distinct Revision; operational storage movement does not.
 - Timestamp order alone never establishes ancestry.
@@ -51,7 +53,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 ## Known Design Gaps
 
 - No direct ActorId representation gap remains; ADR-0002 resolves DG-0004.
-- Upstream WORK-0007 must be completed before Revision implementation begins; no unresolved DG-0001 through DG-0005 blocks its design.
+- Upstream WORK-0007 must be completed before Revision implementation begins; DG-0012 is resolved by ADR-0012.
 
 ## Implementation plan
 

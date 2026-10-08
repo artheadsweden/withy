@@ -3492,15 +3492,17 @@ These can be understood by foreign adapters more easily than Ardour-native Route
 
 # 190. Native fidelity versus portability
 
-A Project State may therefore contain:
+A published Revision may therefore associate:
 
 ```text
-native Ardour state
+native Ardour state through its referenced Adapter State
 +
-portable Resources
+portable Resources through their owning Component States as applicable
 +
-Reference Render
+Reference Render where the applicable approved historical schema defines that association
 ```
+
+This illustration does not add top-level fields to the closed Project State body defined by Core Specification section 13. Reference Render policy and association remain subject to the applicable Core decision and versioned schema.
 
 This is valuable because it gives us:
 
