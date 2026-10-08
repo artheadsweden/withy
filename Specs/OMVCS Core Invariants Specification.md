@@ -64,6 +64,8 @@ A Revision MUST NOT represent merely a list of changes.
 
 The Project State MUST contain sufficient immutable references to determine the complete logical creative state represented by that Revision.
 
+Every Project State MUST reference exactly one canonical Adapter State metadata object by its Adapter State Identifier. A native Resource Object MAY be referenced by that Adapter State to contain native DAW state, but MUST NOT be referenced directly by the Project State as the complete Adapter State.
+
 Delta storage MAY be used internally for efficiency, but the semantics of a Revision MUST always be equivalent to a complete state.
 
 ---
@@ -97,6 +99,20 @@ Examples of operational events:
 - changing the preferred storage endpoint.
 
 Operational changes MUST NOT rewrite creative history.
+
+## INV-HIST-006 — Hashed collection semantics are explicit and deterministic
+
+Every array-valued collection field included in a hashed OMVCS metadata object MUST declare whether it is ordered or set-like. JSON object maps are not array-valued collections: their insertion order has no semantic significance, duplicate member names MUST be rejected before hashing/canonical serialization, and their canonical serialization MUST use RFC 8785 object-member ordering without additional entry sorting.
+
+Ordered array collections MUST preserve their semantic order. Set-like array collections MUST be canonically sorted before serialization, and duplicate elements MUST be rejected, according to the canonical serialization rules in the Core Specification. Map entries MUST NOT be sorted using the set-like array element-byte rule.
+
+---
+
+## INV-HIST-007 — Actor identity is stable and independent of accounts and keys
+
+An ActorId in OMVCS 0.1 MUST be an assigned UUIDv7 in lowercase canonical textual form.
+
+Display-name, email, username, Platform-account, and signing-key changes, including signing-key rotation, MUST NOT change an ActorId or rewrite historical authorship. Platform/account linkage and proof of control are separate from ActorId.
 
 ---
 
@@ -503,7 +519,7 @@ Changing storage custody MUST NOT alter provenance.
 
 If a Component State or Revision is derived from earlier OMVCS material, the architecture MUST permit the derivation relationship to remain discoverable.
 
-Exact provenance rules will be defined in the Core Specification.
+Component State parentage is optional. Derived states SHOULD record parent Component States when lineage is known, and a specific OMVCS operation or provenance rule MAY require preserving derivation. Unknown historical lineage MUST NOT be fabricated. Exact provenance rules will be defined in the Core Specification.
 
 ---
 

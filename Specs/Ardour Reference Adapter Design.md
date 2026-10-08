@@ -269,7 +269,7 @@ rather than silently choosing one.
 
 The Ardour `Session` is the principal native state root.
 
-The reference Adapter SHOULD treat a saved Ardour session snapshot as the central native representation of Adapter State.
+The reference Adapter SHOULD capture a saved Ardour session snapshot as a native-state Resource referenced by the canonical Adapter State metadata object. The Project State references that Adapter State object, not the native-state Resource directly.
 
 Ardour's state subsystem already exposes session save and possible saved state/snapshot handling, and `Session::save_state` accepts options relating to snapshot, archive and used assets. 
 
@@ -540,6 +540,8 @@ Adapter State SHOULD contain a stable mapping such as:
 
 The exact Ardour ID representation must be taken from native stable identities, not route names.
 
+The `component_bindings` array and each binding's `native_ids` array are set-like: their member order carries no semantics, and duplicate members are invalid. Any Adapter State collection introduced in a later schema MUST be classified explicitly and normalized according to Core Specification section 5.1.
+
 ---
 
 # 24. Track rename
@@ -624,7 +626,7 @@ Drum Kit
 Percussion
 ```
 
-The Adapter must propose lineage rather than erase history.
+The Adapter must propose known lineage rather than erase history, but MUST NOT fabricate unknown historical parentage. Confirmed derived Component States SHOULD record their parent Component States, except where a specific operation or provenance rule makes this mandatory.
 
 ---
 
@@ -708,7 +710,9 @@ A conceptual Ardour Adapter State:
 }
 ```
 
-The real schema must be canonical and deterministic.
+The conceptual structure is a canonical OMVCS metadata object. The real schema must be canonical and deterministic, and the Project State references this object rather than any native-state Resource directly.
+
+For this conceptual Adapter State schema, `native_state_resources`, `component_bindings`, and each binding's `native_ids` are set-like collections: member order carries no semantics, and duplicate members are invalid. Any later collection field added to a hashed Ardour Adapter State schema MUST explicitly declare its ordering semantics and follow Core Specification section 5.1. Ardour-native order that has creative meaning remains represented in the native Session Resource, not in the set-like identity of these references.
 
 ---
 
@@ -3326,7 +3330,7 @@ The initial conceptual mapping is:
 | OMVCS concept | Ardour reference mapping |
 |---|---|
 | Project | Bound Ardour Session + independent OMVCS Project ID |
-| Adapter State | Ardour native Session state + bindings |
+| Adapter State | Canonical OMVCS metadata object containing bindings and references to Ardour native-state Resources |
 | Resource | Audio/MIDI/native state/support files required by Session |
 | Creative Component | Usually one or more Routes/Tracks |
 | Component State | State of bound creative Route/group within a Project State |

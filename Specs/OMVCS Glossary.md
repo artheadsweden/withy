@@ -95,6 +95,18 @@ A Project MAY contain multiple components of the same general kind, such as:
 
 ---
 
+## Actor Identifier (ActorId)
+
+An **Actor Identifier**, abbreviated **ActorId**, is the stable assigned identity used to refer to an actor in OMVCS historical metadata.
+
+In OMVCS 0.1, an ActorId MUST be a UUID version 7 serialized in lowercase canonical textual form, as specified for assigned identifiers in Core Specification section 4.1.
+
+An ActorId is independent of an actor's display name, email address, username, Platform account, and signing keys. Those values MAY change without changing the ActorId or historical authorship. Rotating a signing key MUST NOT change the ActorId.
+
+Platform/account linkage and proof that an account controls or represents an ActorId are separate Platform concerns; neither is encoded by the ActorId itself.
+
+---
+
 ## Component State
 
 A **Component State** is one immutable historical state of a Creative Component.
@@ -111,7 +123,7 @@ A Component State references the Resource Objects required to represent that sta
 
 Creating another bass recording MUST create another Component State rather than modifying the old one.
 
-A Component State MAY have one or more parent Component States to express lineage.
+Parentage is optional. An initial state has zero parents. A derived state SHOULD record one or more parent Component States when lineage is known. A specific OMVCS operation or provenance rule MAY require preserving derivation. Unknown historical lineage MUST NOT be fabricated.
 
 **Git analogy:** loosely comparable to a blob plus semantic history, but there is no direct Git equivalent.
 
@@ -121,7 +133,7 @@ A Component State MAY have one or more parent Component States to express lineag
 
 A **Project State** is an immutable description of the complete logical creative state represented by a Revision.
 
-It identifies exactly which Component States, DAW State, Resources and other relevant objects constitute that creative state.
+It identifies exactly which Component States, the canonical Adapter State metadata object, and other relevant objects constitute that creative state. The Adapter State may in turn reference opaque Resource Objects containing native DAW state.
 
 Example:
 
@@ -154,7 +166,7 @@ A Revision MUST contain or reference:
 
 - its Project State;
 - zero or more parent Revisions;
-- author identity;
+- author identity as an ActorId;
 - creation timestamp;
 - revision message or description;
 - any required provenance metadata.
@@ -456,7 +468,7 @@ A Chunk is an implementation/storage concept and is normally invisible to the mu
 
 ## Chunk Manifest
 
-A **Chunk Manifest** identifies the ordered Chunks required to reconstruct a Resource Object.
+A **Chunk Manifest** identifies the ordered Chunks required to reconstruct a Resource Object. Its Chunk collection is an ordered sequence in reconstruction order; that order is significant.
 
 The Chunk Manifest MUST permit verification that reconstructed bytes equal the Resource Identifier.
 
@@ -765,6 +777,14 @@ It may include:
 DAW State MAY be represented by one or more Resource Objects.
 
 A native Ardour session is an example of DAW State.
+
+---
+
+## Adapter State
+
+An **Adapter State** is an immutable, canonical OMVCS metadata object that describes how OMVCS Resources and Creative Components relate to a DAW's native project model.
+
+An Adapter State MAY reference one or more opaque Resource Objects containing native DAW state. A Project State MUST reference the Adapter State object by its Adapter State Identifier and MUST NOT use a native Resource Object directly as the complete Adapter State.
 
 ---
 
@@ -1260,4 +1280,3 @@ integration plan, component mapping, semantic replacement, arrangement compatibi
 pending replica, verified replica, migration transaction, repository operation log.
 
 I would deliberately leave those names provisional until we design their underlying behaviour.
-

@@ -552,7 +552,11 @@ OMVCS Core does not need to understand those resources.
 
 The Adapter MUST produce an immutable **Adapter State** representation.
 
+Every Adapter State MUST be a canonical OMVCS metadata object with a content-derived Adapter State Identifier. The Adapter State MAY reference one or more opaque Resource Objects containing native DAW state. A native Resource Object MUST NOT serve directly as the complete Adapter State.
+
 The Adapter State describes how OMVCS Resources and Creative Components relate to the DAW-native project model.
+
+Any array-valued collection field in Adapter State that participates in its content-derived identity MUST declare whether it is ordered or set-like in the Adapter State schema and MUST follow the canonical collection rules in Core Specification section 5.1. This applies to adapter-specific opaque metadata and extension data as well as the generic fields below. The generic `resources` collection is set-like; `component_bindings` is a JSON object map keyed by Component Identifier and follows RFC 8785 object-member ordering solely. Duplicate member names in Adapter State maps MUST be rejected before hashing or canonical serialization; no additional sorting transformation applies to map entries.
 
 It MUST contain:
 
@@ -569,7 +573,7 @@ adapter-specific opaque metadata
 
 # 21. Adapter State identity
 
-Adapter State MUST be content-addressed through the OMVCS canonical metadata mechanism.
+Adapter State MUST be content-addressed through the OMVCS canonical metadata mechanism as a canonical metadata object.
 
 Changing Adapter State creates a new Adapter State object.
 
@@ -584,6 +588,8 @@ OMVCS Core MUST preserve Adapter-specific opaque metadata.
 Core MUST NOT interpret it.
 
 The Adapter MUST version its own opaque structure.
+
+The Adapter State schema MUST declare the ordering semantics of every collection within opaque metadata that participates in Adapter State identity. An Adapter MUST reject duplicate elements in any set-like collection before producing the immutable Adapter State.
 
 Example:
 
@@ -720,6 +726,8 @@ component_structure_changed
 and provide candidate derivation relationships.
 
 The user or higher-level workflow may confirm the intended Creative Component mapping.
+
+This rule does not require parentage where the derivation is unknown. Confirmed, known lineage SHOULD be recorded in parent Component State references; an operation or provenance rule that explicitly requires preserving the derivation MUST do so.
 
 ---
 
@@ -2691,7 +2699,7 @@ Otherwise every capture could appear different despite no musical change.
 
 Adapter-generated immutable metadata MUST be deterministic for equivalent captured state.
 
-Ordering of semantically unordered collections MUST be canonicalised before hashing.
+Ordering of semantically unordered collections MUST be canonicalised before hashing according to Core Specification section 5.1.
 
 ---
 
@@ -2699,7 +2707,7 @@ Ordering of semantically unordered collections MUST be canonicalised before hash
 
 Where ordering is meaningful, it MUST be preserved.
 
-Where ordering is not meaningful, the Adapter MUST produce deterministic ordering.
+Where ordering is not meaningful in a collection included in hashed Adapter State, the Adapter MUST apply Core Specification section 5.1. Other Adapter outputs MUST use deterministic ordering where the applicable contract requires it.
 
 ---
 
@@ -3949,7 +3957,7 @@ The most important requirements of this specification are:
 
 # 214. Unresolved DAW Adapter decisions for 0.1
 
-These questions remain intentionally open inside this specification and should be settled before freezing version 0.1:
+Questions 1–9 remain intentionally open inside this specification and should be settled before freezing version 0.1:
 
 1. Exact wire/schema format for Adapter operation request and response objects.
 2. Whether `full_state_capture` requires preservation of all inactive/unused-but-referenced DAW state or permits adapter-defined exclusions.
@@ -3960,7 +3968,7 @@ These questions remain intentionally open inside this specification and should b
 7. Exact requirements for machine-specific state classification.
 8. Whether the Mock Adapter becomes an official conformance reference implementation.
 9. Exact safe-inspection requirements for untrusted Contributions.
-10. Whether Adapter State itself should always be a canonical OMVCS metadata object, or whether an Adapter may designate one opaque Resource as its complete state representation.
+Question 10 is resolved by ADR-0004: every Adapter State is a canonical OMVCS metadata object, and Project State references that object rather than a native Resource Object directly.
 
 These are finite decisions within this document, not invitations to create additional specifications.
 

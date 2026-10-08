@@ -1,6 +1,6 @@
 # DG-0002 — Component State parentage requirement
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-MILESTONE
 Discovered by: OMVCS Lead
 Discovered during: M0
@@ -9,7 +9,7 @@ Date: 2026-10-08
 ## Relevant specifications
 
 - `Specs/OMVCS Glossary.md`, Component State.
-- `Specs/OMVCS Core Specification.md`, sections 10–11 and 89, question 10.
+- `Specs/OMVCS Core Specification.md`, sections 10–11 and 89, question 9.
 - `Specs/OMVCS Core Invariants Specification.md`, INV-HIST-003 and INV-PROV-003.
 
 ## Problem
@@ -41,4 +41,8 @@ Is Component State parentage optional, recommended, or mandatory for defined cla
 
 ## Resolution
 
-UNRESOLVED
+Resolved by [ADR-0003](../decisions/ADR-0003-component-state-parentage.md), approved by the human decision owner on 2026-10-08.
+
+Component State parentage is optional. Initial states have zero parents; derived states SHOULD record one or more parents when lineage is known. Parentage is mandatory only where a specific OMVCS operation or provenance rule explicitly requires preserving derivation. Unknown historical lineage MUST NOT be fabricated.
+
+For schema field presence, an explicitly empty `parents` array means known zero-parent initial state; omission means lineage is unknown or not asserted and MUST NOT be treated as proof of initial state. Present parent arrays follow Core Specification §5.1 set-like normalization. The affected Specs, WORK-0006, and coverage map have been updated.

@@ -182,7 +182,7 @@ Conceptually:
   "endpoint_id": "019ef...",
   "adapter_id": "org.openmusic.storage.s3",
   "display_name": "Main Project Storage",
-  "owner_actor_id": "actor:joakim",
+  "owner_actor_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
   "capabilities": [],
   "configuration_reference": "local-secret-store:s3-main",
   "status": "available"
@@ -2435,7 +2435,7 @@ It MUST preserve privacy and access-control requirements.
 
 # 162. Chunk manifest storage
 
-Chunk Manifests MAY live in Repository metadata or Storage Endpoint representation depending on Core design.
+Chunk Manifests MAY live in Repository metadata or Storage Endpoint representation depending on Core design. Whenever a Chunk Manifest is included in hashed metadata, its `chunks` collection is an ordered sequence in reconstruction order, as defined in the Core Specification and Glossary.
 
 Regardless, a Replica using chunked representation MUST expose enough information to reconstruct the complete Resource.
 

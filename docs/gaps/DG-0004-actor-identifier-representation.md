@@ -1,6 +1,6 @@
 # DG-0004 — Actor Identifier representation in Revision identity
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-MILESTONE
 Discovered by: OMVCS Lead
 Discovered during: M0
@@ -8,8 +8,8 @@ Date: 2026-10-08
 
 ## Relevant specifications
 
-- `Specs/OMVCS Core Specification.md`, sections 14 and 59 and section 89, question 7.
-- `Specs/OMVCS Platform Protocol.md`, sections 15–19 and 245, question 1.
+- `Specs/OMVCS Core Specification.md`, sections 14 and 59; originally also listed in section 89, question 7.
+- `Specs/OMVCS Platform Protocol.md`, sections 15–19 and 245, question 1; the remaining account-association proof question is tracked as DEC-PLATFORM-001.
 - `Specs/OMVCS Core Invariants Specification.md`, INV-HIST-002 and INV-SEC-002.
 
 ## Problem
@@ -29,7 +29,7 @@ The examples use an unspecified string value, while the Core and Platform decisi
 
 ## Can unaffected work continue?
 
-Yes. Identifier types, raw Resource identity, and model work independent of Revision author representation may proceed. Revision schema/hash conformance must remain blocked until the Actor Identifier representation is resolved or a normative opaque representation is approved.
+At discovery, identifier types, raw Resource identity, and model work independent of Revision author representation could proceed, while Revision schema/hash conformance was blocked on this gap. The representation is now resolved by ADR-0002; remaining M1 blockers are tracked separately, and Platform account-association proof remains DEC-PLATFORM-001.
 
 ## Candidate directions
 
@@ -41,4 +41,8 @@ What stable Actor Identifier representation must an OMVCS Revision serialize and
 
 ## Resolution
 
-UNRESOLVED
+Resolved by [ADR-0002](../decisions/ADR-0002-actor-identifier.md), approved by the human decision owner on 2026-10-08.
+
+In OMVCS 0.1, ActorId is an assigned UUIDv7 serialized in lowercase canonical textual form. It is independent of display name, email, username, Platform account, and signing keys; key rotation and Platform/account linkage changes do not alter ActorId or historical authorship.
+
+Platform/account linkage and proof of control remain separate. The association/proof mechanism was not selected and remains tracked by DEC-PLATFORM-001; it does not block M1 ActorId or Revision author representation.

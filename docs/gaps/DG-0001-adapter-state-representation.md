@@ -1,6 +1,6 @@
 # DG-0001 — Adapter State representation in Project State
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-MILESTONE
 Discovered by: OMVCS Lead
 Discovered during: M0
@@ -20,7 +20,7 @@ These alternatives change the type and interpretation of the Project State refer
 
 ## Why the current specifications are insufficient
 
-The Core and DAW Adapter examples do not select a representation, while the DAW Adapter unresolved-decision list explicitly says the choice remains open. Selecting one representation in the M1 model would therefore settle an unapproved semantic/schema decision.
+The DAW Adapter unresolved-decision list left the representation open despite the canonical metadata requirements and typed Adapter State reference shown elsewhere.
 
 ## Affected work
 
@@ -29,16 +29,16 @@ The Core and DAW Adapter examples do not select a representation, while the DAW 
 
 ## Can unaffected work continue?
 
-Yes. Assigned identifiers, raw Resource identity, Resource references, and Component State work that does not freeze the Adapter State representation may proceed independently. Project State and Revision schema/hash work must remain blocked until resolved.
+Yes. Assigned identifiers, raw Resource identity, Resource references, and Component State work that does not freeze the Adapter State representation may proceed independently. Project State and Revision schema/hash work may proceed under the representation fixed by ADR-0004. The separate canonical map-ordering question was tracked as DG-0005 and has since been resolved by ADR-0005.
 
 ## Candidate directions
 
-Non-normative options include requiring a canonical metadata envelope for every Adapter State, or permitting an opaque Resource representation behind an explicit typed reference. Neither option is selected here.
+The approved decision selects a canonical OMVCS metadata object for every Adapter State. It may reference one or more opaque Resource Objects containing native DAW state.
 
 ## Required decision
 
-Must every Adapter State be represented by a canonical OMVCS metadata object, or may an Adapter designate an opaque Resource as its complete Adapter State representation? If both are allowed, what distinguishes and identifies the two forms in Project State?
+Every Adapter State MUST be a canonical OMVCS metadata object. It MAY reference one or more opaque Resource Objects containing native DAW state. Project State MUST reference the Adapter State object and MUST NOT reference a native Resource directly as the complete Adapter State.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by [ADR-0004](../decisions/ADR-0004-adapter-state-object.md). Every Adapter State is a canonical OMVCS metadata object with its own content-derived Adapter State Identifier. Project State references that metadata object; native DAW state may be held in opaque Resource Objects referenced by the Adapter State.

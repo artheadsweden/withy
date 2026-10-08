@@ -341,7 +341,7 @@ Example:
 platform_user_id
 ```
 
-This MUST be distinct from immutable historical actor identity unless explicitly linked.
+This MUST be distinct from an ActorId. A separate association MAY link the Platform account to an ActorId, but the identifiers MUST NOT be treated as interchangeable.
 
 A Platform username changing MUST NOT alter historical authorship.
 
@@ -349,7 +349,7 @@ A Platform username changing MUST NOT alter historical authorship.
 
 # 16. Actor identity
 
-Historical objects SHOULD use a stable **Actor Identifier**.
+Historical objects that identify an actor MUST use the **Actor Identifier (ActorId)** defined in the Glossary and Core Specification. In OMVCS 0.1, ActorId is an assigned UUIDv7 in lowercase canonical textual form.
 
 The Platform may associate:
 
@@ -359,7 +359,7 @@ Actor ID <-> Platform Account
 
 This relationship MAY change operationally.
 
-Historical objects remain unchanged.
+The association and its proof are separate from ActorId. Changing or removing an association MUST NOT change ActorId or historical objects.
 
 ---
 
@@ -377,6 +377,8 @@ repository-issued authorization
 ```
 
 The exact authentication implementation is Platform-specific.
+
+Proof-of-control and account-association mechanisms do not define ActorId and remain a separate unresolved Platform Protocol decision.
 
 ---
 
@@ -3609,7 +3611,7 @@ The most important rules of this protocol are:
 
 The following questions remain inside this document and should be resolved before freezing version 0.1:
 
-1. Exact Actor Identifier format and how Platform accounts prove association with Actors.
+1. Exact mechanism by which Platform accounts prove control of or association with an ActorId.
 2. Exact cryptographic authorization/signing model for repository-to-Platform updates.
 3. Which Contribution metadata must also be persisted in Repository Home for Platform-independent recovery.
 4. Exact Platform Mirror schema.

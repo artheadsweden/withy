@@ -18,7 +18,7 @@ Implement the specified SHA-256 identities for raw Resource bytes and canonical 
 
 - WORK-0001 for typed digest identifiers.
 - WORK-0002 for canonical metadata bytes.
-- Metadata collection vectors are additionally dependent on DG-0003.
+- Hashed object-map identity follows RFC 8785 map canonicalization from ADR-0005; raw Resource hashing can proceed independently of metadata serialization.
 
 ## Allowed scope
 
@@ -37,20 +37,21 @@ Implement the specified SHA-256 identities for raw Resource bytes and canonical 
 - Identical raw byte sequences produce identical Resource identifiers regardless of filename or physical location.
 - A one-byte Resource change produces a different Resource identifier.
 - Metadata hashing consumes canonical object bytes and excludes external wrappers.
+- Maps supplied with different insertion orders produce the same canonical metadata hash; duplicate member names are rejected before hashing.
+- Hashed JSON object-map identities consume the RFC 8785 canonical bytes, with duplicate member names rejected before hashing.
 - Moving a Resource between locations or changing replica availability leaves Resource/Project/Revision identities unchanged.
 - Object-type namespaces remain distinct even when digest text is equal.
 - Property tests cover byte sequences and demonstrate deterministic raw Resource hashing.
+
+## Known Design Gaps
+
+- None affecting this work package. Metadata object hashing depends on the resolved serialization contract in WORK-0002.
 
 ## Explicit non-goals
 
 - Adding hash algorithms not specified for OMVCS 0.1.
 - Chunk hashes, chunk manifests, or storage layouts.
 - Defining domain-separation bytes not required by the identifier format.
-- Freezing hashes for unresolved collection order.
-
-## Known Design Gaps
-
-- DG-0003 affects metadata objects with collection-valued fields.
 
 ## Implementation plan
 

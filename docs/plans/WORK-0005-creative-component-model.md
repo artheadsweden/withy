@@ -47,7 +47,7 @@ Represent a Creative Component as a stable, semantically identified Project enti
 
 ## Known Design Gaps
 
-- None directly. WORK-0006 is separately blocked on DG-0002.
+- None directly. WORK-0006 parentage semantics are resolved by ADR-0003; hashed-map identity follows the resolved RFC 8785 rule in ADR-0005.
 
 ## Implementation plan
 

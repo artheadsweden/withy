@@ -11,14 +11,14 @@ Model the assigned and content-derived identifier classes explicitly, preserving
 
 ## Normative requirements
 
-- Core Specification, sections 4, 6, 9–14.
-- Glossary: Project Identifier, Creative Component, Resource Identifier, Revision Identifier.
-- Core Invariants: INV-HIST-002, INV-RES-002, INV-RES-003, INV-PROJ-001–003.
+- Core Specification, sections 4, 6, 9–14, and 59.
+- Glossary: Project Identifier, Creative Component, Resource Identifier, Revision Identifier, Actor Identifier (ActorId).
+- Core Invariants: INV-HIST-002, INV-HIST-007, INV-RES-002, INV-RES-003, INV-PROJ-001–003.
 
 ## Dependencies
 
 - Work is limited to identifier definitions whose formats are explicit in the cited requirements.
-- Metadata-object digest inputs depend on WORK-0002 and unresolved DG-0003.
+- Metadata-object digest inputs depend on WORK-0002 and the canonical serialization rules in Core Specification §5.1, including RFC 8785 map handling resolved by ADR-0005.
 - Known open decisions are tracked in `docs/decision-register.md`; do not invent formats for unresolved identifiers.
 
 ## Allowed scope
@@ -28,13 +28,14 @@ Model the assigned and content-derived identifier classes explicitly, preserving
 
 ## Deliverables
 
-- Types distinguishing UUIDv7 assigned identifiers from typed SHA-256 content identifiers.
+- Types distinguishing UUIDv7 assigned identifiers (including ActorId) from typed SHA-256 content identifiers.
 - Canonical lowercase UUID text and typed `omvcs:<object-type>:sha256:<digest>` formatting/parsing for specified object classes.
 - No reliance on filenames, paths, storage endpoints, platform URLs, or credentials for creative identity.
 
 ## Acceptance tests
 
 - Generated assigned identifiers use UUID version 7 and canonical lowercase textual form.
+- ActorId uses canonical lowercase UUIDv7 form and is unchanged by display-name, email, username, Platform-account, or signing-key changes, including key rotation.
 - Parsing rejects malformed UUID/content-identifier forms and preserves object-type namespace distinctions.
 - Equal Resource bytes yield equal Resource identifiers; a changed byte yields a different identifier.
 - Storage/path/platform/replica metadata changes cannot alter assigned Project/Component identity or content identifiers.
@@ -42,13 +43,13 @@ Model the assigned and content-derived identifier classes explicitly, preserving
 
 ## Explicit non-goals
 
-- Choosing formats for Actor, Line, Release, or other identifiers not settled by M1 requirements.
+- Choosing formats for Line, Release, or other identifiers not settled by M1 requirements.
 - Implementing canonical serialization, metadata hashing, storage locations, or repository operations.
 - Introducing implementation-specific identifier semantics as OMVCS requirements.
 
 ## Known Design Gaps
 
-- None directly. Metadata object identity remains dependent on DG-0003.
+- None directly. Metadata object identity follows WORK-0002 and its conformance requirements.
 
 ## Implementation plan
 

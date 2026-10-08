@@ -1,6 +1,6 @@
 # WORK-0008 — Immutable Revision model
 
-Status: BLOCKED ON DG-0003 AND DG-0004
+Status: BLOCKED ON WORK-0007
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0008-revision-model`
@@ -11,15 +11,13 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 
 ## Normative requirements
 
-- Glossary: Revision, Revision Identifier, Parent Revision, Revision Graph.
-- Core Specification, sections 4–5, 14–15, and 55.
-- Core Invariants: INV-HIST-001–004, INV-RES-002, INV-PROJ-001.
+- Glossary: Actor Identifier (ActorId), Revision, Revision Identifier, Parent Revision, Revision Graph.
+- Core Specification, sections 4–5, 14–15, 55, and 59.
+- Core Invariants: INV-HIST-001–004, INV-HIST-007, INV-RES-002, INV-PROJ-001.
 
 ## Dependencies
 
 - WORK-0001 through WORK-0003 and WORK-0007.
-- DG-0003 must resolve ordering semantics for hashed parent/provenance collections.
-- DG-0004 must resolve the Actor Identifier representation included in Revision identity.
 
 ## Allowed scope
 
@@ -39,18 +37,19 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 - A changed creative state requires a distinct Revision; operational storage movement does not.
 - Timestamp order alone never establishes ancestry.
 - Platform/storage/replica changes leave Revision identity unchanged.
-- Multi-parent and provenance ordering tests remain blocked until DG-0003 is resolved.
+- Revision author is a canonical lowercase UUIDv7 ActorId; profile/account/signing-key changes, including key rotation, do not change the ActorId or rewrite historical authorship.
+- Parent/provenance permutations produce identical identities; duplicate set elements are rejected under Core Specification §5.1.
 
 ## Explicit non-goals
 
 - Lines, Releases, Working State, publication transactions, signatures, or authorization.
-- Defining Actor Identifier format, authentication, or whether signing is mandatory.
+- Defining Actor account-association proof, authentication, or whether signing is mandatory.
 - Permitting history rewriting or deriving ancestry from timestamps.
 
 ## Known Design Gaps
 
-- DG-0003 — canonical order of hashed collection fields.
-- DG-0004 — Actor Identifier representation in Revision identity.
+- No direct ActorId representation gap remains; ADR-0002 resolves DG-0004.
+- Upstream WORK-0007 must be completed before Revision implementation begins; no unresolved DG-0001 through DG-0005 blocks its design.
 
 ## Implementation plan
 

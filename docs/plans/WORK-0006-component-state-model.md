@@ -1,25 +1,24 @@
 # WORK-0006 — Component State model
 
-Status: BLOCKED ON DG-0002 AND DG-0003
+Status: PLANNED
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0006-component-state-model`
 
 ## Objective
 
-Represent an immutable, content-addressed state of one Creative Component, including its stable Component reference and Resource dependencies, without choosing unresolved lineage or collection-order semantics.
+Represent an immutable, content-addressed state of one Creative Component, including its stable Component reference and Resource dependencies, with optional parentage that preserves known lineage without fabricating unknown ancestry.
 
 ## Normative requirements
 
 - Glossary: Component State.
-- Core Specification, sections 10–11 and 89, question 10.
-- Core Invariants: INV-HIST-001–003, INV-RES-004, INV-PROJ-002, INV-PROV-003.
+- Core Specification, sections 5.1, 10–11, and 23.
+- Core Invariants: INV-HIST-001–003, INV-HIST-006, INV-RES-004, INV-PROJ-002, INV-PROV-003.
 
 ## Dependencies
 
 - WORK-0001 through WORK-0005.
-- DG-0002 must resolve Component State parentage requirements.
-- DG-0003 must resolve canonical ordering of hashed collection fields.
+- Hashed metadata maps follow RFC 8785 object-member ordering; duplicate member names are rejected before canonicalization/hashing (ADR-0005).
 
 ## Allowed scope
 
@@ -29,16 +28,20 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 ## Deliverables
 
 - Immutable Component State identity referencing its Creative Component and required Resource Objects.
-- Parentage representation and validation only after DG-0002 is resolved.
-- Canonical identity tests only after DG-0003 is resolved.
+- Optional parentage representation and validation; distinguish known initial state from unknown/unasserted lineage.
+- Canonical identity tests use resolved array collection rules and RFC 8785 map handling.
 
 ## Acceptance tests
 
 - A published Component State cannot be changed in place.
 - A changed Resource reference produces a distinct Component State identity.
 - Resource references use immutable Resource identifiers.
-- Parentless/parented-state validity tests remain blocked until DG-0002 is resolved.
-- Permutations of parent/resource collections are tested only after DG-0003 defines their order semantics.
+- An initial state with zero parents is valid; known derived states SHOULD record one or more parents.
+- An explicit empty `parents` array identifies a known initial state; an omitted field does not imply initial state.
+- Unknown historical lineage is never fabricated.
+- An operation/provenance rule requiring derivation preservation MUST enforce parent recording.
+- Parent/resource set-like permutations produce identical identities; duplicate set elements are rejected.
+- Metadata map insertion-order permutations produce identical canonical bytes/identities; duplicate member names are rejected; map entries receive no additional element-byte sorting.
 
 ## Explicit non-goals
 
@@ -48,12 +51,11 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 ## Known Design Gaps
 
-- DG-0002 — Component State parentage requirement.
-- DG-0003 — canonical order of hashed collection fields.
+- None affecting this work package.
 
 ## Implementation plan
 
-1. Hold implementation of normative parentage validation until DG-0002 is approved and Specs/tests are updated.
+1. Implement the optional parentage semantics resolved in ADR-0003 without inventing operation-specific mandatory rules.
 2. Model the resolved Component State references and immutable hash preimage.
 3. Add identity, reference-integrity, lineage, and permutation tests from the resolved rules.
 

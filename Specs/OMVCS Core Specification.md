@@ -186,7 +186,8 @@ The following entities use globally unique assigned identifiers:
 - Project;
 - Creative Component;
 - Storage Endpoint;
-- Contribution.
+- Contribution;
+- Actor.
 
 OMVCS 0.1 uses UUID version 7 for newly generated assigned identifiers.
 
@@ -256,6 +257,36 @@ The hash MUST be calculated over the canonical serialized object body.
 Storage wrappers, HTTP headers, database keys, signatures and timestamps added outside the historical object MUST NOT affect the identifier unless explicitly defined as fields of the object itself.
 
 This means two implementations given the same semantic object MUST produce the same canonical bytes and therefore the same identifier.
+
+## 5.1 Hashed collection fields
+
+JSON Canonicalization Scheme does not reorder array elements. Before an OMVCS metadata object is serialized for hashing, the schema for every array-valued collection field MUST explicitly declare that the field is either an **ordered sequence** or a **set-like collection**.
+
+- An ordered sequence preserves its specified semantic order. Canonicalization MUST NOT reorder its elements.
+- A set-like collection has no semantic element order. Before serializing the containing object, each element MUST be serialized using the same canonical JSON rules, and the elements MUST be sorted in ascending lexicographic order of those canonical serialized bytes. Duplicate elements, determined by identical canonical serialized bytes, are invalid and MUST be rejected.
+
+This normalization is recursive: any collection-valued field within an element MUST itself declare its ordering semantics and be normalized before that element is serialized for sorting. Implementations MUST NOT infer whether a field is ordered or set-like from observed values.
+
+JSON object maps are unordered mappings rather than array-valued collections. Map insertion order has no semantic significance. Before hashing or canonical serialization, maps MUST have unique member names; duplicate names are invalid and MUST be rejected. Their canonical serialization MUST use RFC 8785 object-member ordering solely. OMVCS MUST NOT apply the set-like array element-byte sorting rule, or any other additional entry-sorting transformation, to map entries. Their schemas MUST identify them as maps and define the meaning of their keys; their values are normalized according to their own schemas.
+
+The following collection fields in the OMVCS 0.1 conceptual object models have these semantics:
+
+| Object and field | Semantics |
+|---|---|
+| Resource Reference `properties` | JSON object map keyed by property name. |
+| Chunk Manifest `chunks` | Ordered sequence in reconstruction order. |
+| Component State `parents` | Optional set-like collection of direct Component State parents. |
+| Component State `resources` | Set-like collection of Resource References required by that state. |
+| Component State `metadata` | JSON object map keyed by metadata property name. |
+| Adapter State `resources` | Set-like collection of native Resource References. |
+| Adapter State `component_bindings` | JSON object map keyed by Creative Component Identifier. |
+| Adapter State `metadata` | JSON object map keyed by metadata property name. |
+| Project State `components` | JSON object map keyed by Creative Component Identifier. |
+| Project State `project_metadata` | JSON object map keyed by metadata property name. |
+| Revision `parents` | Set-like collection of direct parent Revisions. |
+| Revision `provenance` | Set-like collection of provenance relationships. |
+
+Every additional array-valued collection included in a hashed Core object, Adapter State, or namespaced extension MUST declare its ordering semantics in the schema that defines it. A schema that does not make this declaration is not valid for hashing.
 
 ---
 
@@ -372,6 +403,8 @@ omvcs:chunk:sha256:<digest>
 
 A Chunk Manifest defines one physical reconstruction representation of a Resource.
 
+Its `chunks` collection is an ordered sequence in reconstruction order. Offsets and lengths describe each element's position and MUST agree with that sequence.
+
 Example:
 
 ```json
@@ -458,6 +491,12 @@ Deleting a component from one Project State does not erase the Component's histo
 
 A Component State describes one immutable state of a Creative Component.
 
+The `parents` field is optional. When present, it is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. An explicitly empty `parents` array identifies an initial state with zero parents. An omitted `parents` field means parentage is unknown or not asserted; it MUST NOT be interpreted as proof that the state is initial. Implementations MUST NOT fabricate parentage for unknown historical lineage.
+
+Derived states SHOULD record one or more parent Component States when their lineage is known. Parentage is mandatory only when a specific OMVCS operation or provenance rule explicitly requires preserving that derivation.
+
+The `resources` field is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. Present collection fields MUST be normalized as specified in section 5.1 before the object is hashed.
+
 Canonical conceptual structure:
 
 ```json
@@ -494,6 +533,8 @@ The Component State Identifier is the hash of the canonical representation.
 
 Component State parentage expresses semantic creative derivation.
 
+Parentage is optional in the Component State schema. An initial state has zero parents; when this is explicitly known, it is represented by an empty `parents` array. A missing `parents` field indicates that lineage is unknown or was not asserted, not that the state is known to be initial. Derived states SHOULD record one or more parents when known. A specific operation or provenance rule MAY make preserving derivation mandatory; implementations MUST NOT invent unknown historical lineage.
+
 Example:
 
 ```text
@@ -525,6 +566,10 @@ This distinction is necessary because a Component may be reused across different
 DAWs contain state that OMVCS Core must preserve without understanding.
 
 OMVCS represents this through **Adapter State**.
+
+Every Adapter State MUST be a canonical OMVCS metadata object with its own content-derived Adapter State Identifier. It MAY reference one or more opaque Resource Objects containing native DAW state. A native Resource Object MUST NOT serve directly as the complete Adapter State.
+
+In the conceptual structure below, `resources` is set-like. `component_bindings` is a JSON object map keyed by Component Identifier and follows RFC 8785 map canonicalization as specified in section 5.1. Any array-valued collection in adapter-specific metadata or extensions that participates in Adapter State identity MUST declare its ordering semantics in the Adapter State schema and follow section 5.1.
 
 Conceptually:
 
@@ -562,6 +607,8 @@ The DAW Adapter Specification will define exactly how adapters create and restor
 
 A Project State defines one complete logical creative state.
 
+The `components` member is a JSON object map keyed by Creative Component Identifier. Its canonical serialization uses RFC 8785 object-member ordering solely, as specified in section 5.1.
+
 Conceptual structure:
 
 ```json
@@ -591,11 +638,15 @@ A Project State does not describe only what changed.
 
 It describes the complete state.
 
+The `adapter_state` member MUST reference exactly one canonical Adapter State metadata object by its Adapter State Identifier. It MUST NOT reference a native Resource Object directly as the complete Adapter State.
+
 ---
 
 # 14. Revision
 
 A Revision is the principal immutable historical node.
+
+The `parents` and `provenance` arrays are set-like collections: their element order has no semantic meaning, and duplicate elements are invalid. They MUST be normalized as specified in section 5.1 before the Revision is hashed.
 
 Conceptual structure:
 
@@ -613,7 +664,7 @@ Conceptual structure:
     "omvcs:project-state:sha256:STATE...",
 
   "author": {
-    "actor_id": "..."
+    "actor_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c"
   },
 
   "created_at": "2026-10-08T11:02:17Z",
@@ -743,7 +794,7 @@ Conceptual structure:
     "2026-10-08T13:42:00Z",
 
   "creator": {
-    "actor_id": "..."
+    "actor_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c"
   },
 
   "description":
@@ -913,7 +964,7 @@ new Project State
 new Revision
 ```
 
-Provenance SHOULD record the source Component States.
+Provenance SHOULD record the source Component States. This provenance records known origins and MUST NOT be populated with fabricated lineage.
 
 ---
 
@@ -1113,7 +1164,7 @@ Example:
 
   "adapter_type": "s3",
 
-  "owner": "actor:joakim",
+  "owner": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
 
   "display_name": "Joakim project storage",
 
@@ -1340,7 +1391,7 @@ Conceptually:
     "019-line-main",
 
   "creator":
-    "actor:anna",
+    "019cc17d-1b22-7a41-9fe9-c345c468f82c",
 
   "intent": {
     "kind":
@@ -1900,8 +1951,8 @@ An operation-log record conceptually includes:
   "generation":
     188,
 
-  "actor":
-    "...",
+  "actor_id":
+    "019cc17d-1b22-7a41-9fe9-c345c468f82c",
 
   "timestamp":
     "...",
@@ -1956,23 +2007,17 @@ requires divergence resolution.
 
 # 59. Identity and authorship claims
 
-Core records stable author/actor identifiers but does not define platform authentication.
+Core records historical actors by their Actor Identifier (ActorId), as defined in the Glossary. An ActorId is an assigned UUIDv7 serialized in lowercase canonical textual form.
 
-Historical objects SHOULD record:
+Every Revision MUST record its author as an ActorId. Any other historical object that records an actor MUST use an ActorId rather than a display name, email address, username, Platform account identifier, or signing key.
 
-```text
-actor_id
-```
-
-rather than only display name.
-
-Display names may change.
+ActorId is independent of display name, email, username, Platform account, and signing keys. Changing any of those values, including rotating a signing key, MUST NOT change the ActorId or rewrite historical authorship. Platform/account linkage and proof that an account controls or represents an ActorId are separate Platform concerns.
 
 Core MUST NOT infer legal ownership from authorship metadata.
 
 Cryptographic signing MAY be attached to historical objects without becoming part of their content-derived identity.
 
-The detailed identity/authentication model will be handled by the Platform Protocol where appropriate.
+ActorId is not a signing identity or proof of authorization. The Platform Protocol defines association and authentication behaviour separately.
 
 ---
 
@@ -2793,11 +2838,8 @@ They belong inside this Core Specification and should be resolved before Core 0.
 4. Whether complete metadata history is mandatory locally or may itself be sparse.
 5. Exact retention period before unreachable Resources become eligible for garbage collection.
 6. Whether signing becomes mandatory for published Revisions in 0.1.
-7. Exact representation of actor identity outside a particular platform.
-8. Whether Line deletion requires an automatic archival/pin period.
-9. Exact treatment of shallow/incomplete history imports.
-10. Whether Component State parentage is mandatory or merely recommended.
-
+7. Whether Line deletion requires an automatic archival/pin period.
+8. Exact treatment of shallow/incomplete history imports.
 Those are now a finite list of **Core decisions**, not invitations to create ten more documents.
 
 ---
