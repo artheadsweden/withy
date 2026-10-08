@@ -177,6 +177,13 @@ pub fn canonicalize_metadata_body(
     serde_jcs::to_vec(&normalized).map_err(|_| CanonicalMetadataError::Canonicalization)
 }
 
+pub(crate) fn validate_unique_json_member_names(body: &[u8]) -> Result<(), CanonicalMetadataError> {
+    let text = str::from_utf8(body).map_err(|_| CanonicalMetadataError::InvalidUtf8)?;
+    let mut deserializer = serde_json::Deserializer::from_str(text);
+    UniqueJsonValue::deserialize(&mut deserializer).map_err(|error| parse_error(&error))?;
+    deserializer.end().map_err(|error| parse_error(&error))
+}
+
 fn parse_error(error: &serde_json::Error) -> CanonicalMetadataError {
     let message = error.to_string();
     if message.contains(DUPLICATE_MEMBER_MARKER) {
