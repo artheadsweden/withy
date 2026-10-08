@@ -22,6 +22,25 @@ Do not mark a requirement `done` merely because code exists. `done` means implem
 | Project State identifies one complete logical state through immutable references and not storage locations; it references exactly one canonical Adapter State object, which may reference opaque native-state Resources (Glossary; Core §§12–13, 24; INV-HIST-003, INV-RES-004, INV-RES-008, INV-PROJ-004, INV-HIST-006; ADR-0001, ADR-0004, ADR-0005, ADR-0006, ADR-0009, ADR-0010) | WORK-0007 | `crates/omvcs-model/` | complete-state vs delta; exactly one typed Adapter State reference; native Resource cannot stand in for Adapter State; opaque state Resources are referenced through Adapter State; Project State membership/reference associates the Project with Component IDs and corresponding Component State IDs, with no Component `project_id`; `component_bindings` is keyed by Creative Component Identifier with adapter-specific record values and no redundant key repetition; different creative refs differ; location independence; Component, Adapter binding and project-metadata map insertion-order invariance; RFC 8785 ordering only; duplicate-name rejection; map-value schema normalization; Adapter-supplied Resource Reference properties pass exact-context validation before admission | planned |
 | Revision identifies exactly one complete Project State; immutable parentage and identity depend only on immutable history (Glossary; Core §§14–15, 59; INV-HIST-001–004, INV-HIST-006–007; ADR-0001, ADR-0002, ADR-0004, ADR-0005, ADR-0010) | WORK-0008 | `crates/omvcs-model/` | state required; parent immutability; no timestamp ancestry; operational changes do not alter ID; parent/provenance permutation invariance and duplicate rejection; ActorId form and stability; Component participation comes through its Project State | planned (after WORK-0007) |
 
+## WORK-0006 independent gate — 2026-10-08
+
+**Rejected** implementation `298e5d0198e9b125d8f9b258800ed4f2620ec196` against
+base `0ff182ab005fff7d58cebdea73dcb36e82c33b42`; the WORK-0006 row remains
+`implemented`. `crates/omvcs-model/tests/component_state_acceptance.rs` links
+Core §§5.1, 7, 10–11, 76–77, INV-HIST-006, INV-RES-004/008 and
+ADR-0001/0005/0007/0008/0009/0011 to 12 independent acceptance tests.
+
+W6-V001: both generic and property-bearing positional Resource Reference arrays
+decode through JSON text/value APIs and admit into historical Component State.
+Two retained rejection regressions fail; the other ten pass, including 576
+combined parent/resource permutations, canonical-equivalent duplicate rejection,
+explicit JCS/preimage assertions, embedded number/type boundaries, duplicate raw
+names, strict field shapes and exact schema/binding checks. The original 85 model
+tests still pass; final full gate totals **95 passed, 2 failed** including six
+passing compile-fail doctests. No production changes or test weakening. See the
+WORK-0006 plan and handover for root-cause evidence and remediation boundary.
+No new Design Gap; WORK-0007/0008 remain unstarted.
+
 ## M1 planning status
 
 DG-0001 through DG-0010 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, ADR-0005, ADR-0006, ADR-0007, ADR-0008, ADR-0009, and ADR-0010 respectively. WORK-0001 through WORK-0004 are independently verified. DEC-PLATFORM-016 does not block current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.

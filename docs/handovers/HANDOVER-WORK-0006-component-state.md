@@ -4,7 +4,8 @@ From agent: Core Engineer
 To agent: Verifier
 Date: 2026-10-08
 Branch: `work/0006-component-state`
-HEAD: the single WORK-0006 implementation-and-handover commit at the tip of this branch (full SHA is in the completion report)
+Implementation HEAD: `298e5d0198e9b125d8f9b258800ed4f2620ec196`
+Accepted specification base: `0ff182ab005fff7d58cebdea73dcb36e82c33b42`
 
 ## Completed
 
@@ -80,7 +81,8 @@ These are implementation boundaries, not additional historical semantics.
 
 ## Remaining work
 
-- Independent Verifier review is required before integration.
+- Independent Verifier review below rejects admission pending W6-V001 remediation;
+  another independent gate is required before integration.
 - WORK-0007 and WORK-0008 remain unstarted.
 
 ## Git state
@@ -88,3 +90,139 @@ These are implementation boundaries, not additional historical semantics.
 Working tree: CLEAN after the completion commit.
 Remote push performed: NO.
 Remote publishing enabled: YES in `docs/project-state.md`; no push or integration was requested or performed.
+
+## Independent Verifier gate — 2026-10-08
+
+From agent: Verifier
+To agent: Core Engineer / OMVCS Lead
+Branch: `work/0006-component-state`
+Reviewed implementation: `298e5d0198e9b125d8f9b258800ed4f2620ec196`
+Reviewed base: `0ff182ab005fff7d58cebdea73dcb36e82c33b42`
+Result: **REJECTED — W6-V001 remains blocking**.
+
+### Authority and scope inspected
+
+Independently read AGENTS, this plan/handover, resolved DG-0011, ADR-0011 and
+ADR-0001/0003/0005/0007/0008/0009/0010, Core §§5.1, 7, 10–11, 23, 56, 76–77,
+Glossary Component State, INV-HIST-001–003/006, INV-PROJ-002, INV-PROV-003,
+INV-RES-004/008, INV-DAW-004 and relevant DAW Adapter §§20, 27–28. Searched the
+complete Spec set for cross-spec requirements and inspected WORK-0001–0005
+public APIs, verified tests and handovers, and every WORK-0006 changed file plus
+base-to-implementation history.
+
+The implementation delta is one commit and seven scoped files. Only a
+crate-private prevalidated JCS composition helper was added to the canonical
+foundation; identifiers, hashing, Resource and Creative Component APIs were not
+changed. No Project State, Revision, Adapter State, repository/storage,
+clone/fork or later-package behavior was implemented.
+
+### Blocking finding W6-V001 — positional Resource References enter history
+
+Core §§7, 10 and ADR-0007/0011 require embedded Resource References with named
+`resource_id` and `byte_length` fields. The following invalid input succeeds:
+
+```json
+{
+  "schema": "test.verifier-state/1",
+  "component_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
+  "resources": [
+    ["omvcs:resource:sha256:ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", 3]
+  ],
+  "metadata": {}
+}
+```
+
+Both `serde_json::from_str::<ComponentStateCandidate>` and
+`serde_json::from_value::<ComponentStateCandidate>` accept it.
+`ComponentStateCandidate::admit` then returns an admitted object and identity,
+silently converting the positional sequence into a named-field canonical object.
+The property-bearing sequence `[resource_id, 3, "primary", "audio/wav", {}]`
+also succeeds with one exact synthetic property authority.
+
+Root cause: `src/resource.rs:264–304` checks raw duplicate names, then delegates
+to derived `ResourceReferenceWire` decoding, which also accepts sequences.
+`src/component_state.rs:183–199, 284–297` consumes those candidates without
+requiring each raw reference to be an object. This is an inherited WORK-0004
+decoder defect exposed through WORK-0006's admission boundary; prior green
+Resource tests did not exercise positional decoding. The Component State
+top-level object-only gate does not protect nested Resource References.
+
+Retained failing tests in `tests/component_state_acceptance.rs`:
+
+- `embedded_resource_references_reject_positional_arrays_before_history`;
+- `property_bearing_resource_references_reject_positional_arrays_before_history`.
+
+Both report `text_rejected=false`, `value_rejected=false`,
+`historical_admission=true`. No production remediation was made and neither
+regression is ignored or weakened.
+
+### Other observations and API semantics
+
+The remaining examined behavior conforms: exact closed outer body, required
+empty collections, typed assigned/content ID separation, omitted versus empty
+parents, preserved known lineage, canonical-byte set sorting and duplicate
+rejection (including equivalent nested canonical elements), exact schema and
+unique property authority, schema-directed nested collection rules, recursive
+raw duplicate-name rejection, RFC 8785 UTF-16 map ordering, body-only SHA-256
+with no prefix, and excluded operational/evidence/wrapper fields.
+
+No unapproved concrete metadata vocabulary was introduced. Metadata structure
+and semantic validation are supplied by the exact versioned authority through
+`ComponentStateSchemaValidator`; generic Core does not infer names, meanings or
+types beyond declared shape. Synthetic test authorities are not production
+schema definitions. Their implementations must honor the exact-version,
+deterministic binding and semantic-exclusion contract; Core does not attempt to
+guess or reproduce schema/Adapter meanings. This matches ADR-0009/0011.
+
+Pure immutable model admission has no transactions, storage, interruption/retry
+or concurrent mutation API to exercise. Operation-specific mandatory parentage
+remains outside this work package; none was invented.
+
+### Verification-only changes and commands
+
+Changed only:
+
+- `crates/omvcs-model/tests/component_state_acceptance.rs` — 12 independent
+  acceptance tests, including the two retained blockers and a bounded exhaustive
+  property over 24 parent permutations × 24 resource permutations.
+- `docs/spec-coverage.md` — WORK-0006 evidence note; status stays `implemented`.
+- `docs/plans/WORK-0006-component-state-model.md` — rejected gate and follow-up.
+- This handover — independent evidence and accurate remaining work.
+
+Commands actually run:
+
+- Editor test discovery for `tests/component_state.rs`: no tests found; Cargo
+  used instead.
+- Before adding regressions, `cargo test --locked -p omvcs-model --test component_state`
+  and `cargo test --locked -p omvcs-model`: passed, 21 targeted and 85 full tests.
+- Final `cargo test --locked -p omvcs-model --test component_state --test component_state_acceptance --no-fail-fast`:
+  21 original tests and 10 reviewer tests passed; two reviewer regressions failed.
+- Final `cargo test --locked -p omvcs-model --no-fail-fast`: **95 passed, 2 failed**
+  across all targets, including six passing compile-fail doctests.
+- `cargo fmt --package omvcs-model -- --check`: passed.
+- `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings`: passed.
+- `git diff --check` and `git diff --check 0ff182a..298e5d0`: passed.
+- Editor Problems for the added test file: no errors.
+
+Intermediate verifier-test syntax/format/lint issues were corrected in test
+support only. The final two failures are normative regressions, not tooling
+errors. Existing implementation tests and production code are unchanged.
+
+### Decisions, gaps, limitations and next action
+
+Semantic decisions beyond Specs: **None**. New Design Gaps: **None**.
+W6-V001 is a specified-behavior defect, not grounds to reopen DG-0011.
+Coverage remains `implemented`, and the passing implementer handover commands
+do not establish independent acceptance. Older global coverage prose claiming
+WORK-0005 has not started is stale; the package rows correctly show WORK-0005
+verified and WORK-0006 implemented. That unrelated prose was not changed.
+
+Next action: Core Engineer remediates object-only embedded Resource decoding
+under authorized scope, preserves these regressions, and requests independent
+reverification. Do not integrate or start WORK-0007/0008 from this handover.
+
+Verification changes are recorded in a local verification-only successor of
+`298e5d0198e9b125d8f9b258800ed4f2620ec196` with the required Co-authored-by
+trailer; the implementation commit is preserved unchanged. Working tree: CLEAN
+after that commit. Remote push: NO. Integration: NO. Remote publishing remains
+ENABLED but was not used.

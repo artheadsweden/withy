@@ -86,3 +86,35 @@ The Verifier must reject any parentage or collection-order behavior not authoriz
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Independent verification — 2026-10-08
+
+Result: **REJECTED pending implementation remediation**. Status remains
+`IMPLEMENTED`, not verified. Reviewed implementation
+`298e5d0198e9b125d8f9b258800ed4f2620ec196` against base
+`0ff182ab005fff7d58cebdea73dcb36e82c33b42`.
+
+Blocking finding W6-V001: embedded Resource References accept positional JSON
+arrays without the required named fields. Both `[resource_id, 3]` and
+`[resource_id, 3, "primary", "audio/wav", {}]` decode through JSON text and value
+APIs, then admit as valid Component State history. The inherited
+`ResourceReferenceCandidate` decoder delegates to a derived wire struct without
+an object-only gate. This violates Core §§7, 10 and ADR-0007/0011; it is an
+implementation defect, not an unresolved semantic question.
+
+Retained `tests/component_state_acceptance.rs`: 12 independent tests, including
+two failing regressions for this defect. The other ten pass, covering embedded
+exact byte-length forms and lossy/alternate-type rejection, raw duplicate names,
+canonical-equivalent Resource duplicate rejection, explicit JCS/hash preimage,
+576 combined parent/resource permutations, strict field shapes, schema fallback
+rejection, mismatched property binding, and incomplete metadata schema rejection.
+
+The original 21 Component State tests pass. The full model gate with
+`--no-fail-fast` completes all targets: **95 passed, 2 failed**, including six
+passing compile-fail doctests. Formatting, locked strict Clippy and whitespace
+checks pass. See the handover for commands and evidence.
+
+No production code or Specs changed, no test weakened, and no new Design Gap or
+unapproved metadata vocabulary introduced. The Core Engineer must remediate
+W6-V001 under bounded scope and request another independent gate before
+integration. WORK-0007/0008 remain unstarted; no push or integration performed.
