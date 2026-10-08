@@ -27,7 +27,7 @@ The Core and Storage Adapter specifications define Chunk Manifests as physical r
 
 The listed terms and examples establish content identity and location independence, but do not establish a single schema boundary between Resource Reference and Resource Manifest. Treating the Manifest as a separate content-addressed object, treating it as a Resource Reference, or embedding its fields in a parent hashed object creates different object graphs and hash inputs.
 
-The Glossary's MAY-listed fields do not specify which fields are present, required, or identity-bearing. Core §7 identifies `resource_id` as the Resource Object identifier but does not state whether or how each descriptive reference field participates in the containing Component State's canonical identity. Core §5 and §5.1 provide canonicalization rules once a hashed object's fields are defined; they do not define this missing object/schema relationship.
+The Glossary's MAY-listed fields do not specify which fields are present or required in the M1 historical model. Core §5 establishes that fields included in a hashed object body contribute to its canonical bytes and identity; Core §7 does not specify which Resource Manifest fields, if any, are fields of a Resource Reference included in a containing Component State. Core §5.1 classifies the `properties` map but does not define the missing object/schema relationship or field inclusion boundary.
 
 Choosing a schema or identity boundary would therefore add normative model semantics rather than merely implement the existing content-hash and storage-independence rules.
 
@@ -51,7 +51,7 @@ The following are discussion material only and are NOT approved decisions:
 
 ## Required decision
 
-For OMVCS 0.1, is Resource Manifest a distinct object, the schema of Resource Reference, or a separate non-historical description? Which Resource/Resource Reference fields are in the M1 model, and which of them participate in a containing hashed historical object's identity? Are chunk structure and friendly filename excluded from that historical model or represented elsewhere?
+For OMVCS 0.1, is Resource Manifest a distinct object, the schema of Resource Reference, or a separate non-historical description? Which Resource/Resource Reference fields are included in a containing historical object body, given that included fields contribute to that object's canonical identity? Are chunk structure and friendly filename excluded from that historical model or represented elsewhere?
 
 ## Resolution
 
