@@ -32,6 +32,7 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 
 - Explicit distinction between logical Resource metadata and immutable Resource Object bytes/identity.
 - Generic Resource References contain required typed `resource_id` and complete-resource `byte_length` integer in `0 ..= 9007199254740991`, with optional `role`, `media_type`, and schema/Adapter-supplied immutable `properties`.
+- The OMVCS model/API MUST enforce the `byte_length` domain explicitly; an unconstrained host-language integer is not the field contract.
 - Every present Resource Reference field participates in the containing historical object's canonical identity, while Resource Identifier remains determined solely by complete raw Resource bytes.
 - Resource References exclude friendly/logical filename, Chunk/Chunk Manifest data, storage/location/Replica/provider metadata, and credentials.
 - Resource Manifest is descriptive Resource-oriented metadata/reconstruction terminology only, with no separate content-derived historical identifier in OMVCS 0.1.
@@ -43,6 +44,7 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 - Renaming a Friendly Name does not change Resource identity.
 - Resource References require a typed Resource Identifier and non-negative byte length; optional fields are limited to role, media type, and schema/Adapter-supplied immutable interpretation properties.
 - `byte_length` is REQUIRED and equals the complete Resource's byte count; it MUST be an integer in `0 ..= 9007199254740991`. Reject missing, negative, fractional/non-integral, greater-than-maximum, string, and alternate-encoded values regardless of host integer capacity.
+- Expose no unconstrained host-language integer as the OMVCS field contract; the accepted maximum is always `9007199254740991`, even where the implementation's integer type is wider.
 - Changing the canonical value of a present Resource Reference field changes the containing historical object's identity but never changes the Resource Identifier for the same raw bytes.
 - Reordering `properties` map insertion without changing its entries does not change the containing identity under RFC 8785/ADR-0005.
 - Changing any Resource Reference descriptive field while keeping raw bytes fixed leaves the Resource Identifier unchanged.
