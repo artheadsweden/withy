@@ -1,6 +1,6 @@
 # WORK-0006 — Component State model
 
-Status: PLANNED
+Status: IMPLEMENTED
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0006-component-state`

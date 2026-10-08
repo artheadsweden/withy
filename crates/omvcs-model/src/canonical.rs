@@ -177,6 +177,20 @@ pub fn canonicalize_metadata_body(
     serde_jcs::to_vec(&normalized).map_err(|_| CanonicalMetadataError::Canonicalization)
 }
 
+/// RFC 8785-serializes a value whose fields and nested collections have already
+/// been validated and normalized by their owning schemas.
+///
+/// This crate-private composition point is used only after each Component State
+/// metadata map and Resource Reference has passed its exact schema admission.
+pub(crate) fn canonicalize_prevalidated_body(
+    body: &Value,
+) -> Result<Vec<u8>, CanonicalMetadataError> {
+    if !body.is_object() {
+        return Err(schema_mismatch(""));
+    }
+    serde_jcs::to_vec(body).map_err(|_| CanonicalMetadataError::Canonicalization)
+}
+
 pub(crate) fn validate_unique_json_member_names(body: &[u8]) -> Result<(), CanonicalMetadataError> {
     let text = str::from_utf8(body).map_err(|_| CanonicalMetadataError::InvalidUtf8)?;
     let mut deserializer = serde_json::Deserializer::from_str(text);

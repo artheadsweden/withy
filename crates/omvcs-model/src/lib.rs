@@ -5,10 +5,12 @@
 #![forbid(unsafe_code)]
 
 pub mod canonical;
+pub mod component_state;
 pub mod creative_component;
 pub mod hashing;
 pub mod resource;
 
+pub use component_state::ComponentState;
 pub use creative_component::CreativeComponent;
 
 use std::fmt;
