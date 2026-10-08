@@ -4,6 +4,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod canonical;
+
 use std::fmt;
 use std::str::FromStr;
 
