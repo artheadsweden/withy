@@ -12,7 +12,7 @@ HEAD: `e2bc52b908666ad9a2bc8ad86b9202523e95f95e` (implementation/coverage commit
 - Added typed SHA-256 identifiers for Resource, Component State, Adapter State, Project State, and Revision objects. Formatting and parsing enforce each object-type namespace and exactly 64 lowercase hexadecimal digest characters.
 - Added focused model tests for generation, canonical formatting/parsing, malformed UUIDs (including wrong version and variant), object-type namespace separation, digest boundaries/encodings, and assigned-ID independence from profile/location values.
 - Preserved the Lead's WORK-0001 and coverage-map clarifications that WORK-0001 owns identifier type/format/namespace tests while WORK-0003 owns raw Resource byte-to-ID equality and mutation behavior.
-- Updated the coverage map to distinguish WORK-0001 identifier behavior from WORK-0003 content hashing. Coverage is marked `implemented`, not `verified`.
+- Updated the coverage map to distinguish WORK-0001 identifier behavior from WORK-0003 content hashing. At handover the entries were `implemented`; the Verifier has since marked the three WORK-0001 entries `verified`.
 - Independent Verifier review found three issues: UUID variant validation, weak independence-test assertions, and a stale coverage summary. All three were addressed before handover. The focused checks below pass after those changes.
 
 ## Specifications implemented
@@ -81,11 +81,23 @@ None affecting WORK-0001. DG-0001 through DG-0006 are resolved. The Platform acc
 
 ## Remaining work
 
-- No WORK-0001 implementation work remains. The independent review findings were addressed and the package was validated and committed.
-- Verifier may use this handover for final gate confirmation. Do not begin WORK-0002 through WORK-0008 until the requested WORK-0001 review/handover/clean-Git gate is accepted.
+- No WORK-0001 implementation or verification work remains. The independent review findings were addressed before handover, and the final acceptance gate below passed.
+- Do not begin WORK-0002 through WORK-0008 as part of this WORK-0001 acceptance task.
 
 ## Git state
 
-Working tree: CLEAN after the handover/completion-status commit.
+Working tree at implementation handover: CLEAN after the handover/completion-status commit.
 Remote push performed: NO.
 Remote publishing: ENABLED in `docs/project-state.md`; no push was performed, as instructed.
+
+## Final acceptance gate
+
+Verifier result: **VERIFIED** (2026-10-08).
+
+- Independently re-read the WORK-0001 plan, handover, applicable Core Specification, Core Invariants, Glossary, and relevant accepted ADRs, and inspected the implementation and tests.
+- Confirmed the UUIDv7 and canonical lowercase parsing/generation contract; distinct assigned identifier newtypes; exact content-identifier type prefix, 32-byte/64-lowercase-hex parsing, and namespace separation; and the absence of profile/account/key semantics from ActorId or location/platform semantics from Project and Creative Component IDs.
+- Confirmed WORK-0001 only models typed identifiers: it does not calculate raw Resource hashes or implement canonical serialization.
+- No unresolved Design Gap affects WORK-0001.
+- Checks passed: `cargo fmt --package omvcs-model -- --check`; `cargo test --locked -p omvcs-model` (7 tests); `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings`.
+- Updated the three WORK-0001 rows in `docs/spec-coverage.md` to `verified`.
+- Verification changed documentation only; no production code or test behavior was modified. WORK-0002 was not started.

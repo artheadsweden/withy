@@ -1,6 +1,6 @@
 # WORK-0001 — Normative identifier types
 
-Status: COMPLETE
+Status: COMPLETE — independently verified
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0001-identifiers`
@@ -65,3 +65,11 @@ The Verifier must compare supported identifier classes and formatting against th
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Final verification gate
+
+- Status: VERIFIED
+- Verifier acceptance on 2026-10-08 confirmed the scoped identifier contracts against the cited Specs and ADRs.
+- `cargo fmt --package omvcs-model -- --check`, `cargo test --locked -p omvcs-model`, and `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings` passed.
+- No WORK-0001-affecting Design Gap or normative defect was found. No production behavior was changed during verification.
+- WORK-0002 and WORK-0003 remain outside this package and are not started by this verification.
