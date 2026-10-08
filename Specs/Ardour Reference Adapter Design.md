@@ -712,6 +712,8 @@ The conceptual structure is a canonical OMVCS metadata object. `component_bindin
 
 For this conceptual Adapter State schema, `native_state_resources` and each binding's `native_ids` are set-like arrays: member order carries no semantics, and duplicate elements are invalid. `component_bindings` is a JSON object map, not an array collection, and follows RFC 8785 object-member ordering solely; duplicate member names are invalid and MUST be rejected before hashing or canonical serialization. Any other array-valued collection added to a hashed Ardour Adapter State schema MUST explicitly declare its ordering semantics and follow Core Specification section 5.1. Ardour-native order that has creative meaning remains represented in the native Session Resource, not in the set-like identity of these references.
 
+The Ardour Adapter implementation is responsible for defining and validating any Resource Reference `properties` under the exact Ardour Adapter State schema version that governs the containing historical use. It MUST enforce ADR-0007's excluded naming, storage, credential, and physical-reconstruction semantics without relying on Core to interpret Ardour property meanings. The Core still performs generic structural, duplicate-member, canonicalization, and declared-collection validation. This reference design does not define additional generic Resource Reference property meanings.
+
 ---
 
 # 32. Session path independence

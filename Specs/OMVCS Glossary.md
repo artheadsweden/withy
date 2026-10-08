@@ -454,6 +454,14 @@ Physical copies of the same Resource Object on multiple storage systems share th
 
 ---
 
+## Resource Reference
+
+A **Resource Reference** is the historical structure that refers to an immutable Resource Object from a containing OMVCS object, as defined by Core Specification section 7.
+
+A decoded or preserved **Resource Reference candidate** is not necessarily valid for historical use. A candidate with `properties` becomes valid for historical admission only after generic Core validation and semantic validation under the exact applicable versioned schema or Adapter context. If that context is unknown, unavailable, or non-unique, the candidate remains unchecked and MUST NOT be used to produce or commit valid historical state. Validation status and evidence are operational and are not fields of the Resource Reference.
+
+---
+
 ## Chunk
 
 A **Chunk** is an immutable content-addressed subsection of a Resource Object used for efficient storage, deduplication and transfer.

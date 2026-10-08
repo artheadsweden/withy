@@ -288,6 +288,10 @@ The following collection fields in the OMVCS 0.1 conceptual object models have t
 
 Every additional array-valued collection included in a hashed Core object, Adapter State, or namespaced extension MUST declare its ordering semantics in the schema that defines it. A schema that does not make this declaration is not valid for hashing.
 
+Resource Reference `properties` values MUST be validated under the exact versioned schema or Adapter context that governs their use in the containing historical object. The applicable context MUST be determinable from the containing object's schema and, where applicable, its Adapter State schema and Adapter identifier; a Resource Reference MUST NOT introduce an independent property-schema identifier for this purpose. Core validates the generic JSON shape, duplicate member names, canonical form, schema-declared value shapes, and nested collection classifications. The applicable schema or Adapter authority validates the semantic admissibility of property values. Core MUST NOT infer semantic admissibility from property names, deny lists, heuristics, or DAW-specific knowledge.
+
+Every versioned containing schema that permits Resource Reference `properties` MUST bind those properties to one exact schema/Adapter validation authority and version. If that authority cannot be uniquely determined from the containing schema/Adapter contract, the candidate remains unchecked and MUST NOT be admitted as valid historical state.
+
 ---
 
 # 6. Resource identity
@@ -345,6 +349,14 @@ The generic Resource Reference contains:
 
 Every field present in a Resource Reference is part of the containing historical object's canonical body and contributes to that object's identity. These fields do not contribute to or change the Resource Identifier, which is calculated only from the complete raw Resource bytes under section 6.
 
+Decoding or preserving a Resource Reference candidate does not by itself validate it for historical use. A Resource Reference without `properties` MAY be validated using the generic Core Resource Reference rules alone. When `properties` is present, including as an empty object, the candidate MUST NOT be admitted as a valid Resource Reference in a historical object until its values have passed validation under the exact applicable, versioned schema or Adapter context governing that use. The applicable context is identified by the containing historical object's schema version and, where the Resource Reference's property meanings are Adapter-owned, the applicable Adapter identity and schema/version declared by that context. It MUST NOT be inferred from the property names or from an unrelated, unknown, or merely latest schema/Adapter version.
+
+The applicable schema or Adapter authority MUST define the valid property meanings and structures for its context and MUST NOT admit properties that encode presentation or logical names, filenames, Chunk or Chunk Manifest information, storage locations, endpoints, Replicas, credentials, provider metadata, or other physical reconstruction/storage information prohibited above. It MUST supply the value-shape and nested collection rules needed by section 5.1. Core is responsible for generic structural and canonical validation, including duplicate object member rejection, but MUST NOT reproduce the schema or Adapter's semantic judgement.
+
+Implementations MAY preserve or transport a property-bearing Resource Reference candidate when its applicable validator or schema context is unknown, unavailable, or non-unique, provided that it remains explicitly unchecked. Such unchecked data MUST NOT be admitted as a valid historical Resource Reference, used to create a valid containing historical object, used to produce a valid historical object identity, or committed into valid OMVCS history until validation succeeds under the applicable context. Preservation does not imply semantic validity.
+
+Validation status, validator implementation details, callbacks, timestamps, signatures, and other validation evidence are operational concerns. They MUST NOT become Resource Reference fields or affect canonical historical identity. The property values themselves remain part of the containing object's canonical body after successful validation.
+
 The `byte_length` upper bound is the maximum interoperable JSON safe integer used by the RFC 8785/JCS numeric model. Conforming implementations MUST reject negative, fractional/non-integral, and greater-than-`9007199254740991` values, as well as string or other alternate representations. This bound applies to one Resource only, not repository, Project, Storage Endpoint, or aggregate Project size. Implementations MUST NOT widen the accepted domain based on host-language integer capacity. OMVCS 0.1 defines no decimal-string, tagged-big-integer, or alternate representation for larger values. A future version MAY define a larger representation only through an explicit schema/version decision that specifies compatibility and canonical-identity consequences.
 
 Conformance cases for `byte_length`:
@@ -358,6 +370,16 @@ Conformance cases for `byte_length`:
 | `1.5` | Reject |
 | `9007199254740992` | Reject |
 | `"1"` | Reject |
+
+Conformance tests for historical admission MUST establish that:
+
+- a Resource Reference without `properties` can pass generic Core validation;
+- a property-bearing candidate is admitted only when the exact applicable versioned context approves it, and is rejected for historical admission when that context rejects it;
+- an unknown, unavailable, or non-unique context cannot produce a valid historical Resource Reference or containing historical object; preserved unchecked data cannot be committed as valid history;
+- Core does not infer property validity from key spelling;
+- context-declared nested value shapes and ordered/set-like array rules are enforced, and unclassified arrays are rejected;
+- duplicate object member names, including nested names and escaped-equivalent names, are rejected before decoding or canonicalization;
+- changing validation status/evidence does not affect canonical historical bytes.
 
 `logical_name`, Friendly Name, and filename are not fields of the generic historical Resource Reference. Chunk structure, Chunk IDs, Chunk Manifest information, Storage Endpoint, Storage Location, Replica information, credentials, provider metadata, and other physical reconstruction or storage details MUST NOT appear in a historical Resource Reference or affect historical object identity. Resource Reference `properties` MUST NOT be used to reintroduce these excluded values.
 
@@ -522,6 +544,8 @@ Derived states SHOULD record one or more parent Component States when their line
 
 The `resources` field is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. Present collection fields MUST be normalized as specified in section 5.1 before the object is hashed.
 
+Each Resource Reference in `resources` MUST satisfy the Resource Reference admission rules in section 7 before it is included in this Component State. If `properties` is present, its values MUST be validated against the versioned schema context governing this Component State.
+
 Canonical conceptual structure:
 
 ```json
@@ -593,6 +617,8 @@ OMVCS represents this through **Adapter State**.
 
 Every Adapter State MUST be a canonical OMVCS metadata object with its own content-derived Adapter State Identifier. It MAY reference one or more opaque Resource Objects containing native DAW state. A native Resource Object MUST NOT serve directly as the complete Adapter State.
 
+The `adapter_id` and `adapter_state_schema` identify the Adapter context governing Adapter-owned Resource Reference properties in this state. Before an Adapter State is admitted as valid historical state, every Resource Reference with `properties` MUST pass semantic validation under that exact Adapter schema/version and generic Core validation under section 7. Unknown, unavailable, or non-unique Adapter schema contexts may be preserved as unchecked data, but MUST NOT be treated as valid historical Adapter State or used to create its valid historical identity.
+
 In the conceptual structure below, `resources` is set-like. `component_bindings` is a JSON object map keyed by Creative Component Identifier and follows RFC 8785 map canonicalization as specified in section 5.1. Each map value is an adapter-specific binding record, which MAY contain fields such as `binding_kind`, `native_ids`, and other metadata permitted by that Adapter State schema. The Creative Component Identifier MUST NOT be duplicated inside the value merely to repeat the map key unless a future schema has a separate justified need. Any array-valued collection in a binding record, adapter-specific metadata, or extensions that participates in Adapter State identity MUST declare its ordering semantics in the Adapter State schema and follow section 5.1.
 
 Conceptually:
@@ -602,6 +628,8 @@ Conceptually:
   "schema": "omvcs.adapter-state/0.1",
 
   "adapter_id": "org.openmusic.ardour",
+
+  "adapter_state_schema": "org.openmusic.ardour.state/0.1",
 
   "adapter_format_version": "1",
 
@@ -628,7 +656,7 @@ Conceptually:
 }
 ```
 
-OMVCS Core treats adapter-specific metadata as opaque.
+OMVCS Core treats adapter-specific metadata as opaque with respect to semantic interpretation. It still enforces generic structural/canonical validation and Resource Reference historical admission rules in section 7.
 
 The DAW Adapter Specification will define exactly how adapters create and restore these objects.
 
@@ -670,6 +698,8 @@ A Project State does not describe only what changed.
 It describes the complete state.
 
 The `adapter_state` member MUST reference exactly one canonical Adapter State metadata object by its Adapter State Identifier. It MUST NOT reference a native Resource Object directly as the complete Adapter State.
+
+A Project State MUST NOT treat an unchecked Adapter State as a valid historical object. The referenced Adapter State must first satisfy the validation and admission requirements in section 12.
 
 ---
 
@@ -1943,7 +1973,7 @@ validate canonical object hashes
 validate Revision references
 validate Project State references
 validate Component State references
-validate Resource References and applicable operational reconstruction manifests
+validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
 validate Release targets
 validate Line targets
 validate provenance references
@@ -2420,6 +2450,8 @@ An implementation MUST reject or preserve-but-not-interpret schema versions it c
 
 It MUST NOT reinterpret unknown versions according to a guessed older schema.
 
+Preserving an unknown or unavailable schema version does not make a candidate Resource Reference with `properties` valid for historical admission. Such a candidate MUST remain unchecked and MUST NOT be used to produce or commit a valid historical object until the exact applicable schema or Adapter context can validate it under section 7.
+
 ---
 
 # 77. Protocol evolution
@@ -2429,6 +2461,8 @@ Future OMVCS versions may add object types and capabilities.
 They MUST NOT redefine the meaning of already published object schemas.
 
 A new semantic interpretation requires a new schema version.
+
+Changing the admissibility or interpretation of Resource Reference `properties` requires a new version of the applicable containing schema or Adapter schema. Implementations MUST NOT apply a newer property's validation rules to an older historical schema version.
 
 This ensures old creative history remains interpretable.
 
