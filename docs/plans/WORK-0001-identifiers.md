@@ -1,6 +1,6 @@
 # WORK-0001 — Normative identifier types
 
-Status: PLANNED
+Status: COMPLETE — independently verified
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0001-identifiers`
@@ -19,6 +19,7 @@ Model the assigned and content-derived identifier classes explicitly, preserving
 
 - Work is limited to identifier definitions whose formats are explicit in the cited requirements.
 - Metadata-object digest inputs depend on WORK-0002 and the canonical serialization rules in Core Specification §5.1, including RFC 8785 map handling resolved by ADR-0005.
+- Raw Resource-byte hashing and byte-to-Resource-Identifier behavior are implemented and tested by WORK-0003; this package defines the typed identifier contract only.
 - Known open decisions are tracked in `docs/decision-register.md`; do not invent formats for unresolved identifiers.
 
 ## Allowed scope
@@ -37,14 +38,14 @@ Model the assigned and content-derived identifier classes explicitly, preserving
 - Generated assigned identifiers use UUID version 7 and canonical lowercase textual form.
 - ActorId uses canonical lowercase UUIDv7 form and is unchanged by display-name, email, username, Platform-account, or signing-key changes, including key rotation.
 - Parsing rejects malformed UUID/content-identifier forms and preserves object-type namespace distinctions.
-- Equal Resource bytes yield equal Resource identifiers; a changed byte yields a different identifier.
-- Storage/path/platform/replica metadata changes cannot alter assigned Project/Component identity or content identifiers.
+- Assigned Project and Component identifiers are not derived from filenames, paths, storage endpoints, Platform URLs, or credentials.
+- Resource byte-to-identifier equality and mutation behavior are tested by WORK-0003, not reimplemented here.
 - Tests cover format boundaries and invalid digest encodings without silently accepting malformed IDs.
 
 ## Explicit non-goals
 
 - Choosing formats for Line, Release, or other identifiers not settled by M1 requirements.
-- Implementing canonical serialization, metadata hashing, storage locations, or repository operations.
+- Implementing raw Resource hashing, canonical serialization, metadata hashing, storage locations, or repository operations.
 - Introducing implementation-specific identifier semantics as OMVCS requirements.
 
 ## Known Design Gaps
@@ -64,3 +65,11 @@ The Verifier must compare supported identifier classes and formatting against th
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Final verification gate
+
+- Status: VERIFIED
+- Verifier acceptance on 2026-10-08 confirmed the scoped identifier contracts against the cited Specs and ADRs.
+- `cargo fmt --package omvcs-model -- --check`, `cargo test --locked -p omvcs-model`, and `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings` passed.
+- No WORK-0001-affecting Design Gap or normative defect was found. No production behavior was changed during verification.
+- WORK-0002 and WORK-0003 remain outside this package and are not started by this verification.

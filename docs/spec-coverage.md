@@ -8,9 +8,11 @@ Do not mark a requirement `done` merely because code exists. `done` means implem
 
 | Requirement | Work item | Implementation | Tests | Status |
 |---|---|---|---|---|
-| Assigned IDs use UUIDv7; canonical lowercase text; identity independent of names, paths, storage, and platform (Core §4; INV-PROJ-001–003) | WORK-0001 | `crates/omvcs-model/` | UUIDv7/canonical-text round trip; invalid form; no filename/location identity | planned |
-| ActorId is assigned UUIDv7 in lowercase canonical form and independent of display/profile/account/signing keys (Glossary Actor Identifier; Core §§4.1, 59; Platform §§15–19; INV-HIST-007; ADR-0002) | WORK-0001, WORK-0008 | `crates/omvcs-model/` | canonical UUIDv7 parsing/serialization; profile, Platform-account, and signing-key changes (including rotation) do not alter ActorId or historical authorship | planned |
-| Typed content-derived identifiers and object namespaces (Core §§4, 6; INV-HIST-002; INV-RES-002–003) | WORK-0001, WORK-0003 | `crates/omvcs-model/` | same bytes/same Resource ID; changed byte/different ID; object-type namespace distinction | planned |
+| Assigned Project, Creative Component, Storage Endpoint, and Contribution IDs are generated as UUIDv7 in canonical lowercase form; Project and Component identity is independent of filenames, paths, storage endpoints, Platform URLs, and credentials (Core §§4, 9; INV-PROJ-001–003) | WORK-0001 | `crates/omvcs-model/` | generated UUIDv7/canonical text and strict UUID parsing; test fixture changes filename/path/storage/Platform/credential values while assigned IDs remain stable | verified |
+| ActorId is assigned UUIDv7 in lowercase canonical form and independent of display name, email, username, Platform account, and signing keys, including key rotation (Glossary Actor Identifier; Core §§4.1, 59; INV-HIST-007; ADR-0002) | WORK-0001 | `crates/omvcs-model/` | canonical UUIDv7 parsing/formatting; test fixture changes profile, account, and signing-key values (including rotation) while ActorId remains stable | verified |
+| Revision authorship uses ActorId and preserves authorship in immutable Revision history (Core §§14, 59; INV-HIST-007; ADR-0002) | WORK-0008 | `crates/omvcs-model/` | Revision author field is ActorId; profile, account, and key changes do not rewrite historical authorship | planned |
+| Typed SHA-256 identifier formats and object-type namespaces (Core §§4, 6, 9–14; INV-HIST-002; INV-RES-002–003) | WORK-0001 | `crates/omvcs-model/` | strict prefix/digest parsing and round trips for Resource, Component State, Adapter State, Project State, and Revision IDs; same digest text remains separated by object type | verified |
+| Content-derived identity from raw Resource bytes and canonical metadata objects (Core §§4–6; INV-HIST-002; INV-RES-002–003) | WORK-0003 | `crates/omvcs-model/` | identical raw bytes yield the same Resource ID and a byte mutation yields a different ID; metadata digest uses canonical bytes | planned |
 | Canonical UTF-8 JSON metadata bytes use RFC 8785 semantics; array collection fields declare ordered/set-like semantics; set-like elements sort by canonical serialized bytes and reject duplicates; object maps use RFC 8785 member ordering only and reject duplicate names; wrappers excluded (Core §§5, 5.1; INV-HIST-006; ADR-0001, ADR-0005) | WORK-0002 | `crates/omvcs-model/` | whitespace and map-insertion-order invariance; exact RFC 8785 map member ordering with no extra entry sort; raw duplicate-member rejection before canonicalization/hashing; ordered-array preservation; set-like array permutation invariance and duplicate rejection; recursive schema-directed normalization; RFC 8785 vectors; wrapper exclusion | planned |
 | Resource identity hashes complete raw bytes; chunking/location do not alter it (Core §§6–8; INV-RES-001–006) | WORK-0003, WORK-0004 | `crates/omvcs-model/` | arbitrary-byte property; one-byte mutation; rename/location independence | planned |
 | Resource Object, Resource Reference, Resource Manifest, and Friendly Name remain distinct; historic refs use identities, not locations (Glossary; Core §§6–8; INV-RES-004, INV-PROJ-003) | WORK-0004 | `crates/omvcs-model/` | references contain Resource ID; same content across replicas; no physical locator in identity | planned |
@@ -21,7 +23,7 @@ Do not mark a requirement `done` merely because code exists. `done` means implem
 
 ## M1 planning status
 
-DG-0001 through DG-0006 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, ADR-0005, and ADR-0006 respectively, and their requirements are reflected in the applicable Specs, plans, and conformance criteria. No remaining open decision blocks the generic M1 model or the Ardour component-binding schema. Implementation and verification remain pending; WORK-0008 follows WORK-0007. DEC-PLATFORM-016 does not block the current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
+DG-0001 through DG-0006 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, ADR-0005, and ADR-0006 respectively, and their requirements are reflected in the applicable Specs, plans, and conformance criteria. No remaining open decision blocks the generic M1 model or the Ardour component-binding schema. WORK-0001 identifier code and model tests are independently verified and handed over. Other M1 implementation and verification remain pending; WORK-0008 follows WORK-0007. DEC-PLATFORM-016 does not block the current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
 
 ### Recommended M1 implementation sequence
 
@@ -35,7 +37,7 @@ DG-0001 through DG-0006 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, 
 
 The model work packages share the same crate scope, so do not parallelize whole packages without first confirming non-overlapping module/file ownership. WORK-0008 remains sequential after WORK-0007.
 
-M0 has created work-package acceptance criteria and conformance vectors only. No implementation or executable conformance tests have been started.
+M0 created work-package acceptance criteria and conformance vectors. WORK-0001 now contains identifier implementation and focused model unit tests. No other M1 implementation or repository-level executable conformance suite has started.
 
 Suggested status values:
 
