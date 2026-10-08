@@ -24,7 +24,7 @@ Do not mark a requirement `done` merely because code exists. `done` means implem
 
 ## M1 planning status
 
-DG-0001 through DG-0008 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, ADR-0005, ADR-0006, ADR-0007, and ADR-0008 respectively. WORK-0004 is unblocked; WORK-0005 through WORK-0008 may proceed in documented dependency order. WORK-0001 through WORK-0003 are independently verified. DEC-PLATFORM-016 does not block current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
+DG-0001 through DG-0008 are resolved by ADR-0004, ADR-0003, ADR-0001, ADR-0002, ADR-0005, ADR-0006, ADR-0007, and ADR-0008 respectively. DG-0009 is open and blocks WORK-0004 completion; WORK-0005 and later M1 packages have not started and must wait until WORK-0004 is unblocked and independently verified. WORK-0001 through WORK-0003 are independently verified. DEC-PLATFORM-016 does not block current M1 scope because WORK-0007 excludes licensing fields pending that separate decision.
 
 ### Recommended M1 implementation sequence
 
