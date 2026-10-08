@@ -5,8 +5,11 @@
 #![forbid(unsafe_code)]
 
 pub mod canonical;
+pub mod creative_component;
 pub mod hashing;
 pub mod resource;
+
+pub use creative_component::CreativeComponent;
 
 use std::fmt;
 use std::str::FromStr;

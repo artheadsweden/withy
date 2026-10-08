@@ -1,9 +1,9 @@
 # WORK-0005 — Creative Component identity model
 
-Status: PLANNED
+Status: VERIFIED
 Owner agent: Core Engineer
 Milestone: M1
-Branch: `work/0005-creative-component-model`
+Branch: `work/0005-creative-component`
 
 ## Objective
 
@@ -72,3 +72,26 @@ The Verifier must check stable semantic identity independently of filename, phys
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Independent acceptance — 2026-10-08
+
+The Verifier accepted remediation commit `947fa4e76ab9af6a2f5933b58c35aec843321e56`.
+The original gate rejected positional JSON array decoding; the map-only visitor now
+rejects arrays and other non-object forms while the exact one-field object round-trips.
+The independent regression file `crates/omvcs-model/tests/creative_component_acceptance.rs`
+is preserved without weakening its assertions.
+
+- Focused model tests: 6 implementation tests and 3 independent acceptance tests passed.
+- Full `cargo test --locked -p omvcs-model`: 62 tests passed, including 4 compile-fail doctests.
+- `cargo fmt --package omvcs-model -- --check`: passed.
+- `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings`: passed.
+- Working-tree and base-to-HEAD `git diff --check`: passed.
+- Base `b1106ee6966351d57a448d90c6e2980ee4275549` and ADR-0010 merge
+  `509dbba` are ancestors; no implementation-branch specification edits or unrelated changes.
+- One-field typed identity, strict decoding, identity independence and namespace separation
+  confirmed. No state/membership, parentage, Adapter State, storage/repository operations,
+  or undefined lifecycle/cross-Project semantics were implemented.
+
+Semantic decisions beyond the Specs/ADR-0010: `None`. WORK-0006 and all later
+packages remain unstarted. This acceptance does not authorize their start.
+No push or integration performed; the verification commit contains only tests/docs.
