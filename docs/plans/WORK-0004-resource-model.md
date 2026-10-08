@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: PLANNED
+Status: IMPLEMENTED — independent verification pending
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -89,7 +89,19 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 
 1. Define the minimal logical Resource/Resource Reference model from explicit normative requirements.
 2. Connect Resource identity to WORK-0003.
-3. Test byte identity, names, location independence, and immutable references.
+3. Preserve the duplicate-member rejection parser and bounded exact-number decoding.
+4. Separate unchecked candidates from validated-for-admission references. Obtain value shapes and semantic validation from one exact versioned containing schema/Adapter authority; reject missing or non-unique authority.
+5. Normalize nested collections using that authority's schema before semantic validation. Keep evidence operational and require the same context for historical output.
+6. Test identity/exclusions, contextual admission and rejection, unchecked preservation, canonical map/array behavior, and integer boundaries. Use compile-fail tests for the type boundary.
+
+## Implementation outcome
+
+- `ResourceReferenceCandidate` supports explicit unchecked preservation. Any present `properties`, including `{}`, requires successful `admit` under an exact context with one matching authority.
+- `ResourceReference` cannot be decoded from unrestricted JSON or serialized unconditionally. Its historical-value/canonical-byte APIs check the containing-use context; replacing properties returns an unchecked candidate.
+- Core enforces shapes, duplicate names, and recursive collection normalization without property vocabularies or key-name heuristics. Semantic admissibility remains the exact schema/Adapter authority's responsibility.
+- The prior immutable Resource Object, exact `byte_length` parsing/range, and recursive raw duplicate-member rejection are preserved.
+- Focused tests and the full model suite pass; rustfmt and warnings-denied Clippy pass. See `docs/handovers/HANDOVER-WORK-0004-resource-model.md` for commands and results.
+- No semantics beyond Specs. No new dependencies, Specs edits, Adapter vocabularies, storage/chunking, or WORK-0005+ implementation. Independent Verifier acceptance remains outstanding.
 
 ## Verification requirements
 

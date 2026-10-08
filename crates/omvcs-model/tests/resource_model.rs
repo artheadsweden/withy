@@ -1,10 +1,14 @@
 use std::collections::BTreeMap;
 use std::error::Error;
 
-use omvcs_model::canonical::{MetadataSchema, canonicalize_metadata_body};
+use omvcs_model::canonical::{
+    ArrayOrdering, CanonicalMetadataError, MetadataSchema, canonicalize_metadata_body,
+};
 use omvcs_model::hashing::{hash_component_state_metadata, hash_resource_bytes};
 use omvcs_model::resource::{
-    MAX_RESOURCE_BYTE_LENGTH, ResourceByteLength, ResourceObject, ResourceReference,
+    MAX_RESOURCE_BYTE_LENGTH, ResourceAdmissionError, ResourceByteLength, ResourceObject,
+    ResourcePropertiesValidator, ResourceReference, ResourceReferenceCandidate,
+    ResourceValidationContext,
 };
 use serde_json::Value;
 
@@ -28,9 +32,70 @@ fn resource_reference_schema() -> MetadataSchema {
 fn reference_identity(
     reference: &ResourceReference,
 ) -> Result<omvcs_model::ComponentStateId, Box<dyn Error>> {
-    let body = serde_json::to_vec(reference)?;
-    let canonical = canonicalize_metadata_body(&body, &resource_reference_schema())?;
+    // A synthetic versioned containing body, not a separate Resource Reference ID
+    // or an implementation of the future Component State model.
+    let body = serde_json::to_vec(&serde_json::json!({
+        "schema": context().containing_schema,
+        "reference": reference.historical_value(Some(&context()))?,
+    }))?;
+    let canonical = canonicalize_metadata_body(
+        &body,
+        &MetadataSchema::structure([
+            ("schema", MetadataSchema::Scalar),
+            ("reference", resource_reference_schema()),
+        ]),
+    )?;
     Ok(hash_component_state_metadata(&canonical))
+}
+
+fn context() -> ResourceValidationContext {
+    ResourceValidationContext {
+        containing_schema: "test.containing-state/0.1".to_owned(),
+        adapter: Some((
+            "test.authority".to_owned(),
+            "test.authority.state/0.1".to_owned(),
+        )),
+    }
+}
+
+// Synthetic authority only: no real Adapter vocabulary or semantics.
+struct Authority {
+    context: ResourceValidationContext,
+    schema: MetadataSchema,
+    rejection: Option<String>,
+    calls: std::cell::Cell<usize>,
+    seen: std::cell::RefCell<Option<BTreeMap<String, Value>>>,
+}
+
+impl Authority {
+    fn new(schema: MetadataSchema) -> Self {
+        Self {
+            context: context(),
+            schema,
+            rejection: None,
+            calls: std::cell::Cell::new(0),
+            seen: std::cell::RefCell::new(None),
+        }
+    }
+}
+
+impl ResourcePropertiesValidator for Authority {
+    fn context(&self) -> &ResourceValidationContext {
+        &self.context
+    }
+    fn properties_schema(&self) -> MetadataSchema {
+        self.schema.clone()
+    }
+    fn validate_properties(&self, properties: &BTreeMap<String, Value>) -> Result<(), String> {
+        self.calls.set(self.calls.get() + 1);
+        *self.seen.borrow_mut() = Some(properties.clone());
+        self.rejection.clone().map_or(Ok(()), Err)
+    }
+}
+
+fn admit_json(json: &str, authority: &Authority) -> Result<ResourceReference, Box<dyn Error>> {
+    let candidate: ResourceReferenceCandidate = serde_json::from_str(json)?;
+    Ok(candidate.admit(Some(&context()), &[authority])?)
 }
 
 #[test]
@@ -81,6 +146,12 @@ fn resource_byte_length_rejects_normative_invalid_vectors_and_rounded_fractions(
         "1e-4000",
         "9007199254740990.9999999999",
         "9007199254740992.0",
+        "18446744073709551615",
+        "9007199254740991.0000000001",
+        "true",
+        "null",
+        r#"{"integer":"1"}"#,
+        "[1]",
     ] {
         assert!(
             serde_json::from_str::<ResourceByteLength>(json_number).is_err(),
@@ -102,7 +173,7 @@ fn resource_reference_requires_typed_id_and_complete_resource_length() {
     assert_eq!(reference.byte_length().get(), 3);
     assert!(reference.matches_resource(&object));
     assert_eq!(
-        serde_json::from_str::<ResourceReference>(&reference_json("3"))
+        serde_json::from_str::<ResourceReferenceCandidate>(&reference_json("3"))
             .ok()
             .map(|value| (value.resource_id(), value.byte_length().get())),
         Some((hash_resource_bytes(b"abc"), 3))
@@ -113,9 +184,13 @@ fn resource_reference_requires_typed_id_and_complete_resource_length() {
         r#"{"byte_length":3}"#.to_owned(),
         format!(r#"{{"resource_id":"{RESOURCE_ID}"}}"#),
         r#"{"resource_id":"not-a-resource-id","byte_length":3}"#.to_owned(),
+        format!(
+            r#"{{"resource_id":"{}","byte_length":3}}"#,
+            RESOURCE_ID.replace(":resource:", ":revision:")
+        ),
     ] {
         assert!(
-            serde_json::from_str::<ResourceReference>(&invalid).is_err(),
+            serde_json::from_str::<ResourceReferenceCandidate>(&invalid).is_err(),
             "{invalid}"
         );
     }
@@ -141,18 +216,22 @@ fn resource_reference_contains_only_approved_generic_fields() {
         "provider",
         "credentials",
         "resource_manifest_id",
+        "property_schema_id",
+        "validation_context",
+        "validation_status",
+        "validation_evidence",
     ];
 
     for field in forbidden_fields {
         let json =
             format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"{field}":"excluded"}}"#);
         assert!(
-            serde_json::from_str::<ResourceReference>(&json).is_err(),
+            serde_json::from_str::<ResourceReferenceCandidate>(&json).is_err(),
             "{field}"
         );
     }
 
-    let minimal = serde_json::from_str::<ResourceReference>(&reference_json("0"));
+    let minimal = serde_json::from_str::<ResourceReferenceCandidate>(&reference_json("0"));
     assert!(minimal.is_ok());
     if let Ok(minimal) = minimal {
         let serialized = serde_json::to_value(minimal);
@@ -169,6 +248,7 @@ fn resource_reference_contains_only_approved_generic_fields() {
 #[test]
 fn resource_reference_deserialization_rejects_duplicate_member_names_recursively() {
     let duplicate_members = [
+        format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"byte_length":1}}"#),
         format!(
             r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"properties":{{"sample_rate":44100,"sample_rate":48000}}}}"#
         ),
@@ -178,11 +258,15 @@ fn resource_reference_deserialization_rejects_duplicate_member_names_recursively
         format!(
             r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"properties":{{"nested":{{"value":1,"value":2}}}}}}"#
         ),
+        format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"\u0062yte_length":1}}"#),
+        format!(
+            r#"{{"resource_id":"{RESOURCE_ID}","byte_length":0,"properties":{{"nested":[{{"value":1,"\u0076alue":2}}]}}}}"#
+        ),
     ];
 
     for json in duplicate_members {
         assert!(
-            serde_json::from_str::<ResourceReference>(&json).is_err(),
+            serde_json::from_str::<ResourceReferenceCandidate>(&json).is_err(),
             "{json}"
         );
     }
@@ -196,7 +280,11 @@ fn descriptive_reference_fields_change_containing_identity_not_resource_identity
     let with_role = base.clone().with_role("primary-audio");
     let with_media_type = base.clone().with_media_type("audio/wav");
     let properties = BTreeMap::from([("sample_rate".to_owned(), Value::from(48_000))]);
-    let with_properties = base.clone().with_properties(properties);
+    let authority = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let with_properties = base
+        .clone()
+        .with_properties(properties)
+        .admit(Some(&context()), &[&authority])?;
 
     assert_eq!(
         object.resource_id(),
@@ -209,6 +297,21 @@ fn descriptive_reference_fields_change_containing_identity_not_resource_identity
     assert_ne!(base_identity, reference_identity(&with_role)?);
     assert_ne!(base_identity, reference_identity(&with_media_type)?);
     assert_ne!(base_identity, reference_identity(&with_properties)?);
+    let changed_properties = base
+        .clone()
+        .with_properties(BTreeMap::from([(
+            "sample_rate".to_owned(),
+            Value::from(44_100),
+        )]))
+        .admit(Some(&context()), &[&authority])?;
+    assert_ne!(
+        reference_identity(&with_properties)?,
+        reference_identity(&changed_properties)?
+    );
+    assert_eq!(
+        with_properties.resource_id(),
+        changed_properties.resource_id()
+    );
     assert_eq!(with_role.role(), Some("primary-audio"));
     assert_eq!(with_media_type.media_type(), Some("audio/wav"));
     assert!(with_properties.properties().is_some());
@@ -232,21 +335,20 @@ fn descriptive_reference_fields_change_containing_identity_not_resource_identity
 #[test]
 fn properties_object_map_insertion_order_does_not_change_canonical_identity()
 -> Result<(), Box<dyn Error>> {
-    let schema = resource_reference_schema();
+    let authority = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
     let left = format!(
         r#"{{"resource_id":"{RESOURCE_ID}","byte_length":3,"properties":{{"beta":2,"alpha":1}}}}"#
     );
     let right = format!(
         r#"{{"resource_id":"{RESOURCE_ID}","byte_length":3,"properties":{{"alpha":1,"beta":2}}}}"#
     );
-    let left_canonical = canonicalize_metadata_body(left.as_bytes(), &schema)?;
-    let right_canonical = canonicalize_metadata_body(right.as_bytes(), &schema)?;
+    let left = admit_json(&left, &authority)?;
+    let right = admit_json(&right, &authority)?;
+    let left_canonical = left.canonical_bytes(Some(&context()))?;
+    let right_canonical = right.canonical_bytes(Some(&context()))?;
 
     assert_eq!(left_canonical, right_canonical);
-    assert_eq!(
-        hash_component_state_metadata(&left_canonical),
-        hash_component_state_metadata(&right_canonical)
-    );
+    assert_eq!(reference_identity(&left)?, reference_identity(&right)?);
     Ok(())
 }
 
@@ -292,4 +394,356 @@ fn external_names_and_physical_storage_variations_are_not_resource_reference_inp
     );
     assert_eq!(reference_identity(&reference)?, reference_id);
     Ok(())
+}
+
+// Core §§5.1, 7, 76–77; INV-RES-004/008; ADR-0009.
+#[test]
+fn no_properties_pass_generic_validation_but_even_empty_properties_require_context()
+-> Result<(), Box<dyn Error>> {
+    let candidate: ResourceReferenceCandidate = serde_json::from_str(&reference_json("3"))?;
+    let admitted = candidate.admit(None, &[])?;
+    assert!(admitted.properties().is_none());
+    assert_eq!(
+        admitted.canonical_bytes(None)?,
+        ResourceReference::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?)
+            .canonical_bytes(None)?
+    );
+
+    let empty = candidate.with_properties(BTreeMap::new());
+    assert_eq!(
+        empty.admit(None, &[]),
+        Err(ResourceAdmissionError::UnknownContext)
+    );
+    let authority = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let admitted = empty.admit(Some(&context()), &[&authority])?;
+    assert_eq!(authority.calls.get(), 1);
+    assert_eq!(admitted.properties(), Some(&BTreeMap::new()));
+    assert_ne!(
+        admitted.canonical_bytes(Some(&context()))?,
+        ResourceReference::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?)
+            .canonical_bytes(None)?
+    );
+
+    let null_properties =
+        format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":3,"properties":null}}"#);
+    assert!(serde_json::from_str::<ResourceReferenceCandidate>(&null_properties).is_err());
+    Ok(())
+}
+
+#[test]
+fn unavailable_unrelated_and_non_unique_authorities_leave_preservable_candidates_unchecked()
+-> Result<(), Box<dyn Error>> {
+    let json =
+        format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":3,"properties":{{"value":1}}}}"#);
+    let candidate: ResourceReferenceCandidate = serde_json::from_str(&json)?;
+    let mut unrelated = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    unrelated.context.containing_schema = "test.containing-state/0.2".to_owned();
+    assert_eq!(
+        candidate.admit(Some(&context()), &[]),
+        Err(ResourceAdmissionError::UnavailableContext)
+    );
+    assert_eq!(
+        candidate.admit(Some(&context()), &[&unrelated]),
+        Err(ResourceAdmissionError::UnavailableContext)
+    );
+    let first = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let second = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    assert_eq!(
+        candidate.admit(Some(&context()), &[&first, &second]),
+        Err(ResourceAdmissionError::NonUniqueAuthority)
+    );
+    assert_eq!(
+        first.calls.get() + second.calls.get() + unrelated.calls.get(),
+        0
+    );
+
+    // Preservation is an unchecked transport path, never an admission operation.
+    let preserved = serde_json::to_vec(&candidate)?;
+    let restored: ResourceReferenceCandidate = serde_json::from_slice(&preserved)?;
+    assert_eq!(restored, candidate);
+    assert_eq!(
+        restored.admit(None, &[]),
+        Err(ResourceAdmissionError::UnknownContext)
+    );
+    let admitted = restored.admit(Some(&context()), &[&first])?;
+    assert_eq!(first.calls.get(), 1);
+    assert_eq!(
+        admitted.canonical_bytes(None),
+        Err(ResourceAdmissionError::ContextMismatch)
+    );
+    assert_eq!(
+        admitted.historical_value(Some(&unrelated.context)),
+        Err(ResourceAdmissionError::ContextMismatch)
+    );
+
+    for changed in [
+        ResourceValidationContext {
+            adapter: Some((
+                "another.authority".to_owned(),
+                "test.authority.state/0.1".to_owned(),
+            )),
+            ..context()
+        },
+        ResourceValidationContext {
+            adapter: Some((
+                "test.authority".to_owned(),
+                "test.authority.state/0.2".to_owned(),
+            )),
+            ..context()
+        },
+        ResourceValidationContext {
+            adapter: None,
+            ..context()
+        },
+    ] {
+        assert_eq!(
+            candidate.admit(Some(&changed), &[&first]),
+            Err(ResourceAdmissionError::UnavailableContext)
+        );
+        assert_eq!(
+            admitted.canonical_bytes(Some(&changed)),
+            Err(ResourceAdmissionError::ContextMismatch)
+        );
+    }
+    // Replacing an already validated map revokes admission, including with {}.
+    assert_eq!(
+        admitted.with_properties(BTreeMap::new()).admit(None, &[]),
+        Err(ResourceAdmissionError::UnknownContext)
+    );
+    Ok(())
+}
+
+#[test]
+fn exact_semantic_authority_rejection_propagates_without_core_key_heuristics()
+-> Result<(), Box<dyn Error>> {
+    let mut authority = Authority::new(MetadataSchema::map(MetadataSchema::map(
+        MetadataSchema::Scalar,
+    )));
+    authority.rejection = Some("synthetic authority: excluded interpretation".to_owned());
+    for key in ["filename", "unrelated_alias"] {
+        let candidate = ResourceReferenceCandidate::new(
+            hash_resource_bytes(b"abc"),
+            ResourceByteLength::new(3)?,
+        )
+        .with_properties(BTreeMap::from([(
+            key.to_owned(),
+            serde_json::json!({"nested_alias": "excluded synthetic meaning"}),
+        )]));
+        assert_eq!(
+            candidate.admit(Some(&context()), &[&authority]),
+            Err(ResourceAdmissionError::SemanticRejection(
+                "synthetic authority: excluded interpretation".to_owned(),
+            ))
+        );
+    }
+    assert_eq!(authority.calls.get(), 2);
+    // Generic Core does not guess meanings even from suggestive key names.
+    let authority = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let candidate =
+        ResourceReferenceCandidate::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?)
+            .with_properties(BTreeMap::from([("filename".to_owned(), Value::from(17))]));
+    assert!(candidate.admit(Some(&context()), &[&authority]).is_ok());
+    assert_eq!(authority.calls.get(), 1);
+    Ok(())
+}
+
+fn nested_properties_schema(ordering: Option<ArrayOrdering>) -> MetadataSchema {
+    let element = MetadataSchema::structure([
+        (
+            "sequence",
+            MetadataSchema::array(ArrayOrdering::Ordered, MetadataSchema::Scalar),
+        ),
+        (
+            "members",
+            MetadataSchema::Array {
+                ordering,
+                elements: Box::new(MetadataSchema::Scalar),
+            },
+        ),
+    ]);
+    MetadataSchema::map(MetadataSchema::array(ArrayOrdering::SetLike, element))
+}
+
+#[test]
+fn exact_context_supplies_nested_shapes_and_ordered_and_set_like_array_semantics()
+-> Result<(), Box<dyn Error>> {
+    let authority = Authority::new(nested_properties_schema(Some(ArrayOrdering::SetLike)));
+    let base =
+        ResourceReferenceCandidate::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?);
+    let first = base
+        .clone()
+        .with_properties(BTreeMap::from([(
+            "items".to_owned(),
+            serde_json::json!([
+                {"sequence": [2, 1], "members": [3, 1, 2]},
+                {"sequence": [4, 5], "members": [6, 7]}
+            ]),
+        )]))
+        .admit(Some(&context()), &[&authority])?;
+    let permuted = base
+        .clone()
+        .with_properties(BTreeMap::from([(
+            "items".to_owned(),
+            serde_json::json!([
+                {"members": [7, 6], "sequence": [4, 5]},
+                {"members": [2, 3, 1], "sequence": [2, 1]}
+            ]),
+        )]))
+        .admit(Some(&context()), &[&authority])?;
+    assert_eq!(
+        first.canonical_bytes(Some(&context()))?,
+        permuted.canonical_bytes(Some(&context()))?
+    );
+    let reordered = base
+        .clone()
+        .with_properties(BTreeMap::from([(
+            "items".to_owned(),
+            serde_json::json!([
+                {"sequence": [1, 2], "members": [3, 1, 2]},
+                {"sequence": [4, 5], "members": [6, 7]}
+            ]),
+        )]))
+        .admit(Some(&context()), &[&authority])?;
+    assert_ne!(
+        first.canonical_bytes(Some(&context()))?,
+        reordered.canonical_bytes(Some(&context()))?
+    );
+
+    // Different classifications from the exact context change normalization.
+    let mut ordered_authority =
+        Authority::new(nested_properties_schema(Some(ArrayOrdering::Ordered)));
+    // Changed property interpretation uses a different versioned context (§77).
+    ordered_authority.context.containing_schema = "test.containing-state/0.2".to_owned();
+    let changed_members = base
+        .with_properties(BTreeMap::from([(
+            "items".to_owned(),
+            serde_json::json!([{"sequence": [2, 1], "members": [3, 1, 2]}]),
+        )]))
+        .admit(Some(&ordered_authority.context), &[&ordered_authority])?;
+    assert_eq!(
+        changed_members
+            .properties()
+            .and_then(|p| p.get("items"))
+            .and_then(|v| v.get(0))
+            .and_then(|v| v.get("members")),
+        Some(&serde_json::json!([3, 1, 2]))
+    );
+    assert_eq!(*authority.seen.borrow(), reordered.properties().cloned());
+    assert_eq!(
+        *ordered_authority.seen.borrow(),
+        changed_members.properties().cloned()
+    );
+    Ok(())
+}
+
+#[test]
+fn unclassified_nested_arrays_shape_mismatches_and_duplicate_set_members_block_admission()
+-> Result<(), Box<dyn Error>> {
+    let base =
+        ResourceReferenceCandidate::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?);
+    let unclassified = Authority::new(nested_properties_schema(None));
+    // Reject incomplete schema even with no nested values.
+    assert!(matches!(
+        base.clone()
+            .with_properties(BTreeMap::new())
+            .admit(Some(&context()), &[&unclassified]),
+        Err(ResourceAdmissionError::Canonical(
+            CanonicalMetadataError::UnclassifiedArray { .. }
+        ))
+    ));
+    assert_eq!(unclassified.calls.get(), 0);
+    let scalar_authority = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let candidate = base.clone().with_properties(BTreeMap::from([(
+        "array".to_owned(),
+        serde_json::json!([1, 2]),
+    )]));
+    assert!(matches!(
+        candidate.admit(Some(&context()), &[&scalar_authority]),
+        Err(ResourceAdmissionError::Canonical(
+            CanonicalMetadataError::SchemaMismatch { .. }
+        ))
+    ));
+    assert_eq!(scalar_authority.calls.get(), 0);
+    let classified = Authority::new(nested_properties_schema(Some(ArrayOrdering::SetLike)));
+    let candidate = base.with_properties(BTreeMap::from([(
+        "items".to_owned(),
+        serde_json::json!([{"sequence": [2, 1], "members": [1, 1]}]),
+    )]));
+    assert!(matches!(
+        candidate.admit(Some(&context()), &[&classified]),
+        Err(ResourceAdmissionError::Canonical(
+            CanonicalMetadataError::DuplicateSetLikeElement { .. }
+        ))
+    ));
+    assert_eq!(classified.calls.get(), 0);
+    Ok(())
+}
+
+#[test]
+fn operational_validation_evidence_is_absent_from_canonical_historical_fields()
+-> Result<(), Box<dyn Error>> {
+    let candidate =
+        ResourceReferenceCandidate::new(hash_resource_bytes(b"abc"), ResourceByteLength::new(3)?)
+            .with_properties(BTreeMap::from([("value".to_owned(), Value::from(17))]));
+    let first = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    let second = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    second.calls.set(100);
+    let left = candidate.admit(Some(&context()), &[&first])?;
+    let right = candidate.admit(Some(&context()), &[&second])?;
+    assert_eq!(
+        left.canonical_bytes(Some(&context()))?,
+        right.canonical_bytes(Some(&context()))?
+    );
+    assert_eq!(
+        left.historical_value(Some(&context()))?,
+        serde_json::json!({
+            "resource_id": RESOURCE_ID, "byte_length": 3, "properties": {"value": 17}
+        })
+    );
+    assert_eq!(first.calls.get(), 1);
+    assert_eq!(second.calls.get(), 101);
+    let mut another_context = Authority::new(MetadataSchema::map(MetadataSchema::Scalar));
+    another_context.context.containing_schema = "test.other-containing-state/0.1".to_owned();
+    let other = candidate.admit(Some(&another_context.context), &[&another_context])?;
+    assert_eq!(
+        left.canonical_bytes(Some(&context()))?,
+        other.canonical_bytes(Some(&another_context.context))?
+    );
+    Ok(())
+}
+
+#[test]
+fn resource_reference_decoding_enforces_integer_boundaries_and_invalid_encodings() {
+    for valid in ["0", "1", "9007199254740991"] {
+        assert!(serde_json::from_str::<ResourceReferenceCandidate>(&reference_json(valid)).is_ok());
+    }
+
+    for invalid in [
+        "-1",
+        "1.5",
+        "9007199254740992",
+        r#""1""#,
+        "18446744073709551615",
+        "null",
+        "true",
+        "[1]",
+        r#"{"integer":1}"#,
+        "9007199254740991.0000000001",
+    ] {
+        assert!(
+            serde_json::from_str::<ResourceReferenceCandidate>(&reference_json(invalid)).is_err(),
+            "{invalid}"
+        );
+    }
+}
+
+#[test]
+fn present_optional_fields_cannot_silently_disappear_during_decoding() {
+    for field in ["role", "media_type", "properties"] {
+        let json = format!(r#"{{"resource_id":"{RESOURCE_ID}","byte_length":3,"{field}":null}}"#);
+        assert!(
+            serde_json::from_str::<ResourceReferenceCandidate>(&json).is_err(),
+            "{field}"
+        );
+    }
 }
