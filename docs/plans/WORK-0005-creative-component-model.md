@@ -1,6 +1,6 @@
 # WORK-0005 — Creative Component identity model
 
-Status: PLANNED
+Status: BLOCKED ON DG-0010 — Creative Component object schema and metadata semantics
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0005-creative-component-model`
@@ -47,7 +47,8 @@ Represent a Creative Component as a stable, semantically identified Project enti
 
 ## Known Design Gaps
 
-- None directly. WORK-0006 parentage semantics are resolved by ADR-0003; hashed-map identity follows the resolved RFC 8785 rule in ADR-0005.
+- DG-0010 blocks this package because the Core Specs do not normatively define the Creative Component object fields or the historical/mutable/out-of-object semantics of the conceptual `project_id`, `kind`, `name`, and `created_at` fields in Core §9.
+- WORK-0006 parentage semantics are resolved by ADR-0003; hashed-map identity follows the resolved RFC 8785 rule in ADR-0005. These resolutions do not resolve DG-0010.
 
 ## Implementation plan
 
