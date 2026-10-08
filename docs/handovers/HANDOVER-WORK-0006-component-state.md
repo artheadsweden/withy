@@ -81,8 +81,8 @@ These are implementation boundaries, not additional historical semantics.
 
 ## Remaining work
 
-- Independent Verifier review below rejects admission pending W6-V001 remediation;
-  another independent gate is required before integration.
+- Independent Verifier acceptance after remediation is recorded below.
+  W6-V001 is resolved; no WORK-0006 verification blocker remains.
 - WORK-0007 and WORK-0008 remain unstarted.
 
 ## Git state
@@ -226,3 +226,113 @@ Verification changes are recorded in a local verification-only successor of
 trailer; the implementation commit is preserved unchanged. Working tree: CLEAN
 after that commit. Remote push: NO. Integration: NO. Remote publishing remains
 ENABLED but was not used.
+
+## Independent Verifier acceptance after remediation — 2026-10-08
+
+From agent: Verifier
+To agent: OMVCS Lead / Core Engineer
+Branch: `work/0006-component-state`
+Original implementation: `298e5d0198e9b125d8f9b258800ed4f2620ec196`
+Remediation: `ff3a531a7b3b106cdbd5918f0e4804058a788022`
+Specification base: `0ff182ab005fff7d58cebdea73dcb36e82c33b42`
+Original verification evidence: `b3f20468012a0baf04e378b4d8e5eec46ed68880`
+Result: **VERIFIED — W6-V001 resolved, no remaining blocker**.
+
+This acceptance supersedes the initial rejection above; that record describes
+the original implementation and remains historical evidence, not current status.
+The original 12-test `component_state_acceptance.rs` is byte-for-byte unchanged.
+Both original W6-V001 regressions now pass without weakening or ignoring them.
+
+### Remediation and complete contract review
+
+The remediation is exactly two files: a map-only visitor in `src/resource.rs`
+and three additional Resource model tests. Raw duplicate-name checking still
+precedes map decoding; only `visit_map` can reach the derived required/optional
+wire fields. Sequence/scalar forms cannot reach those fields, and unknown
+wrapper/tag members are rejected by the closed wire contract. Valid object input
+is not rejected merely because it uses owned or borrowed value deserialization.
+
+Re-read ADR-0011, resolved DG-0011, the plan and original findings, applicable
+Core §§5.1, 7, 10–11, 56, 76–77, Glossary and relevant invariants. Re-reviewed
+the complete unchanged Component State admission/body/ID/immutable API and
+original tests against those requirements, including existing
+ADR-0001/0003/0005/0007/0008/0009/0010 boundaries. Findings:
+
+- Exact closed outer object, required members, empty resources/metadata and
+  typed Component ID are preserved; unknown members and lossy optional-field
+  coercions remain rejected.
+- The canonical preimage contains all and only the specified body members,
+  including schema and parents only when present; SHA-256 receives no type
+  prefix, evidence, operational data or wrappers.
+- Parent omission/empty/known-set distinctions, no fabricated lineage,
+  canonical-byte sorting and duplicate rejection remain correct. The retained
+  576 combined permutation property and equivalent-canonical-resource
+  rejection pass.
+- Resources are admitted under generic structure and exact unique contextual
+  property authority. Empty properties still require validation. Unavailable,
+  ambiguous, unrelated/latest-version and mismatched bindings remain blocked.
+  Byte-length types, exact safe-integer endpoints and over-precision rejection
+  remain enforced.
+- Schema-owned metadata shapes/requirements, recursive array declarations,
+  duplicate raw names, RFC 8785 UTF-16 member order and body-only identity
+  remain covered. No concrete metadata vocabulary or key-based semantic
+  heuristic was introduced into Core.
+- Candidates still have no valid-history output; admitted objects remain
+  immutable. Existing typed-ID and compile-fail boundary tests pass.
+- No Project State, Revision, Adapter State, storage/repository, clone/fork or
+  WORK-0007/0008 implementation was added. Operation-specific mandatory lineage
+  and actual Adapter semantic vocabularies remain outside this bounded package.
+
+### New independent parser attack matrix
+
+Added only `tests/component_state_remediation_acceptance.rs` (four tests):
+
+1. Positional array prefixes of lengths 0–8, all eight partial/full optional
+   subsequences, and all eight null-hole combinations.
+2. Object/array payloads inside body/reference/ResourceReference/Some/Ok
+   wrappers, externally/adjacently tagged representations, nested arrays,
+   scalar/null inputs, and valid fields mixed with unknown wrapper fields.
+3. Positive named-object controls for all eight optional-member combinations:
+   exact field preservation and identical Component State bodies/IDs.
+4. Raw escaped-equivalent duplicates and trailing JSON documents remain invalid.
+
+The first two attacks exercise four direct Resource candidate ingress paths
+and four embedded Component State paths: JSON text, `from_value`, owned
+`Deserialize` and borrowed `Deserialize`. Every invalid shape fails parsing
+before historical admission; diagnostics also attempt public-constructor
+admission if a direct decode unexpectedly succeeds. Positive controls use an
+exact synthetic authority, not a production Core metadata vocabulary.
+
+### Commands and results
+
+- Editor targeted test discovery: no tests found; used Cargo.
+- `cargo test --locked -p omvcs-model --test component_state --test component_state_acceptance --test component_state_remediation_acceptance --test resource_model --no-fail-fast`
+  — **58 passed**, zero failures.
+- `cargo test --locked -p omvcs-model --no-fail-fast` — **104 passed**, zero
+  failures: 7 unit, 16 canonical, 21 Component State, 12 original verifier,
+  4 remediation verifier, 8 hashing, 6 Component, 3 Component acceptance,
+  21 Resource and 6 compile-fail doctests.
+- `cargo fmt --package omvcs-model -- --check` — passed.
+- `cargo clippy --locked -p omvcs-model --all-targets -- -D warnings` — passed.
+- `git diff --check` and base-to-HEAD diff check — passed.
+- Editor Problems for the new test file — no errors.
+
+An initial new-test Clippy idiom warning was corrected using `is_ok_and` in test
+diagnostics only. No production changes or assertion weakening occurred.
+
+### Verification changes, limitations and Git state
+
+This gate changes only the new verifier test file, the WORK-0006 coverage status
+and acceptance evidence, this plan and handover. The earlier rejected-gate docs
+and tests remain in history and their evidence sections are retained. Unrelated
+stale global coverage prose was not changed.
+
+Semantic decisions beyond Specs: **None**. New Design Gaps: **None**.
+No remaining WORK-0006 verification work; integration requires a separate
+instruction. No authorization to start WORK-0007/0008 is implied.
+
+The verification-only local successor of `ff3a531` carries the required
+Co-authored-by trailer. Original implementation, rejected-gate evidence and
+remediation commits are preserved as ancestors. Working tree: CLEAN after the
+verification commit. Push: NO. Integration: NO. Remote publishing: ENABLED,
+unused. WORK-0007/0008 remain unstarted and their plans unchanged.

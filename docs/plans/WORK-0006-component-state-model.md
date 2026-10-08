@@ -1,6 +1,6 @@
 # WORK-0006 — Component State model
 
-Status: IMPLEMENTED
+Status: VERIFIED
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0006-component-state`
@@ -118,3 +118,37 @@ No production code or Specs changed, no test weakened, and no new Design Gap or
 unapproved metadata vocabulary introduced. The Core Engineer must remediate
 W6-V001 under bounded scope and request another independent gate before
 integration. WORK-0007/0008 remain unstarted; no push or integration performed.
+
+## Independent verification after remediation — 2026-10-08
+
+Result: **VERIFIED**. This supersedes the earlier rejection without removing its
+evidence. Accepted implementation `298e5d0198e9b125d8f9b258800ed4f2620ec196`
+with remediation `ff3a531a7b3b106cdbd5918f0e4804058a788022`, against specification
+base `0ff182ab005fff7d58cebdea73dcb36e82c33b42`. W6-V001 is resolved; the
+original verifier tests at `b3f20468012a0baf04e378b4d8e5eec46ed68880` remain
+byte-for-byte unchanged and all 12 now pass.
+
+Rechecked the entire ADR-0011 contract and original admission, identity,
+canonicalization, lineage, immutability and scope findings. The map-only Resource
+Reference visitor now rejects positional forms before derived field decoding,
+while preserving duplicate-name checks and valid named-field object handling.
+No metadata vocabulary, semantic inference, or later-package behavior was added.
+
+Added `tests/component_state_remediation_acceptance.rs`: four verifier tests
+attack positional prefixes of lengths 0–8, every partial optional-field
+subsequence and null-hole combination, nested arrays, wrappers, tagged enum
+forms and nonobjects. All fail directly and embedded through JSON text,
+`from_value`, owned `Deserialize`, and borrowed `Deserialize`; none enters
+history. Positive controls cover all eight named optional-member combinations
+and identical admitted bodies/IDs across ingress paths. Raw duplicate names and
+trailing documents remain rejected.
+
+Targeted suite: 21 Component State + 12 original verifier + 4 new verifier +
+21 Resource tests passed (58 total). Full locked model suite: **104 passed,
+0 failed**, including six compile-fail doctests. Package fmt check, locked Clippy
+with warnings denied and diff checks passed. An initial new-test Clippy idiom
+warning was corrected in test support only; no assertions were weakened.
+
+Coverage marks only WORK-0006 `verified`. No production code, Specs or existing
+tests changed during this gate. Semantic decisions beyond Specs: **None**.
+New Design Gaps: **None**. No push/integration; WORK-0007/0008 remain unstarted.
