@@ -6,6 +6,7 @@
 
 pub mod canonical;
 pub mod hashing;
+pub mod resource;
 
 use std::fmt;
 use std::str::FromStr;

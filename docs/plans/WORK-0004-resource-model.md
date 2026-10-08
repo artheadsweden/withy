@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: PLANNED
+Status: VERIFIED — independent acceptance passed (2026-10-08)
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -51,6 +51,7 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 - Renaming a Friendly Name does not change Resource identity.
 - Resource References require a typed Resource Identifier and non-negative byte length; optional fields are limited to role, media type, and schema/Adapter-supplied immutable interpretation properties.
 - `byte_length` is REQUIRED and equals the complete Resource's byte count; it MUST be an integer in `0 ..= 9007199254740991`. Reject missing, negative, fractional/non-integral, greater-than-maximum, string, and alternate-encoded values regardless of host integer capacity.
+- Expose no unconstrained host-language integer as the OMVCS field contract; the accepted maximum is always `9007199254740991`, even where the implementation's integer type is wider.
 - Changing the canonical value of a present Resource Reference field changes the containing historical object's identity but never changes the Resource Identifier for the same raw bytes.
 - Reordering `properties` map insertion without changing its entries does not change the containing identity under RFC 8785/ADR-0005.
 - Changing any Resource Reference descriptive field while keeping raw bytes fixed leaves the Resource Identifier unchanged.
@@ -88,14 +89,25 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 
 1. Define the minimal logical Resource/Resource Reference model from explicit normative requirements.
 2. Connect Resource identity to WORK-0003.
-3. Test byte identity, names, location independence, and immutable references.
+3. Preserve the duplicate-member rejection parser and bounded exact-number decoding.
+4. Separate unchecked candidates from validated-for-admission references. Obtain value shapes and semantic validation from one exact versioned containing schema/Adapter authority; reject missing or non-unique authority.
+5. Normalize nested collections using that authority's schema before semantic validation. Keep evidence operational and require the same context for historical output.
+6. Test identity/exclusions, contextual admission and rejection, unchecked preservation, canonical map/array behavior, and integer boundaries. Use compile-fail tests for the type boundary.
+
+## Implementation outcome
+
+- `ResourceReferenceCandidate` supports explicit unchecked preservation. Any present `properties`, including `{}`, requires successful `admit` under an exact context with one matching authority.
+- `ResourceReference` cannot be decoded from unrestricted JSON or serialized unconditionally. Its historical-value/canonical-byte APIs check the containing-use context; replacing properties returns an unchecked candidate.
+- Core enforces shapes, duplicate names, and recursive collection normalization without property vocabularies or key-name heuristics. Semantic admissibility remains the exact schema/Adapter authority's responsibility.
+- The prior immutable Resource Object, exact `byte_length` parsing/range, and recursive raw duplicate-member rejection are preserved.
+- Focused tests and the full model suite pass; rustfmt and warnings-denied Clippy pass. See `docs/handovers/HANDOVER-WORK-0004-resource-model.md` for commands and results.
+- Independent final acceptance passed against the normative Specs, invariants, ADRs, actual implementation, and tests. No normative defect was found; no code or Specs were changed during verification.
+- No semantics beyond Specs. No new dependencies, Adapter vocabularies, storage/chunking, or WORK-0005+ implementation.
 
 ## Verification requirements
 
-The Verifier must attempt to disprove any coupling between Resource identity and filename, physical locator, provider, or replica state.
-
-The Verifier must also independently test that unchecked, rejected, unknown-context, or ambiguous-context Resource Reference candidates cannot enter valid historical state or produce a valid historical identity, and that an accepted property map is validated under its exact declared schema/Adapter context without adding validation evidence to canonical bytes.
+Independent acceptance confirmed that Resource identity derives only from complete raw bytes and that the candidate/admitted API boundary, exact-context validation, canonicalization, and historical output checks prevent unchecked property-bearing references from being emitted through the Resource Reference historical API.
 
 ## Completion criteria
 
-Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state are complete. WORK-0005 and later remain unstarted.
