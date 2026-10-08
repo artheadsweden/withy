@@ -571,6 +571,16 @@ component bindings where available
 adapter-specific opaque metadata
 ```
 
+The `adapter_id` and exact `adapter_state_schema` version identify the Adapter context governing Adapter-owned Resource Reference `properties` in Adapter State. An Adapter MUST define the immutable interpretation-property meanings and structures valid for each supported schema version and MUST validate them before producing or admitting a property-bearing Resource Reference into valid historical state. The Adapter's schema MUST NOT admit presentation or logical names, filenames, Chunk or Chunk Manifest information, storage locations, endpoints, Replicas, credentials, provider metadata, or other physical reconstruction/storage information prohibited by Core Specification section 7.
+
+For Adapter-supplied Resource Reference properties in any containing historical object, the Adapter contract MUST bind them to one exact versioned validation authority determinable from that object's schema/Adapter context. If the authority cannot be uniquely determined, the candidate remains unchecked and cannot be admitted as valid history. The Adapter MUST NOT add an independent Resource Reference property-schema identifier unless a future explicit decision establishes that the containing context cannot identify the validator.
+
+Core owns generic Resource Reference structure, duplicate JSON member rejection, canonical validation, declared value shapes, nested collection classification, and historical admission mechanics. The applicable schema/Adapter authority owns semantic admissibility. Core MUST NOT infer it from key spellings, deny lists, heuristics, or DAW-specific knowledge.
+
+If an Adapter schema context is unknown, unavailable, or non-unique, an implementation MAY preserve or transport candidate data as unchecked, but MUST NOT admit it as a valid historical Resource Reference or Adapter State, use it to create a valid historical identity, or commit it into valid OMVCS history. Validation status, callbacks, timestamps, signatures, and other validation evidence are operational and MUST NOT be added to historical Resource Reference fields or canonical identity.
+
+Adapter conformance tests for each supported Adapter State schema version MUST include schema-approved property cases and semantic rejection cases for ADR-0007-excluded content, including content represented under alternate keys or nested values. They MUST establish that Core's admission result follows the applicable schema/Adapter validation result and that validation evidence does not enter canonical Adapter State bytes.
+
 ---
 
 # 21. Adapter State identity
@@ -585,13 +595,13 @@ It MUST NOT be modified in place once referenced by a published Project State.
 
 # 22. Opaque Adapter metadata
 
-OMVCS Core MUST preserve Adapter-specific opaque metadata.
-
-Core MUST NOT interpret it.
+OMVCS Core MUST preserve Adapter-specific opaque metadata and MUST NOT semantically interpret its Adapter-owned values. Generic structure, canonicalization, duplicate-member rejection, and Resource Reference admission requirements remain governed by Core Specification §§5.1 and 7.
 
 The Adapter MUST version its own opaque structure.
 
 The Adapter State schema MUST declare the ordering semantics of every collection within opaque metadata that participates in Adapter State identity. An Adapter MUST reject duplicate elements in any set-like collection before producing the immutable Adapter State.
+
+When a Resource Reference in Adapter State has `properties`, the Adapter MUST validate the property map and all nested values under the exact `adapter_state_schema` version identified by that state before treating the state as valid historical metadata. The applicable schema MUST declare all required value shapes and nested array classifications; unclassified arrays are invalid. A reference with no `properties` remains subject to generic Core validation only.
 
 Example:
 
