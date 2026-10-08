@@ -1,6 +1,6 @@
 # WORK-0004 — Resource and Resource Reference model
 
-Status: PLANNED
+Status: BLOCKED ON DG-0007
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0004-resource-model`
@@ -48,7 +48,8 @@ Model logical Resources, immutable Resource Objects, and historical Resource Ref
 
 ## Known Design Gaps
 
-- None directly. Physical chunk representation belongs to the later storage work and its listed decisions.
+- DG-0007 blocks defining the Resource Manifest / Resource Reference schema boundary and which descriptive fields participate in containing hashed historical objects. Do not implement those fields or identities until the required human decision is recorded in an ADR and the affected Specs are updated.
+- Physical Chunk Manifest representation remains outside this package as stated in the explicit non-goals.
 
 ## Implementation plan
 
