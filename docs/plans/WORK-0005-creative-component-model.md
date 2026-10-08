@@ -38,7 +38,8 @@ Represent a Creative Component as a stable logical identity anchor, distinct fro
 ## Acceptance tests
 
 - Replacing a file/Resource used by a Component does not change that Component's identifier.
-- Creative Component contains a required typed `component_id` and generic model/serialization contains no `project_id`, `name`, `kind`, or `created_at`.
+- Creative Component contains a required typed assigned `component_id` and generic model/serialization contains no `project_id`, `name`, `kind`, `created_at`, Resource content, Component State parentage, DAW-native identifier, Platform, storage, or location field.
+- If the generic model provides a decoding boundary, reject extra object fields rather than silently treating them as part of the generic Creative Component.
 - Component identity is stable across Resource replacement/re-recording and independent of Project membership, Component State parentage, DAW-native identifiers, names, kind/classification, timestamps, filenames, storage, Platform accounts, and locations.
 - Project association is expressed through Project State membership/reference, not Component object data.
 - A presentation rename does not create a new Component Identifier and does not by itself require a new Component State.
@@ -48,7 +49,8 @@ Represent a Creative Component as a stable logical identity anchor, distinct fro
 ## Explicit non-goals
 
 - Inventing a mandatory `kind` vocabulary, naming rules, rename/delete lifecycle, or DAW-to-Component mapping.
-- Component State lineage or Project State composition beyond consuming the Project State membership contract.
+- Component State modeling, historical parentage, or Project State modeling/composition/membership logic; consume the already-specified membership boundary only where needed to keep the Component object separate.
+- Adapter State modeling, storage, repository operations, publication, or other repository behavior.
 - Clone, fork, copy, import, move, ownership, or cross-Project reuse semantics.
 - User-interface labels or adapter-specific grouping.
 
