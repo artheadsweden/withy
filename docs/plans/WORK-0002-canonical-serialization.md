@@ -1,6 +1,6 @@
 # WORK-0002 — Canonical metadata serialization
 
-Status: PLANNED
+Status: COMPLETE — independently verified
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0002-canonical-serialization`
@@ -11,17 +11,17 @@ Provide the specified deterministic UTF-8 JSON Canonicalization Scheme represent
 
 ## Normative requirements
 
-- Core Specification, section 5.
-- Core Invariants: INV-HIST-002, INV-RES-002.
+- Core Specification, sections 5 and 5.1.
+- Core Invariants: INV-HIST-002, INV-HIST-006, INV-RES-002.
 
 ## Dependencies
 
-- WORK-0001 for identifier/schema references.
-- ADR-0005 resolves hashed JSON object maps: RFC 8785 object-member ordering only, with duplicate-name rejection before canonical serialization/hashing and no additional entry sorting.
+- WORK-0001 is complete and integrated into the current M1 base branch; use its identifier/schema types without changing that package.
+- ADR-0001 defines explicit ordered and set-like array semantics; ADR-0005 resolves hashed JSON object maps to RFC 8785 member ordering only, with duplicate-name rejection before canonical serialization/hashing and no additional entry sorting.
 
-## Parallel execution
+## Sequencing
 
-The RFC 8785 JSON canonicalization core and its standalone vectors may be developed alongside WORK-0001 if ownership is separated by files/modules. Integration with typed OMVCS schemas and identifier references follows WORK-0001. Do not assume parallel implementation is safe if both tasks require edits to the same files.
+WORK-0001 has passed independent verification and is integrated. WORK-0002 is the sole active M1 package. Do not start WORK-0003 or any later M1 package until this package has passed implementation, independent verification, handover, and clean-Git completion.
 
 ## Allowed scope
 
@@ -41,6 +41,7 @@ The RFC 8785 JSON canonicalization core and its standalone vectors may be develo
 - Raw JSON containing duplicate object member names is rejected before canonical serialization or hashing.
 - Map values are normalized by their schemas, including set-like array normalization, without reordering map entries beyond RFC 8785.
 - Canonical output has no semantically irrelevant whitespace and follows RFC 8785 string and number rules.
+- UTF-8 handling, string escaping, and numeric serialization/rejection behavior match RFC 8785 vectors; do not add normalization or number semantics beyond that standard.
 - Hashing input excludes storage wrappers, HTTP headers, database keys, and external signatures/timestamps unless specified as object fields.
 - Independent canonicalization of the same supported object yields byte-identical output.
 - Ordered sequences preserve order; reordered inputs produce distinct bytes where sequence order differs.
@@ -64,7 +65,7 @@ Conformance vectors:
 
 ## Implementation plan
 
-1. Implement the RFC 8785-compatible canonical JSON boundary and reject duplicate member names before canonicalization; this isolated foundation may proceed alongside WORK-0001 when file ownership is disjoint.
+1. Implement the RFC 8785-compatible canonical JSON boundary and reject duplicate member names before canonicalization.
 2. Add published/independently checked serialization vectors for resolved object forms.
 3. Apply the resolved collection classifications and normalization rules in Core Specification §5.1.
 
@@ -75,3 +76,7 @@ The Verifier must check byte-level determinism against RFC 8785 and Core Specifi
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Known Design Gaps
+
+None affecting this work package. DG-0003 and DG-0005 are resolved by ADR-0001 and ADR-0005. Any hashed array field without an explicit classification is invalid for hashing under Core Specification §5.1; do not infer its semantics. If implementation work discovers a distinct unresolved canonicalization rule, stop the affected work and record a Design Gap rather than choosing behavior.

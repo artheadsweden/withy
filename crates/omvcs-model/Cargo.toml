@@ -9,4 +9,7 @@ publish = false
 workspace = true
 
 [dependencies]
+serde = "1"
+serde_jcs = "=0.2.0"
+serde_json = "1"
 uuid = { version = "1", features = ["v7"] }
