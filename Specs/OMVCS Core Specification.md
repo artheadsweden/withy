@@ -500,21 +500,23 @@ More sophisticated content-defined chunking MAY later be introduced without chan
 
 # 9. Creative Component
 
-A Creative Component represents persistent musical meaning rather than physical files.
+A Creative Component is a stable logical identity anchor representing persistent creative meaning rather than physical files. Its normative generic OMVCS 0.1 object contains only the required assigned `component_id`; no other field is part of that object.
 
-Conceptual Component record:
+Normative generic Creative Component object:
 
 ```json
 {
-  "component_id": "019cc...",
-  "project_id": "019aa...",
-  "kind": "audio-performance",
-  "name": "Bass",
-  "created_at": "2026-10-08T10:34:11Z"
+  "component_id": "019cc..."
 }
 ```
 
-`component_id` remains stable throughout the life of the component.
+The globally stable `component_id` MUST remain unchanged throughout the life of the logical Component and is independent of Resource content, Component State parentage, DAW-native identifiers, Project membership, names, descriptive metadata, timestamps, storage, Platform accounts, and locations. It MUST NOT be derived from any of those values.
+
+`project_id`, `kind`, `name`, `created_at`, and comparable descriptive values are not fields of the generic OMVCS 0.1 Creative Component object and MUST NOT affect Component identity. Generic Core MUST NOT infer historical significance for such values. Presentation/friendly names and UI labels are mutable descriptive, local, or Platform metadata unless an approved historical schema explicitly gives them historical meaning. DAW-native names, classifications, identifiers, and reconstruction-relevant values belong in Adapter State when required by that Adapter. A value that an approved Component State schema explicitly defines as creative state belongs in that Component State and affects it according to that schema.
+
+A rename or descriptive metadata change MUST NOT create a new Creative Component Identifier. Generic Core MUST NOT require a new Component State merely because presentation metadata changes; a Component State changes only when its applicable historical schema says a changed value belongs to that state. Implementations MAY keep operational/audit creation timestamps outside the generic Component object, but those timestamps MUST NOT affect Component identity or historical object identity unless another approved schema explicitly includes them elsewhere.
+
+The generic Creative Component object has no `project_id` back-reference. Association is expressed by membership/reference in Project State as specified in section 13. This does not define or imply any cross-Project reuse, copy, import, move, clone, fork, or ownership semantics.
 
 Changing:
 
@@ -537,6 +539,8 @@ Deleting a component from one Project State does not erase the Component's histo
 # 10. Component State
 
 A Component State describes one immutable state of a Creative Component.
+
+It MUST identify the Creative Component whose state it represents by its typed `component_id`. The Component State's own schema determines which creative-state fields it contains; the generic Creative Component object is not expanded by those fields.
 
 The `parents` field is optional. When present, it is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. An explicitly empty `parents` array identifies an initial state with zero parents. An omitted `parents` field means parentage is unknown or not asserted; it MUST NOT be interpreted as proof that the state is initial. Implementations MUST NOT fabricate parentage for unknown historical lineage.
 
@@ -666,7 +670,7 @@ The DAW Adapter Specification will define exactly how adapters create and restor
 
 A Project State defines one complete logical creative state.
 
-The `components` member is a JSON object map keyed by Creative Component Identifier. Its canonical serialization uses RFC 8785 object-member ordering solely, as specified in section 5.1.
+The `components` member is a JSON object map keyed by Creative Component Identifier, with each value referencing the corresponding Component State Identifier. This Project State membership/reference is the association between the Project and the participating Creative Components; the Creative Component object has no `project_id` back-reference. A Project State therefore determines which Creative Components and corresponding Component States participate in that historical Project State. Its canonical serialization uses RFC 8785 object-member ordering solely, as specified in section 5.1.
 
 Conceptual structure:
 

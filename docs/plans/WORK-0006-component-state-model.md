@@ -17,6 +17,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - ADR-0007 for the generic Resource Reference schema and identity boundary.
 - ADR-0008 for the exact `byte_length` integer range and rejection rules.
 - ADR-0009 for applicable schema/Adapter validation and historical admission of Resource Reference `properties`.
+- ADR-0010 for the one-field Creative Component object and separation of Component State from Project State membership.
 
 ## Dependencies
 
@@ -37,6 +38,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 ## Acceptance tests
 
 - A published Component State cannot be changed in place.
+- Each Component State identifies the Creative Component whose state it represents by its typed `component_id`; Component State creative fields do not expand the generic Creative Component object.
 - A changed Resource reference produces a distinct Component State identity.
 - Resource references use immutable Resource identifiers.
 - Each embedded Resource Reference has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count, represented as an integer in `0 ..= 9007199254740991`; reject negative, fractional, greater-than-maximum, string, and other alternate representations (ADR-0008).

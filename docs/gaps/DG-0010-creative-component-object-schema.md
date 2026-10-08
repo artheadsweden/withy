@@ -1,6 +1,6 @@
 # DG-0010 — Creative Component object schema and metadata semantics
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead during WORK-0005 revalidation
 Discovered during: WORK-0005 — Creative Component identity model
@@ -37,15 +37,16 @@ Choosing a schema or assigning historical/mutable semantics would affect interop
 ## Affected work
 
 - WORK-0005: Creative Component identity/model schema and its acceptance tests.
-- Downstream Component State and Project State model packages only to the extent they need to embed or bind the unresolved Component object fields; WORK-0006 and later packages remain unstarted pending the normal sequence.
+- WORK-0006 and WORK-0007: consume the identity/Project State membership boundary without expanding the generic Component object.
+- WORK-0008: continues to identify a Project State; no direct Revision schema change is required.
 
 ## Can unaffected work continue?
 
-Yes. Completed and independently verified WORK-0001 through WORK-0004 remain unaffected. WORK-0005 is blocked. Do not begin WORK-0006 or later M1 packages until WORK-0005 is resolved and completed under its approved boundary.
+Yes. Completed and independently verified WORK-0001 through WORK-0004 remain unaffected. The approved decision resolves the WORK-0005 blocker. The package may proceed under ADR-0010; downstream packages remain subject to their normal sequence and dependencies.
 
 ## Candidate directions
 
-None selected. Possible object-field and metadata placements are discussion material only and are not normative.
+Before resolution, possible object-field and metadata placements were discussion material only and were not normative. The approved direction is recorded exclusively in ADR-0010 and the updated Specs.
 
 ## Required decision
 
@@ -53,4 +54,12 @@ Define the OMVCS 0.1 Creative Component object boundary: whether it has fields b
 
 ## Resolution
 
-UNRESOLVED
+Resolved by the human-approved decision recorded in [ADR-0010](../decisions/ADR-0010-creative-component-identity-boundary.md) and implemented in the affected Specs:
+
+- The generic OMVCS 0.1 Creative Component object contains only its required assigned `component_id`.
+- Project association is represented through Project State membership/reference to Component and Component State identifiers; there is no Component `project_id`.
+- `kind`, `name`, `created_at`, and comparable descriptive fields are excluded from the generic object and do not affect Component identity. Historical significance is determined only by an approved schema that places a value in Component State or Adapter State.
+- Presentation renames do not change Component identity or automatically require a new Component State.
+- This resolution defines no cross-Project reuse, copy, import, move, clone, fork, ownership, or identity-preservation semantics. These behaviors remain unspecified by design and must not be inferred.
+
+Cross-Spec review found no unresolved contradiction requiring another Design Gap. Existing Project State membership and Adapter State mapping already express the relationships needed by the approved M1 model without selecting cross-Project lifecycle behavior.

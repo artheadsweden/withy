@@ -63,7 +63,7 @@ A Project MAY contain many Lines, Revisions, Releases, Contributions and Creativ
 
 ## Creative Component
 
-A **Creative Component** is a persistent semantic part of a Project whose evolution may be tracked independently.
+A **Creative Component** is a stable logical identity anchor for persistent creative meaning whose evolution may be tracked independently.
 
 Examples:
 
@@ -81,15 +81,21 @@ Examples:
 
 A Creative Component is not merely a filename.
 
-For example, `bass.wav` can change repeatedly while the logical Creative Component remains **Bass**.
+For example, `bass.wav` can change repeatedly while the logical Creative Component remains **Bass**; **Bass** here is a presentation label, not a field of the generic Core object.
 
 A Creative Component MUST have a stable identifier independent of the Resource Objects used to represent its different states.
+
+In OMVCS 0.1, the generic Creative Component object contains only its assigned, globally stable `component_id`. It has no `project_id` back-reference; association with a Project is represented by membership in a Project State. Its identifier is independent of Project membership, Component State parentage, DAW-native identifiers, Resource content, names, descriptive metadata, timestamps, storage, Platform accounts, and locations. This does not define cross-Project reuse, copy, import, move, clone, fork, or ownership semantics.
+
+Generic Core Creative Component objects do not contain `kind`, `name`, `created_at`, or comparable descriptive fields. Presentation labels belong to mutable descriptive/local/Platform metadata unless an approved historical schema explicitly assigns them historical meaning. DAW-native naming or classification belongs in Adapter State when required by an Adapter; creative values defined by an approved Component State schema belong in Component State. A descriptive rename does not change Component identity and does not, by itself, require a new Component State.
 
 A Project MAY contain multiple components of the same general kind, such as:
 
 - Lead Guitar;
 - Rhythm Guitar;
 - Guitar Solo.
+
+These examples describe creative groupings or presentation labels; they do not define a generic Core `kind` field.
 
 **Git analogy:** none.
 
@@ -110,6 +116,8 @@ Platform/account linkage and proof that an account controls or represents an Act
 ## Component State
 
 A **Component State** is one immutable historical state of a Creative Component.
+
+A Component State identifies the Creative Component whose state it represents by its `component_id`. Its applicable historical schema determines its creative-state fields; those fields do not become fields of the generic Creative Component object. Project State membership determines whether the Component and its corresponding Component State participate in a particular historical Project State.
 
 For example:
 

@@ -194,6 +194,7 @@ permissions metadata
 ```
 
 The exact set depends on Project visibility and permissions.
+Creative Component metadata in a Platform Mirror is descriptive/platform metadata, not fields of the generic OMVCS 0.1 Creative Component object. In particular, names and classifications MUST NOT be treated as Component identity or as historical Core fields merely because they are mirrored or indexed.
 
 ---
 
@@ -641,6 +642,7 @@ Contribution Intent
 ```
 
 Only metadata visible to the searching user may be indexed for them.
+Indexed Component names are descriptive Platform/UI metadata. Indexing or changing a name MUST NOT change the Creative Component Identifier or, by itself, require a new Component State. An approved historical schema may separately define a value as part of Component State.
 
 ---
 

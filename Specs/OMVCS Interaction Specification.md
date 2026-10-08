@@ -1172,6 +1172,8 @@ B3 — Fretless version
 B4 — Anna's contribution
 ```
 
+Names and descriptions shown in this UI are presentation metadata, not fields of the generic OMVCS 0.1 Creative Component object. Their display or change MUST NOT by itself change the Component Identifier or require a new Component State. Historical significance is determined only by the applicable approved Component State schema.
+
 ---
 
 # 52. Try Component Version
@@ -1235,6 +1237,7 @@ Integrated in Version 22
 ```
 
 Provenance presentation MUST NOT imply legal ownership beyond known facts.
+The displayed Component name is a presentation label, not a field of the generic Core Creative Component object.
 
 ---
 

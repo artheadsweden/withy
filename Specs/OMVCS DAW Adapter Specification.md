@@ -707,7 +707,9 @@ Electric Bass
 
 MUST NOT automatically create a new Creative Component if the underlying stable DAW entity remains the same.
 
-The Adapter SHOULD treat this as metadata evolution.
+The generic OMVCS 0.1 Creative Component object contains only `component_id`; the name is not a Core Component field. The Adapter MUST preserve the Component Identifier for a presentation rename of the same underlying stable DAW entity. Presentation/friendly labels belong to mutable descriptive, local, or Platform metadata unless an approved historical schema explicitly assigns them historical meaning.
+
+DAW-native naming, classification, native identifiers, or reconstruction-relevant values required by the Adapter belong in Adapter State. A value belongs in Component State only when its applicable historical Component State schema explicitly defines it as creative state. Generic Core MUST NOT require a new Component State merely because presentation metadata changes; whether a schema-defined historical value changes Component State is determined by that schema.
 
 ---
 
