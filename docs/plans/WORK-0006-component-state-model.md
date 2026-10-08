@@ -13,9 +13,10 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 
 - Glossary: Component State.
 - Core Specification, sections 5.1, 7, 10–11, and 23.
-- Core Invariants: INV-HIST-001–003, INV-HIST-006, INV-RES-004, INV-PROJ-002, INV-PROV-003.
+- Core Invariants: INV-HIST-001–003, INV-HIST-006, INV-RES-004, INV-RES-008, INV-PROJ-002, INV-PROV-003, INV-DAW-004.
 - ADR-0007 for the generic Resource Reference schema and identity boundary.
 - ADR-0008 for the exact `byte_length` integer range and rejection rules.
+- ADR-0009 for applicable schema/Adapter validation and historical admission of Resource Reference `properties`.
 
 ## Dependencies
 
@@ -40,6 +41,9 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - Resource references use immutable Resource identifiers.
 - Each embedded Resource Reference has a typed Resource Identifier and a `byte_length` equal to the complete Resource's byte count, represented as an integer in `0 ..= 9007199254740991`; reject negative, fractional, greater-than-maximum, string, and other alternate representations (ADR-0008).
 - Embedded Resource Reference length vectors accept `0`, `1`, `9007199254740991` and reject `-1`, `1.5`, `9007199254740992`, and `"1"`.
+- Every embedded Resource Reference without `properties` passes generic Core validation; any present `properties`, including an empty map, is admitted only after validation under the exact versioned context governing its Component State use.
+- Rejected, unknown, unavailable, or non-unique property validation context prevents admission of that Component State as valid history; preserved unchecked candidates cannot be hashed or committed as valid history.
+- Component State identity contains property values after successful validation but not validation status/evidence; context-driven shapes, nested array declarations, and recursive duplicate-member rejection are enforced.
 - Changing a canonical Resource Reference field value changes Component State identity but does not change Resource Identifier for unchanged raw bytes; reordering `properties` map insertion does not change identity.
 - An initial state with zero parents is valid; known derived states SHOULD record one or more parents.
 - An explicit empty `parents` array identifies a known initial state; an omitted field does not imply initial state.
@@ -57,6 +61,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 ## Known Design Gaps
 
 - DG-0007 and DG-0008 are resolved by ADR-0007 and ADR-0008; apply the same Resource Reference schema and safe-integer validation to embedded references.
+- DG-0009 is resolved by ADR-0009; apply the same exact-context properties validation and unchecked-to-historical admission boundary to every embedded Resource Reference.
 
 ## Implementation plan
 

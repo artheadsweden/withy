@@ -161,6 +161,8 @@ The Resource Reference MAY contain a semantic role, intended media/content type,
 
 A historical Resource Reference MUST NOT contain a logical/Friendly Name or filename, Chunk or Chunk Manifest information, Storage Endpoint or Location, Replica information, credentials, provider metadata, or other physical reconstruction/storage details. Such information MUST NOT affect historical object identity.
 
+When `properties` is present, a Resource Reference MUST be validated under the exact applicable versioned schema or Adapter context before admission into a valid historical object. The applicable context MUST be determinable from the containing object's schema/Adapter contract. Core MUST enforce generic structure and canonicalization; the applicable schema or Adapter authority MUST enforce semantic admissibility and the exclusions above. An unchecked candidate with unknown, unavailable, or non-unique validation context MUST NOT be admitted to valid history or used to produce a valid historical identity. Validation status and evidence MUST NOT affect canonical historical identity.
+
 ---
 
 ## INV-RES-005 — One Resource Object may have many replicas
@@ -201,6 +203,16 @@ from:
 > resource is currently retrievable.
 
 Unavailability MUST NOT be represented by deleting or rewriting history.
+
+---
+
+## INV-RES-008 — Property-bearing Resource References require contextual validation
+
+A Resource Reference with `properties` MUST pass generic Core validation and semantic validation under the exact applicable versioned schema or Adapter context before it is admitted into a valid historical object.
+
+The containing schema/Adapter contract MUST identify the applicable context unambiguously. Core owns generic structural and canonical validation; the applicable schema or Adapter authority owns semantic admissibility and MUST enforce the exclusions in INV-RES-004. Core MUST NOT infer semantic admissibility from property names or heuristics.
+
+A candidate whose applicable validation context is unknown, unavailable, or non-unique MAY be preserved as unchecked data, but MUST NOT be admitted into valid historical state, used to produce a valid historical object identity, or committed as valid OMVCS history. Validation status and evidence MUST NOT affect canonical historical identity.
 
 ---
 
@@ -338,6 +350,8 @@ OMVCS Core MUST NOT need to understand the internal meaning of:
 - plugin-specific automation structures.
 
 The Adapter translates those concepts into the OMVCS contract.
+
+For Resource Reference `properties` supplied under an Adapter schema, that Adapter owns semantic validation under the exact applicable versioned context and MUST reject properties that encode information prohibited by INV-RES-004. Core owns generic structural and canonical validation and MUST NOT infer Adapter-specific meanings. An Adapter MUST NOT claim a containing historical object valid when required property validation has not succeeded.
 
 ---
 
