@@ -484,7 +484,7 @@ Ardour Track "Bass"
 OMVCS Creative Component "Bass"
 ```
 
-But a Track and a Creative Component are not formally identical.
+The quoted names are illustrative presentation labels, not fields of the generic OMVCS 0.1 Creative Component object. A Track and a Creative Component are not formally identical.
 
 ---
 
@@ -563,6 +563,7 @@ same OMVCS Creative Component
 ```
 
 The Adapter reports the display metadata change.
+The displayed route name is not a field of the generic OMVCS 0.1 Creative Component object. Keep it as presentation metadata unless an approved historical schema gives it historical meaning; if required for Ardour reconstruction, represent it in Adapter State. A route rename does not change the Component Identifier or by itself require a new Component State.
 
 ---
 

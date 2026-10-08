@@ -24,6 +24,7 @@ Represent one complete immutable logical Project State using stable Project iden
 - ADR-0009 defines the versioned schema/Adapter validation authority and historical admission boundary for Resource Reference `properties`.
 - Hashed JSON object maps follow RFC 8785 member ordering only, and duplicate member names are rejected before hashing/canonical serialization (ADR-0005).
 - `component_bindings` is keyed by Creative Component Identifier and map values carry adapter-specific binding records; the key is not duplicated in the value (ADR-0006).
+- ADR-0010 defines Project State membership/reference as the Project-to-Component association; do not add a `project_id` back-reference or infer cross-Project ownership/reuse behavior.
 - DEC-PLATFORM-016 remains open. Do not add licensing fields to the M1 Project State model unless its ownership/location is decided first.
 
 ## Allowed scope
@@ -50,6 +51,7 @@ Represent one complete immutable logical Project State using stable Project iden
 - Adapter schema validation rejects ADR-0007-excluded semantics under alternate keys and nested values; Core performs generic structure, duplicate-name, canonicalization, and nested collection validation without interpreting Adapter-specific values.
 - Adapter State `component_bindings` uses a Creative-Component-Identifier-keyed object map whose values contain adapter-specific binding records; values do not repeat the key merely to restate the identifier.
 - Project identity and Component State references are explicit and stable.
+- Project State membership determines which Creative Components and corresponding Component States participate in that historical Project State; the Creative Component object itself has no `project_id`.
 - Storage locations, platform URLs, local paths, and availability do not enter Project State identity.
 - Different creative-object references yield different Project State identities.
 - Component, Adapter State binding, and project-metadata map insertion-order permutations yield identical canonical bytes/identities; duplicate member names are rejected; no additional entry sorting is applied.

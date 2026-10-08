@@ -238,6 +238,12 @@ Replacing `bass.wav` with a new recording MUST NOT automatically create a new lo
 
 Instead, the existing Creative Component normally receives a new Component State.
 
+The Creative Component Identifier MUST be an assigned identifier independent of Resource content, Component State parentage, DAW-native identifiers, Project membership, names, descriptive metadata, timestamps, storage, Platform accounts, and locations. In OMVCS 0.1, the generic Creative Component object contains only its `component_id`; Project association is represented by Project State membership/reference, not by a `project_id` field on the Component.
+
+`kind`, `name`, `created_at`, and comparable descriptive values MUST NOT be fields of the generic Creative Component object or affect Component identity. A presentation rename MUST NOT create a new Component Identifier. Generic Core MUST NOT require a new Component State for a descriptive change unless the applicable historical Component State schema defines the changed value as part of that state.
+
+This invariant does not define cross-Project reuse, copy, import, move, clone, fork, or ownership semantics.
+
 ---
 
 ## INV-PROJ-003 — Filenames are not identities
