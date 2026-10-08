@@ -4,9 +4,9 @@ This file records operational development-project state that agents must not inf
 
 ## Remote publishing
 
-Remote publishing: DISABLED
+Remote publishing: ENABLED
 
-Approved remote: NONE
+Approved remote: origin
 
 Rules:
 

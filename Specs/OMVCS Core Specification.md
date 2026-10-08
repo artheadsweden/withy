@@ -279,7 +279,7 @@ The following collection fields in the OMVCS 0.1 conceptual object models have t
 | Component State `resources` | Set-like collection of Resource References required by that state. |
 | Component State `metadata` | JSON object map keyed by metadata property name. |
 | Adapter State `resources` | Set-like collection of native Resource References. |
-| Adapter State `component_bindings` | JSON object map keyed by Creative Component Identifier. |
+| Adapter State `component_bindings` | JSON object map keyed by Creative Component Identifier; each value is an adapter-specific binding record. |
 | Adapter State `metadata` | JSON object map keyed by metadata property name. |
 | Project State `components` | JSON object map keyed by Creative Component Identifier. |
 | Project State `project_metadata` | JSON object map keyed by metadata property name. |
@@ -569,7 +569,7 @@ OMVCS represents this through **Adapter State**.
 
 Every Adapter State MUST be a canonical OMVCS metadata object with its own content-derived Adapter State Identifier. It MAY reference one or more opaque Resource Objects containing native DAW state. A native Resource Object MUST NOT serve directly as the complete Adapter State.
 
-In the conceptual structure below, `resources` is set-like. `component_bindings` is a JSON object map keyed by Component Identifier and follows RFC 8785 map canonicalization as specified in section 5.1. Any array-valued collection in adapter-specific metadata or extensions that participates in Adapter State identity MUST declare its ordering semantics in the Adapter State schema and follow section 5.1.
+In the conceptual structure below, `resources` is set-like. `component_bindings` is a JSON object map keyed by Creative Component Identifier and follows RFC 8785 map canonicalization as specified in section 5.1. Each map value is an adapter-specific binding record, which MAY contain fields such as `binding_kind`, `native_ids`, and other metadata permitted by that Adapter State schema. The Creative Component Identifier MUST NOT be duplicated inside the value merely to repeat the map key unless a future schema has a separate justified need. Any array-valued collection in a binding record, adapter-specific metadata, or extensions that participates in Adapter State identity MUST declare its ordering semantics in the Adapter State schema and follow section 5.1.
 
 Conceptually:
 
@@ -589,8 +589,14 @@ Conceptually:
   ],
 
   "component_bindings": {
-    "019cc-bass": "ardour-route-id-817",
-    "019cc-vocal": "ardour-route-id-922"
+    "019cc-bass": {
+      "binding_kind": "ardour-route",
+      "native_ids": ["ardour-route-id-817"]
+    },
+    "019cc-vocal": {
+      "binding_kind": "ardour-route",
+      "native_ids": ["ardour-route-id-922"]
+    }
   },
 
   "metadata": {}

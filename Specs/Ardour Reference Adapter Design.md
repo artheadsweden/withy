@@ -519,14 +519,12 @@ Adapter State SHOULD contain a stable mapping such as:
 
 ```json
 {
-  "component_bindings": [
-    {
-      "component_id": "019-bass...",
+  "component_bindings": {
+    "019-bass...": {
       "binding_kind": "ardour-route",
       "native_ids": ["route-id-123"]
     },
-    {
-      "component_id": "019-drums...",
+    "019-drums...": {
       "binding_kind": "ardour-route-group",
       "native_ids": [
         "route-kick",
@@ -534,13 +532,13 @@ Adapter State SHOULD contain a stable mapping such as:
         "route-overheads"
       ]
     }
-  ]
+  }
 }
 ```
 
-The exact Ardour ID representation must be taken from native stable identities, not route names.
+Each map key is a Creative Component Identifier; each value contains the Ardour-specific binding record. Do not repeat the Component Identifier inside the value. The exact Ardour ID representation must be taken from native stable identities, not route names.
 
-The `component_bindings` array and each binding's `native_ids` array are set-like: their member order carries no semantics, and duplicate members are invalid. Any Adapter State collection introduced in a later schema MUST be classified explicitly and normalized according to Core Specification section 5.1.
+`component_bindings` is a JSON object map: insertion order has no semantic significance, and its canonical serialization follows RFC 8785 object-member ordering solely. Duplicate member names MUST be rejected before hashing or canonical serialization; no additional entry-sorting transformation applies. Each binding's `native_ids` array is set-like: its member order carries no semantics, and duplicate members are invalid. Any other array-valued collection introduced in a later schema MUST be classified explicitly and normalized according to Core Specification section 5.1.
 
 ---
 
@@ -696,13 +694,12 @@ A conceptual Ardour Adapter State:
     }
   ],
 
-  "component_bindings": [
-    {
-      "component_id": "...",
+  "component_bindings": {
+    "...creative-component-id...": {
       "binding_kind": "ardour-route",
       "native_ids": ["..."]
     }
-  ],
+  },
 
   "dependencies": [],
 
@@ -710,9 +707,9 @@ A conceptual Ardour Adapter State:
 }
 ```
 
-The conceptual structure is a canonical OMVCS metadata object. The real schema must be canonical and deterministic, and the Project State references this object rather than any native-state Resource directly.
+The conceptual structure is a canonical OMVCS metadata object. `component_bindings` is keyed by Creative Component Identifier; the binding value MUST NOT duplicate that identifier merely to repeat the key. The real schema must be canonical and deterministic, and the Project State references this object rather than any native-state Resource directly.
 
-For this conceptual Adapter State schema, `native_state_resources`, `component_bindings`, and each binding's `native_ids` are set-like collections: member order carries no semantics, and duplicate members are invalid. Any later collection field added to a hashed Ardour Adapter State schema MUST explicitly declare its ordering semantics and follow Core Specification section 5.1. Ardour-native order that has creative meaning remains represented in the native Session Resource, not in the set-like identity of these references.
+For this conceptual Adapter State schema, `native_state_resources` and each binding's `native_ids` are set-like arrays: member order carries no semantics, and duplicate elements are invalid. `component_bindings` is a JSON object map, not an array collection, and follows RFC 8785 object-member ordering solely; duplicate member names are invalid and MUST be rejected before hashing or canonical serialization. Any other array-valued collection added to a hashed Ardour Adapter State schema MUST explicitly declare its ordering semantics and follow Core Specification section 5.1. Ardour-native order that has creative meaning remains represented in the native Session Resource, not in the set-like identity of these references.
 
 ---
 

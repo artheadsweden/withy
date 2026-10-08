@@ -1,6 +1,6 @@
 # DG-0006 — Adapter State component-bindings representation
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead
 Discovered during: M1 revalidation and planning
@@ -44,4 +44,4 @@ Should the Ardour Adapter State encode `component_bindings` using the generic Co
 
 ## Resolution
 
-UNRESOLVED
+Resolved by [ADR-0006](../decisions/ADR-0006-component-bindings-map.md). The generic Adapter State representation is authoritative: `component_bindings` is a JSON object map keyed by Creative Component Identifier, and each map value contains the adapter-specific binding record. The key MUST NOT be duplicated in the value merely to repeat it. The Ardour Reference Adapter Design has been updated to use this map representation. Map canonicalization follows ADR-0005.
