@@ -1,6 +1,6 @@
 # WORK-0001 — Normative identifier types
 
-Status: IN-PROGRESS
+Status: COMPLETE
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0001-identifiers`
