@@ -19,6 +19,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 
 - WORK-0001 through WORK-0003 and WORK-0007.
 - ADR-0010: Component identity is separate from Project State membership; a Revision continues to identify its Project State, which determines the participating Components and Component States.
+- ADR-0011: Component State references consumed through Project State use the closed 0.1 body and canonical identity contract.
 
 ## Allowed scope
 

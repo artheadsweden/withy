@@ -276,8 +276,8 @@ The following collection fields in the OMVCS 0.1 conceptual object models have t
 | Resource Reference `properties` | JSON object map keyed by property name. |
 | Chunk Manifest `chunks` | Ordered sequence in reconstruction order. |
 | Component State `parents` | Optional set-like collection of direct Component State parents. |
-| Component State `resources` | Set-like collection of Resource References required by that state. |
-| Component State `metadata` | JSON object map keyed by metadata property name. |
+| Component State `resources` | REQUIRED set-like collection of Resource References required by that state. |
+| Component State `metadata` | REQUIRED JSON object map keyed by metadata property name; the exact versioned Component State schema owns permitted keys, value shapes, meanings, and nested collection classifications. |
 | Adapter State `resources` | Set-like collection of native Resource References. |
 | Adapter State `component_bindings` | JSON object map keyed by Creative Component Identifier; each value is an adapter-specific binding record. |
 | Adapter State `metadata` | JSON object map keyed by metadata property name. |
@@ -540,17 +540,35 @@ Deleting a component from one Project State does not erase the Component's histo
 
 A Component State describes one immutable state of a Creative Component.
 
-It MUST identify the Creative Component whose state it represents by its typed `component_id`. The Component State's own schema determines which creative-state fields it contains; the generic Creative Component object is not expanded by those fields.
+The closed OMVCS 0.1 Component State historical body is a JSON object containing exactly these top-level members:
 
-The `parents` field is optional. When present, it is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. An explicitly empty `parents` array identifies an initial state with zero parents. An omitted `parents` field means parentage is unknown or not asserted; it MUST NOT be interpreted as proof that the state is initial. Implementations MUST NOT fabricate parentage for unknown historical lineage.
+| Member | Requirement | Meaning |
+|---|---|---|
+| `schema` | REQUIRED | Existing versioned schema identifier under section 76. |
+| `component_id` | REQUIRED | Typed Creative Component Identifier whose state this object represents. |
+| `parents` | OPTIONAL | Direct parent Component State Identifiers, when lineage is asserted. |
+| `resources` | REQUIRED | Resource References required by this state; MAY be empty. |
+| `metadata` | REQUIRED | Schema-owned creative-state metadata map; MAY be empty. |
+
+No additional top-level members are permitted in OMVCS 0.1. In particular, the fields of a Component State do not become fields of the generic Creative Component object defined in section 9.
+
+The exact versioned schema identified by `schema` owns the permitted metadata keys, required/optional metadata keys, value shapes and types, meanings, nested object schemas, and ordered/set-like classifications of nested arrays. Core MUST enforce generic structure and canonicalization and MUST NOT infer or invent metadata semantics. Unknown metadata keys, invalid shapes, and unclassified nested arrays MUST prevent admission unless the exact versioned schema explicitly permits them.
+
+The `parents` field is optional. When present, it is a set-like collection under section 5.1; element order has no semantic meaning and duplicate elements are invalid. An explicitly empty `parents` array identifies an initial state with zero parents. An omitted `parents` field means parentage is unknown or not asserted; it MUST NOT be interpreted as proof that the state is initial. Implementations MUST NOT fabricate parentage for unknown historical lineage.
 
 Derived states SHOULD record one or more parent Component States when their lineage is known. Parentage is mandatory only when a specific OMVCS operation or provenance rule explicitly requires preserving that derivation.
 
-The `resources` field is a set-like collection: its element order has no semantic meaning, and duplicate elements are invalid. Present collection fields MUST be normalized as specified in section 5.1 before the object is hashed.
+The required `resources` field is a set-like collection under section 5.1; element order has no semantic meaning and duplicate elements are invalid. It MAY be empty; omission is invalid. Every Resource Reference in `resources` MUST satisfy section 7 before inclusion. A Resource Reference with `properties` MUST be validated under its exact applicable versioned authority before the Component State can be admitted as valid history. Every versioned Component State schema that permits such references MUST bind each property-bearing context to exactly one validation authority/version. That authority MAY be the Component State schema itself or an explicitly bound versioned Adapter/schema authority. The binding MUST be determinable from the Component State schema/Adapter contract and existing context; no independent property-schema field is added to Resource Reference. Unknown, unavailable, or non-unique context leaves the reference unchecked and prevents admission of the containing Component State as valid history. A Resource Reference without `properties` continues to require only generic Core validation.
 
-Each Resource Reference in `resources` MUST satisfy the Resource Reference admission rules in section 7 before it is included in this Component State. If `properties` is present, its values MUST be validated against the versioned schema context governing this Component State.
+The required `metadata` field is a JSON object map under section 5.1 and MAY be empty; omission is invalid. Its exact versioned Component State schema owns its values and their semantics. Map insertion order has no semantic significance; duplicate member names are invalid and RFC 8785 ordering applies without additional entry sorting.
 
-Canonical conceptual structure:
+The Component State candidate MUST validate against its exact, known and available `schema` version before admission as valid historical state. An unknown or unavailable schema MAY be preserved as uninterpreted candidate data, but MUST NOT be treated as valid history or used to produce a valid Component State Identifier.
+
+The canonical historical body and Component State hash preimage contain exactly `schema`, `component_id`, `resources`, `metadata`, and `parents` only when `parents` is present. Every present member participates in identity, including `schema`. Under the existing WORK-0002/WORK-0003 rules, the Component State Identifier is SHA-256 over the canonical serialized body bytes; no object-type/domain prefix is included in the digest input. Validation evidence, validator identity, callbacks, timestamps, presentation metadata, storage information, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage.
+
+OMVCS 0.1 defines no arbitrary top-level extension mechanism for Component State. Schema-specific creative semantics MUST be expressed through the schema-owned `metadata` map and the already-defined `resources` Resource References. Adding a top-level member requires an explicit future versioned specification and compatibility decision.
+
+Normative OMVCS 0.1 body shape:
 
 ```json
 {
@@ -571,13 +589,11 @@ Canonical conceptual structure:
     }
   ],
 
-  "metadata": {
-    "description": "Fingerstyle bass take"
-  }
+  "metadata": {}
 }
 ```
 
-The Component State Identifier is the hash of the canonical representation.
+The `parents` member is shown as a non-empty set-like collection in this example. If it is omitted from a Component State body, lineage is unknown or unasserted; omission does not mean that this is known to be an initial state.
 
 ---
 
@@ -1977,6 +1993,7 @@ validate canonical object hashes
 validate Revision references
 validate Project State references
 validate Component State references
+validate each Component State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
 validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
 validate Release targets
 validate Line targets
@@ -2454,6 +2471,8 @@ An implementation MUST reject or preserve-but-not-interpret schema versions it c
 
 It MUST NOT reinterpret unknown versions according to a guessed older schema.
 
+For Component State, an unknown or unavailable schema version MAY be preserved only as uninterpreted candidate data. Such preservation MUST NOT establish a valid historical Component State or a valid Component State Identifier.
+
 Preserving an unknown or unavailable schema version does not make a candidate Resource Reference with `properties` valid for historical admission. Such a candidate MUST remain unchecked and MUST NOT be used to produce or commit a valid historical object until the exact applicable schema or Adapter context can validate it under section 7.
 
 ---
@@ -2467,6 +2486,8 @@ They MUST NOT redefine the meaning of already published object schemas.
 A new semantic interpretation requires a new schema version.
 
 Changing the admissibility or interpretation of Resource Reference `properties` requires a new version of the applicable containing schema or Adapter schema. Implementations MUST NOT apply a newer property's validation rules to an older historical schema version.
+
+The OMVCS 0.1 Component State top-level member set is closed. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Component State members as 0.1.
 
 This ensures old creative history remains interpretable.
 

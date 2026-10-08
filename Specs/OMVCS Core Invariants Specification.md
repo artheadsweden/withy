@@ -106,6 +106,8 @@ Every array-valued collection field included in a hashed OMVCS metadata object M
 
 Ordered array collections MUST preserve their semantic order. Set-like array collections MUST be canonically sorted before serialization, and duplicate elements MUST be rejected, according to the canonical serialization rules in the Core Specification. Map entries MUST NOT be sorted using the set-like array element-byte rule.
 
+The OMVCS 0.1 Component State historical body MUST contain exactly `schema`, `component_id`, `resources`, and `metadata`, and MAY contain `parents`; no other top-level members are permitted. `schema`, `component_id`, `resources`, and `metadata` are required; `resources` MAY be empty and `metadata` MAY be an empty object map. The Component State Identifier MUST be derived from the canonical body containing all and only these members, including `parents` only when present. The exact versioned Component State schema owns metadata keys, value shapes, meanings, and nested array classifications.
+
 ---
 
 ## INV-HIST-007 — Actor identity is stable and independent of accounts and keys
@@ -213,6 +215,8 @@ A Resource Reference with `properties` MUST pass generic Core validation and sem
 The containing schema/Adapter contract MUST identify the applicable context unambiguously. Core owns generic structural and canonical validation; the applicable schema or Adapter authority owns semantic admissibility and MUST enforce the exclusions in INV-RES-004. Core MUST NOT infer semantic admissibility from property names or heuristics.
 
 A candidate whose applicable validation context is unknown, unavailable, or non-unique MAY be preserved as unchecked data, but MUST NOT be admitted into valid historical state, used to produce a valid historical object identity, or committed as valid OMVCS history. Validation status and evidence MUST NOT affect canonical historical identity.
+
+For a property-bearing Resource Reference in Component State, the exact versioned Component State schema MUST deterministically bind the permitted context to exactly one validation authority/version. The authority MAY be that Component State schema or an explicitly bound versioned Adapter/schema authority, and MUST be determinable from the containing schema/Adapter contract. An unknown, unavailable, or non-unique binding leaves the Resource Reference unchecked and MUST prevent admission of the containing Component State. No independent property-schema field is added to Resource Reference.
 
 ---
 

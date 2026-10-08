@@ -1,6 +1,6 @@
 # DG-0011 — Component State schema and hash preimage
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-MILESTONE
 Discovered by: Spec Guardian
 Discovered during: WORK-0006 preflight
@@ -86,6 +86,13 @@ The decision must preserve the already-resolved `component_id`, parentage, colle
 
 ## Resolution
 
-UNRESOLVED
+Resolved by the human-approved decision recorded in [ADR-0011](../decisions/ADR-0011-component-state-schema-and-hash-preimage.md) and implemented in the affected Specs:
 
-When resolved, link the approved ADR and resulting specification changes here.
+- The OMVCS 0.1 Component State body is closed: required `schema`, `component_id`, `resources`, and `metadata`; optional `parents`; no other top-level members.
+- `resources` is a required set-like array and may be empty. `metadata` is a required map and may be empty; its exact versioned Component State schema owns keys, shapes, meanings, and nested array classifications.
+- The canonical hash preimage contains exactly all required members and `parents` only when present; all present fields, including `schema`, participate in identity.
+- Each permitted property-bearing Resource Reference context is bound by the exact versioned schema/Adapter contract to one validation authority/version. Unknown, unavailable, or non-unique contexts remain unchecked and cannot enter valid history.
+- Unknown or unavailable Component State schema candidates may be preserved uninterpreted, but cannot be admitted as valid history or assigned a valid Component State Identifier.
+- No arbitrary top-level extension mechanism is defined for OMVCS 0.1.
+
+Search across all eight Specs found no additional contradiction requiring another Design Gap. The Ardour reference design contains no conflicting generic Component State body schema; it remains subject to the generic Core contract.

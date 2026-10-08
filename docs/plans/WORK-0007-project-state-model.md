@@ -25,6 +25,7 @@ Represent one complete immutable logical Project State using stable Project iden
 - Hashed JSON object maps follow RFC 8785 member ordering only, and duplicate member names are rejected before hashing/canonical serialization (ADR-0005).
 - `component_bindings` is keyed by Creative Component Identifier and map values carry adapter-specific binding records; the key is not duplicated in the value (ADR-0006).
 - ADR-0010 defines Project State membership/reference as the Project-to-Component association; do not add a `project_id` back-reference or infer cross-Project ownership/reuse behavior.
+- ADR-0011 defines the closed Component State historical body and valid identity that Project State component references consume.
 - DEC-PLATFORM-016 remains open. Do not add licensing fields to the M1 Project State model unless its ownership/location is decided first.
 
 ## Allowed scope

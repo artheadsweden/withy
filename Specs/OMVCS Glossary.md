@@ -117,7 +117,7 @@ Platform/account linkage and proof that an account controls or represents an Act
 
 A **Component State** is one immutable historical state of a Creative Component.
 
-A Component State identifies the Creative Component whose state it represents by its `component_id`. Its applicable historical schema determines its creative-state fields; those fields do not become fields of the generic Creative Component object. Project State membership determines whether the Component and its corresponding Component State participate in a particular historical Project State.
+A Component State identifies the Creative Component whose state it represents by its typed `component_id`. In OMVCS 0.1 its closed historical object contains exactly required `schema`, `component_id`, `resources`, and `metadata`, plus optional `parents`. Its exact versioned schema owns the permitted `metadata` keys, shapes, meanings, and nested collection rules; these fields do not become fields of the generic Creative Component object. Project State membership determines whether the Component and its corresponding Component State participate in a particular historical Project State.
 
 For example:
 
@@ -128,6 +128,8 @@ or:
 > Lead Vocal → Take 7 with edited timing
 
 A Component State references the Resource Objects required to represent that state.
+
+The required `resources` array and required `metadata` map may be empty. `parents` is optional: omission means unknown or unasserted lineage, while an explicitly empty array means known zero-parent initial state. The Component State Identifier is derived from the canonical body, including every present field and the schema version. No additional top-level fields are permitted in OMVCS 0.1.
 
 Creating another bass recording MUST create another Component State rather than modifying the old one.
 

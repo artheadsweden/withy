@@ -575,6 +575,8 @@ The `adapter_id` and exact `adapter_state_schema` version identify the Adapter c
 
 For Adapter-supplied Resource Reference properties in any containing historical object, the Adapter contract MUST bind them to one exact versioned validation authority determinable from that object's schema/Adapter context. If the authority cannot be uniquely determined, the candidate remains unchecked and cannot be admitted as valid history. The Adapter MUST NOT add an independent Resource Reference property-schema identifier unless a future explicit decision establishes that the containing context cannot identify the validator.
 
+When a versioned Component State schema permits Adapter-supplied Resource Reference `properties`, that schema/Adapter contract MUST bind each permitted property-bearing context to exactly one versioned Adapter validation authority. The binding MUST be explicit and determinable from the containing Component State schema and Adapter context; an installed or latest Adapter version MUST NOT be selected by preference. If no unique authority is available, the Resource Reference remains unchecked and the Component State MUST NOT be admitted as valid history. A Resource Reference without `properties` continues to use generic Core validation only.
+
 Core owns generic Resource Reference structure, duplicate JSON member rejection, canonical validation, declared value shapes, nested collection classification, and historical admission mechanics. The applicable schema/Adapter authority owns semantic admissibility. Core MUST NOT infer it from key spellings, deny lists, heuristics, or DAW-specific knowledge.
 
 If an Adapter schema context is unknown, unavailable, or non-unique, an implementation MAY preserve or transport candidate data as unchecked, but MUST NOT admit it as a valid historical Resource Reference or Adapter State, use it to create a valid historical identity, or commit it into valid OMVCS history. Validation status, callbacks, timestamps, signatures, and other validation evidence are operational and MUST NOT be added to historical Resource Reference fields or canonical identity.
@@ -710,6 +712,8 @@ MUST NOT automatically create a new Creative Component if the underlying stable 
 The generic OMVCS 0.1 Creative Component object contains only `component_id`; the name is not a Core Component field. The Adapter MUST preserve the Component Identifier for a presentation rename of the same underlying stable DAW entity. Presentation/friendly labels belong to mutable descriptive, local, or Platform metadata unless an approved historical schema explicitly assigns them historical meaning.
 
 DAW-native naming, classification, native identifiers, or reconstruction-relevant values required by the Adapter belong in Adapter State. A value belongs in Component State only when its applicable historical Component State schema explicitly defines it as creative state. Generic Core MUST NOT require a new Component State merely because presentation metadata changes; whether a schema-defined historical value changes Component State is determined by that schema.
+
+For OMVCS 0.1, schema-defined Component State creative values are represented in its required `metadata` map, whose vocabulary and value shapes are owned by the exact versioned Component State schema. This does not make Adapter State values, DAW-native reconstruction fields, or presentation labels implicit Component State metadata.
 
 ---
 

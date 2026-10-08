@@ -1,6 +1,6 @@
 # WORK-0006 — Component State model
 
-Status: BLOCKED ON DG-0011
+Status: PLANNED
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0006-component-state`
@@ -18,10 +18,7 @@ Represent an immutable, content-addressed state of one Creative Component, inclu
 - ADR-0008 for the exact `byte_length` integer range and rejection rules.
 - ADR-0009 for applicable schema/Adapter validation and historical admission of Resource Reference `properties`.
 - ADR-0010 for the one-field Creative Component object and separation of Component State from Project State membership.
-
-## Blocker
-
-DG-0011 is OPEN. Do not begin implementation or select a Component State field set, requiredness rules, metadata value semantics, extension policy, complete hash preimage, or Resource Reference `properties` validation authority until the human decision is recorded in an ADR and the affected Specs are updated. The accepted rules listed above remain in force and are not reopened by DG-0011.
+- ADR-0011 for the closed OMVCS 0.1 Component State body, schema-owned metadata contract, exact hash preimage, and Resource Reference property-authority binding.
 
 ## Dependencies
 
@@ -50,6 +47,11 @@ DG-0011 is OPEN. Do not begin implementation or select a Component State field s
 - Every embedded Resource Reference without `properties` passes generic Core validation; any present `properties`, including an empty map, is admitted only after validation under the exact versioned context governing its Component State use.
 - Rejected, unknown, unavailable, or non-unique property validation context prevents admission of that Component State as valid history; preserved unchecked candidates cannot be hashed or committed as valid history.
 - Component State identity contains property values after successful validation but not validation status/evidence; context-driven shapes, nested array declarations, and recursive duplicate-member rejection are enforced.
+- The closed OMVCS 0.1 body requires `schema`, typed `component_id`, `resources`, and `metadata`; permits optional `parents`; accepts empty `resources` and `metadata`; and rejects omitted required members and all additional top-level members.
+- Unknown or unavailable Component State schema versions may be preserved as uninterpreted candidates but cannot be admitted as valid history or assigned a valid Component State Identifier.
+- Metadata keys, shapes, meanings, nested schemas, and array classifications are validated only under the exact versioned Component State schema; unknown/unpermitted keys or invalid shapes fail historical admission.
+- Each permitted property-bearing Resource Reference context is bound to exactly one exact versioned authority by the Component State schema/Adapter contract; no latest-version, installed-preference, key-heuristic, ambiguous, or independent Resource Reference schema-ID behavior is allowed.
+- The hash preimage contains exactly `schema`, `component_id`, `resources`, `metadata`, and `parents` only when present; changes to any present body field, including `schema`, change identity; validation evidence and operational/presentation/storage/transport fields are absent.
 - Changing a canonical Resource Reference field value changes Component State identity but does not change Resource Identifier for unchanged raw bytes; reordering `properties` map insertion does not change identity.
 - An initial state with zero parents is valid; known derived states SHOULD record one or more parents.
 - An explicit empty `parents` array identifies a known initial state; an omitted field does not imply initial state.
@@ -68,14 +70,14 @@ DG-0011 is OPEN. Do not begin implementation or select a Component State field s
 
 - DG-0007 and DG-0008 are resolved by ADR-0007 and ADR-0008; apply the same Resource Reference schema and safe-integer validation to embedded references.
 - DG-0009 is resolved by ADR-0009; apply the same exact-context properties validation and unchecked-to-historical admission boundary to every embedded Resource Reference.
-- DG-0011 is OPEN and blocks this package; its complete Component State schema, metadata semantics, exact hash field set, and properties-authority binding remain undecided.
+- DG-0011 is resolved by ADR-0011; implement its closed field set, schema-owned metadata semantics, exact canonical body, and property-authority binding without reopening the approved rules.
 
 ## Implementation plan
 
-1. BLOCKED: wait for DG-0011 resolution and approved Spec updates; do not implement the missing schema semantics.
-2. After resolution, implement the optional parentage semantics resolved in ADR-0003 without inventing operation-specific mandatory rules.
-3. Model the approved Component State references and immutable hash preimage.
-4. Add identity, reference-integrity, lineage, and permutation tests from the resolved rules.
+1. Implement the closed body and required/optional member validation from ADR-0011, preserving ADR-0003 parentage semantics.
+2. Model the schema-owned metadata and exact Resource Reference validation-authority context without adding generic Core property meanings.
+3. Model admitted Component State references and the exact immutable hash preimage.
+4. Add identity, requiredness, rejection, reference-integrity, lineage, and permutation tests from the approved rules.
 
 ## Verification requirements
 
