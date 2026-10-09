@@ -159,7 +159,9 @@ WORK-0014 must test read-only behavior, both scopes and all depths,
 result-state separation, typed findings, exact boundary lookup, provider
 failures, unavailable root classes, no false completeness/global
 unreachability, no implicit fetch/materialisation, and invocation-error
-versus completed-report behavior.
+versus completed-report behavior. The later Working State safety-reference
+coverage is defined by ADR-0030; the treatment of a missing safety-reference
+target against a declared history boundary remains open under DG-0028.
 
 ## Implementation impact
 
@@ -177,3 +179,10 @@ Resource identity, storage-provider mechanics, or durable metadata format.
 ## Notes
 
 No general error-precedence framework is established.
+
+ADR-0030 extends the applicable §62 root coverage without changing this
+validation operation's report contract. Repository-wide reachability remains
+partial while later root classes are unsupported.
+
+ADR-0031 specifies that missing Working State safety-reference root targets
+are `unresolved` and do not use declared-boundary lookup.

@@ -338,6 +338,12 @@ metadata and is not itself a reachability root merely by existing.
 
 A Working State is not necessarily part of Project history.
 
+For reachability, the current persisted Working State contributes a safety
+root for its present Base Revision and for each present historical
+`ComponentStateId` in its component-source mapping. It does not contribute
+roots through its Line association, `AdapterWorkingStateRef`, recovery
+condition, or Core change status. See Reachability.
+
 It MAY contain:
 
 - checked-out Resource Objects;
@@ -799,6 +805,11 @@ one required historical reference is intentionally omitted. It identifies
 the referring object Identifier, the normative edge kind, the omitted
 target Identifier, and the `intentional_omission` classification. A
 human-readable reason MAY also be recorded.
+
+The referring Identifier and edge kind identify a required reference from
+historical metadata. A missing Working State safety-reference root target
+has no historical referring object and is reported as unresolved rather than
+matched to a declared boundary.
 
 A boundary classifies an omission; it does not resolve, validate,
 fabricate, rewrite, or admit the target, alter historical identity or
@@ -1301,10 +1312,14 @@ Orphan status does not imply immediate deletion.
 
 - active Lines;
 - Releases;
+- explicit Working State safety references (the current persisted Base
+  Revision and present component-source Component States);
 - retained Contributions;
 - configured archival roots.
 
-Reachability is used for garbage collection.
+The Working State and operational Adapter reference are not themselves
+historical roots. Reachability is used for garbage collection and does not
+by itself authorize deletion.
 
 ---
 

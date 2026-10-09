@@ -6,6 +6,11 @@ The Verifier owns completeness of this map. Implementers update entries for thei
 
 Do not mark a requirement `done` merely because code exists. `done` means implementation and required verification are complete.
 
+The existing WORK-0013/0014 coverage records below describe their verified
+Line/Release-only integration scope. The ADR-0030 Working State-root
+extension is not implemented. ADR-0031 resolves missing-target behavior;
+implementation and independent verification remain pending.
+
 | Requirement | Work item | Implementation | Tests | Status |
 |---|---|---|---|---|
 | Assigned Project, Creative Component, Storage Endpoint, and Contribution IDs are generated as UUIDv7 in canonical lowercase form; Project and Component identity is independent of filenames, paths, storage endpoints, Platform URLs, and credentials (Core §§4, 9; INV-PROJ-001–003) | WORK-0001 | `crates/omvcs-model/` | generated UUIDv7/canonical text and strict UUID parsing; test fixture changes filename/path/storage/Platform/credential values while assigned IDs remain stable | verified |
@@ -124,3 +129,15 @@ Core §62 root requirements or authorize deletion.
 | WORK-0013 deterministic sorted/deduplicated output and explicit enumeration failures | `enumeration_order_and_duplicate_root_records_do_not_change_the_result`; `unresolved_references_from_convergent_roots_are_sorted_by_type_and_deduplicated`; `failed_root_enumeration_is_not_reported_as_an_empty_successful_result` |
 | Core §62 / WORK-0013 malformed graph termination without labeling referenced objects unreachable (synthetic graph unit tests, not cyclic admitted fixtures) | `malformed_parent_cycles_terminate_and_leave_independent_branches_reached`; `malformed_component_parent_cycles_terminate_without_fabricating_unresolved_ids`; `deep_parent_history_is_traversed_without_recursive_stack_growth` |
 | INV-GC-001–002 / INV-WORK-004–006 separation / ADR-0018, ADR-0025 / DG-0027: mutation-free, no invented roots or global unreachability classification | `reachability_does_not_mutate_roots_preferences_or_immutable_metadata`; `partial_result_does_not_invent_roots_or_label_unselected_history_globally_unreachable` |
+
+## ADR-0030 Working State-root extension coverage (planned)
+
+These requirements are normative under ADR-0030 but do not yet have
+implementation or test evidence. Existing WORK-0013 and WORK-0014 rows above
+remain verified only for their original Line/Release scope.
+
+| Requirement | Required acceptance coverage | Status |
+|---|---|---|
+| Current persisted Working State Base Revision and every present component-source Component State are safety roots (Core §§19, 62; INV-WORK-007; ADR-0030) | Base-only root; absent Base; source outside Base ancestry; absent source; duplicate sources; custom Working State; root convergence; current-record updates; Line movement independence; operational-field exclusions; Resource-byte independence | Planned, WORK-0013 extension not implemented |
+| WORK-0014 reports the new root-provider coverage without claiming complete Core §62 reachability | Line, Release, and Working State providers reported; Contributions, configured archival pins, and pending publication transactions remain partial/unavailable | Planned, WORK-0014 extension not implemented |
+| Missing Working State safety-root targets receive correct history-completeness classification (ADR-0031) | Absent Base/source targets are unresolved; no declared-boundary lookup or synthetic tuple | Planned, WORK-0014 extension not implemented |

@@ -151,3 +151,9 @@ This decision narrows Working State semantics without importing Git behavior
 or changing immutable historical object identity. It does not define
 temporary checkpoint policy under DEC-INTERACTION-004, provider-specific
 durability mechanics, or an Adapter-owned persistence encoding.
+
+## Subsequent reachability decision
+
+ADR-0030 resolves the deferred Working State safety-reference root policy
+from Decision 4. It does not change this ADR's rule that Working State
+existence alone is not a root or its accepted lifecycle contracts.

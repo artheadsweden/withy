@@ -1203,6 +1203,12 @@ adopted, when such a historical source exists. A locally created component
 may have no source Component State. This map is operational state, not
 historical provenance.
 
+For reachability, a present Base Revision and each present source
+`ComponentStateId` are Working State safety-reference roots as specified in
+§62. `line_id`, `AdapterWorkingStateRef`, recovery condition, and Core change
+status do not add Working State-derived roots. The conceptual record contains
+no separate immutable historical `AdapterStateId` reference.
+
 The conceptual representation above does not define a closed serialized
 schema. Core persists the currently authoritative
 `AdapterWorkingStateRef`; the Adapter owns the mutable state represented by
@@ -2423,6 +2429,17 @@ reported as incomplete coverage, not treated as no declaration. A boundary
 does not resolve, validate, fabricate, rewrite, or admit the missing target.
 The applicable historical-object admission requirements remain in force.
 
+This declared-boundary lookup applies to required references from identified
+historical metadata objects. A missing Working State safety-reference root
+target MUST be reported as `unresolved`; Core MUST NOT substitute another
+Identifier for a Working State Identifier or invent a root edge kind for a
+boundary lookup. See ADR-0031.
+
+Reachability-related validation coverage MUST include the applicable
+Working State safety-reference roots defined in §62. Their support does not
+make repository-wide reachability complete while other applicable §62 root
+classes are unsupported.
+
 A content-derived Identifier is calculated or verified from the exact
 available schema and canonical body; reference resolution is not required
 for that body hash. An implementation MUST perform the Revision schema/member
@@ -2608,9 +2625,33 @@ pending publication transactions
 ```
 
 The Working State itself is not a root merely because it exists. Only
-explicit Working State safety references are roots; their lifecycle and
-protection semantics remain subject to the applicable reachability and
-checkpoint decisions.
+the following explicit references in the current persisted Working State
+record are safety roots:
+
+- a present Base Revision, through the edge `Working State -> Revision`;
+- each present `ComponentStateId` in the component-source mapping, through
+  the edge `Working State -> Component State`.
+
+An absent Base Revision or component source contributes no edge. Traversal
+follows the normal historical graph from each referenced object, and the
+reached set remains deduplicated where roots or traversals converge. A custom
+Working State may therefore root Component States outside its Base Revision;
+no synthetic Revision is created. A pre-first-Revision Working State with no
+historical component sources may contribute zero roots.
+
+Reachability uses the currently persisted record. A change to its Base
+Revision or component-source mapping changes the next calculation. Line
+movement alone does not change these roots; `line_id` does not create an
+additional root because the Line is rooted separately. `AdapterWorkingStateRef`,
+recovery condition, and Core change status are operational and are not roots.
+The record contains no separate immutable historical Adapter State reference.
+
+These root edges protect immutable historical objects for the current
+unpublished Working State. They do not create provenance, mutate history, or
+authorize deletion of objects outside the reached set. Temporary checkpoint
+root semantics remain separate under DEC-INTERACTION-004. Contributions,
+configured archival pins, and pending publication transactions remain
+separate Core §62 root classes.
 
 Each admitted Release is a root whose edge is `Release -> revision_id`.
 Traversal then follows the Revision metadata graph. Release metadata and
@@ -2648,7 +2689,8 @@ When safety cannot be proven, garbage collection MUST retain the object.
 
 # 64. Metadata garbage collection
 
-Published historical metadata referenced by retained creative history MUST NOT be garbage-collected.
+Historical metadata reachable from any protected root defined in §62 MUST
+NOT be garbage-collected.
 
 Temporary operational records MAY be compacted according to defined retention policies, provided current state and required auditability remain reconstructable.
 

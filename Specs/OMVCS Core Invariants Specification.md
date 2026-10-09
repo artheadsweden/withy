@@ -482,6 +482,17 @@ atomically. Invalid or unavailable references and partial Adapter failures
 MUST be reported as recovery conditions, distinct from Core comparison
 status; exact recovery MUST NOT be claimed without validation.
 
+## INV-WORK-007 — Explicit Working State safety references protect history
+
+Reachability MUST include a present Working State Base Revision and every
+present `ComponentStateId` in its component-source mapping as roots into
+immutable history. An absent reference contributes no root. Working State
+itself, its Line association, `AdapterWorkingStateRef`, recovery condition,
+and Core change status MUST NOT add roots. The current persisted record
+determines these roots; Line movement alone MUST NOT change them. Root
+convergence MUST be deduplicated. These roots do not create provenance or
+authorize deletion.
+
 ---
 
 # 5. DAW independence
@@ -912,7 +923,9 @@ Exact publication ordering will be specified later, but published metadata MUST 
 
 ## INV-GC-001 — Reachable history must never be garbage-collected
 
-Objects required by retained Revisions, Releases, protected Contributions or other defined roots MUST NOT be deleted by automatic garbage collection.
+Objects required by retained Revisions, Releases, protected Contributions,
+Working State safety references, or other defined roots MUST NOT be deleted
+by automatic garbage collection.
 
 ---
 
