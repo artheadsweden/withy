@@ -1,6 +1,6 @@
 # WORK-0008 — Immutable Revision model
 
-Status: BLOCKED ON WORK-0007
+Status: BLOCKED — DG-0014 Revision schema and hash preimage unresolved
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0008-revision-model`
@@ -12,8 +12,8 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 ## Normative requirements
 
 - Glossary: Actor Identifier (ActorId), Revision, Revision Identifier, Parent Revision, Revision Graph.
-- Core Specification, sections 4–5, 14–15, 55, and 59.
-- Core Invariants: INV-HIST-001–004, INV-HIST-007, INV-RES-002, INV-PROJ-001.
+- Core Specification, sections 4–5, 14–15, 43, 55–56, 59–60, and 76–77.
+- Core Invariants: INV-HIST-001–007, INV-RES-002, INV-PROJ-001.
 
 ## Dependencies
 
@@ -21,6 +21,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 - ADR-0010: Component identity is separate from Project State membership; a Revision continues to identify its Project State, which determines the participating Components and Component States.
 - ADR-0011: Component State references consumed through Project State use the closed 0.1 body and canonical identity contract.
 - ADR-0012: the Revision's Project State reference MUST resolve to a valid/admitted closed OMVCS 0.1 Project State whose identity hashes all five required historical members.
+- DG-0014 blocks implementation until the exact Revision member set, field representations, provenance schema/requiredness, extension policy, and hash preimage are approved. Do not infer `project_id` membership from the conceptual example.
 
 ## Allowed scope
 
@@ -42,7 +43,7 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 - Timestamp order alone never establishes ancestry.
 - Platform/storage/replica changes leave Revision identity unchanged.
 - Revision author is a canonical lowercase UUIDv7 ActorId; profile/account/signing-key changes, including key rotation, do not change the ActorId or rewrite historical authorship.
-- Parent/provenance permutations produce identical identities; duplicate set elements are rejected under Core Specification §5.1.
+- Parent permutations produce identical identities and duplicate parents are rejected under Core Specification §5.1. Provenance canonicalization/duplicate tests must follow the exact presence and entry schema approved through DG-0014; do not infer them from the array classification alone.
 
 ## Explicit non-goals
 
@@ -53,13 +54,14 @@ Represent an immutable content-addressed Revision that identifies exactly one co
 ## Known Design Gaps
 
 - No direct ActorId representation gap remains; ADR-0002 resolves DG-0004.
-- Upstream WORK-0007 must be completed before Revision implementation begins; DG-0012 is resolved by ADR-0012.
+- WORK-0007 is verified; DG-0012 is resolved by ADR-0012.
+- DG-0014 is OPEN and BLOCKS-MILESTONE. Revision implementation and final conformance tests must not begin until the human decision is recorded in an ADR and affected Specs/test plans are updated.
 
 ## Implementation plan
 
-1. Implement the immutable Revision structure after Project State and canonical identity contracts are resolved.
-2. Hash only the specified immutable historical object body.
-3. Add direct identity, ancestry immutability, and infrastructure-independence tests.
+1. Await resolution of DG-0014; do not implement Revision semantics while its member set, provenance contract, and preimage are unsettled.
+2. After the approved ADR/Spec update, revalidate this work package and implement only the approved immutable Revision structure and canonical identity.
+3. Add direct schema/admission, identity, ancestry, and infrastructure-independence tests derived from the resolved normative contract.
 
 ## Verification requirements
 
