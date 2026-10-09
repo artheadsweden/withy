@@ -1,6 +1,6 @@
 # WORK-0013 — Repository history reachability
 
-Status: BLOCKED — WORK-0012 verification
+Status: PLANNED — WORK-0012 dependency satisfied; preflight not started
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`

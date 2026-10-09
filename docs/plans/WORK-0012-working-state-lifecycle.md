@@ -1,6 +1,6 @@
 # WORK-0012 — Working State lifecycle
 
-Status: VERIFIED — independently accepted; not yet integrated
+Status: VERIFIED — independently accepted; integrated at `fd68d969da671546ec1e00f5362a75c0a52ed61f`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0012-working-state-lifecycle`
@@ -137,5 +137,6 @@ state.
 Formatting, focused tests, coverage-map update, independent verification,
 handover, and clean Git state.
 
-Independent verification: ACCEPT. Implementation and test commit:
-`6e1f6e8`. Integration is pending.
+Independent verification: ACCEPT. Implementation/test commit: `6e1f6e8`;
+feature-branch closeout documentation commit: `f8ddcca`. Integrated by
+no-fast-forward merge `fd68d969da671546ec1e00f5362a75c0a52ed61f`.

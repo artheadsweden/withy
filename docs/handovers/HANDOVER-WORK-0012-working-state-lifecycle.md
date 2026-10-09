@@ -1,10 +1,12 @@
 # Handover WORK-0012
 
 From agent: OMVCS Core Engineer
-To agent: OMVCS Lead (WORK-0012 closeout)
+To agent: OMVCS Lead (WORK-0012 integration closeout)
 Date: 2026-10-09
 Branch: `work/0012-working-state-lifecycle`
 Implementation/test commit: `6e1f6e8`
+Feature-branch closeout documentation commit: `f8ddcca`.
+No-fast-forward integration merge: `fd68d969da671546ec1e00f5362a75c0a52ed61f`.
 
 ## Completed
 
@@ -185,16 +187,16 @@ DEC-INTERACTION-004 remains separate and was not implemented.
 ## Remaining work
 
 - Independent Verifier re-review: ACCEPT; no further actionable findings.
-- Implementation/tests are committed at `6e1f6e8`; closeout documentation
-  remains to be committed, then the feature branch pushed and integrated.
-- WORK-0013 and WORK-0014 have not started.
+- WORK-0012 is integrated; post-integration documentation remains to be
+  committed and pushed on the integration branch.
+- WORK-0013 is dependency-unblocked and PLANNED, but its preflight and
+  implementation remain unstarted. WORK-0014 remains blocked and unstarted.
 
 ## Git state
 
-Working tree: closeout documentation changes pending commit.
-Remote push performed: NO.
-Remote publishing enabled: YES (`docs/project-state.md`); no publishing
-performed or authorized by this request.
+Feature branch push: succeeded to `origin/work/0012-working-state-lifecycle`.
+Integration branch push: pending.
+Remote publishing enabled: YES (`docs/project-state.md`).
 
 ## Independent verification
 
