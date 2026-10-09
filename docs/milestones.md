@@ -14,6 +14,8 @@ These are development milestones, not OMVCS specifications.
 
 ## M1 — Normative data model
 
+Status: COMPLETE. WORK-0001 through WORK-0008 are verified and integrated at `abd0807ed2152aa3e331c6ca058796eb70cf4d4a`.
+
 - identifiers;
 - canonical serialization;
 - hashes;
@@ -24,6 +26,8 @@ These are development milestones, not OMVCS specifications.
 - Revision.
 
 ## M2 — Local repository history
+
+Status: PREFLIGHT COMPLETE. WORK-0009 is the first planned, unblocked package; other feature packages await the decisions and gap resolutions identified in the M2 preflight. Production implementation has not started.
 
 - Lines;
 - Releases;
