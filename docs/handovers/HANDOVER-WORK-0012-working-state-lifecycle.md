@@ -187,15 +187,18 @@ DEC-INTERACTION-004 remains separate and was not implemented.
 ## Remaining work
 
 - Independent Verifier re-review: ACCEPT; no further actionable findings.
-- WORK-0012 is integrated; post-integration documentation remains to be
-  committed and pushed on the integration branch.
+- WORK-0012 is integrated at `fd68d969da671546ec1e00f5362a75c0a52ed61f`.
+- Only documentation/status reconciliation occurred after independent
+  acceptance; no re-verification was needed.
 - WORK-0013 is dependency-unblocked and PLANNED, but its preflight and
   implementation remain unstarted. WORK-0014 remains blocked and unstarted.
 
 ## Git state
 
 Feature branch push: succeeded to `origin/work/0012-working-state-lifecycle`.
-Integration branch push: pending.
+Integration branch push: succeeded to
+`origin/spec/0003-canonical-collection-order`; local and remote refs were
+verified synchronized with a clean worktree.
 Remote publishing enabled: YES (`docs/project-state.md`).
 
 ## Independent verification
