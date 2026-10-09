@@ -54,6 +54,11 @@ Revision identity MUST NOT depend on:
 
 A Revision MUST retain the same identity when infrastructure changes.
 
+For OMVCS 0.1, Revision identity is SHA-256 over the canonical bytes of its
+closed seven-member historical body defined in Core §14. All and only those
+members participate; infrastructure, validation evidence, signatures,
+presentation, and reference-object state do not.
+
 ---
 
 ## INV-HIST-003 — Every Revision identifies one complete Project State
@@ -125,6 +130,39 @@ The OMVCS 0.1 Project State historical body MUST contain exactly the required me
 `project_metadata` MUST be a required JSON object map and MAY be empty. The exact versioned Project State schema owns its permitted keys, requiredness, value shapes, meanings, nested schemas, and nested collection classifications. Unclassified nested arrays, invalid shapes, or disallowed keys prevent admission. It MUST NOT serve as an unrestricted container for presentation/UI, local path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational data.
 
 The Project State Identifier MUST be SHA-256 over the canonical historical body containing all and only those five members; no type/domain prefix is included in the digest input. Every member participates in identity. Validation evidence, operational data, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage. Map insertion order MUST NOT affect identity; maps use RFC 8785 member ordering solely and duplicate member names MUST be rejected.
+
+---
+
+## INV-HIST-009 — Revision schema and identity are closed and project-consistent
+
+The OMVCS 0.1 Revision historical body MUST contain exactly the required
+members `schema`, `project_state_id`, `parents`, `author_id`, `created_at`,
+`message`, and `provenance`. Unknown top-level members are invalid. The exact
+available versioned Revision schema MUST validate the body before historical
+admission or identity calculation.
+
+`project_state_id` MUST identify one valid/admitted Project State. A Revision
+has no direct `project_id`; its Project identity is supplied by that state.
+Every parent Revision MUST resolve as valid/admitted and its Project State
+MUST identify the same Project. A parent from another Project MUST prevent
+admission.
+
+`parents` and `provenance` MUST be required set-like arrays and MAY be empty.
+Duplicate elements are invalid and element ordering is non-semantic.
+Provenance entries MUST validate under the exact versioned Revision schema;
+generic Core MUST NOT infer their meanings. Parent ancestry and provenance
+are distinct and provenance MUST NOT replace parent relationships.
+
+`author_id` MUST be a valid ActorId. `created_at` MUST use the canonical UTC
+RFC 3339 nanosecond form defined in Core §15. `message` MUST be a JSON string
+and MAY be empty.
+
+The Revision Identifier MUST be SHA-256 over the canonical historical body
+containing all and only the seven required members, without a type/domain
+prefix in the digest input. Each member participates in identity.
+Operational, storage, Line, Release, Platform, credential, signature,
+validation-evidence, and unknown extension data MUST NOT enter the body or
+affect its identity.
 
 ---
 

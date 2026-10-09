@@ -176,22 +176,13 @@ Two Project States that reference different creative objects are different Proje
 
 ## Revision
 
-A **Revision** is an immutable node in OMVCS creative history representing one published Project State.
+A **Revision** is an immutable node in OMVCS creative history representing exactly one valid/admitted Project State.
 
-A Revision MUST contain or reference:
+In OMVCS 0.1, the closed historical body contains exactly the required `schema`, `project_state_id`, `parents`, `author_id`, `created_at`, `message`, and `provenance` members. It has no direct `project_id`; its Project identity is obtained through its admitted Project State. Each parent MUST resolve as a valid/admitted Revision whose Project State identifies the same Project.
 
-- its Project State;
-- zero or more parent Revisions;
-- author identity as an ActorId;
-- creation timestamp;
-- revision message or description;
-- any required provenance metadata.
+`parents` and `provenance` are required set-like collections and MAY be empty. An empty parent array represents an initial Revision. A normal derived Revision generally has one parent. A Revision created through integration of independent histories MAY have multiple parents. Parent ordering has no semantic significance in generic Core 0.1 and there is no generic first-parent concept. Parent ancestry and provenance are distinct; provenance MUST NOT replace the parent graph.
 
-A Revision with no parent is an initial Revision.
-
-A normal Revision generally has one parent.
-
-A Revision created through integration of independent histories MAY have multiple parents.
+`author_id` is a direct ActorId. `created_at` uses the canonical UTC RFC 3339 nanosecond form specified in Core §15 and is informational rather than causal. `message` is a JSON string and MAY be empty. The exact versioned Revision schema owns provenance entry fields, shapes, meanings, and nested collection rules. No other top-level members are permitted in OMVCS 0.1.
 
 Once published, a Revision MUST NOT be modified.
 
@@ -208,6 +199,8 @@ Moving resources between storage locations MUST NOT produce a new Revision.
 ## Revision Identifier
 
 A **Revision Identifier** is the stable identity of a Revision.
+
+In OMVCS 0.1, it is derived as SHA-256 over the canonical bytes of exactly the seven-member Revision historical body. All seven members, including `schema`, participate in identity; no type/domain prefix is included in the digest input.
 
 Its calculation MUST depend only on information that forms part of immutable creative history.
 
@@ -230,6 +223,8 @@ A **Parent Revision** is a Revision from which another Revision directly descend
 Parent relationships create the **Revision Graph**.
 
 Parentage is historical and immutable.
+
+In OMVCS 0.1, each parent reference is a typed Revision Identifier that MUST resolve to a valid/admitted Revision from the same Project as the child. Parent collections are set-like: their order has no semantic significance, duplicates are invalid, and there is no generic first-parent meaning.
 
 A later discovery that a resource has moved does not alter parentage.
 
@@ -1013,7 +1008,9 @@ The DAW Adapter or user must determine a valid creative result.
 
 **Provenance** is the preserved record of where creative material or state came from.
 
-Provenance MAY express:
+For OMVCS 0.1 Revision provenance, the exact versioned Revision schema owns the permitted relationship kinds, entry members, requiredness, shapes, meanings, and nested collection rules. Generic Core MUST NOT infer these semantics from key names or values. Revision provenance is distinct from Revision parentage and MUST NOT replace the parent graph.
+
+Depending on the exact versioned schema, provenance MAY express:
 
 - original creator;
 - contributor;
@@ -1041,7 +1038,7 @@ Examples:
 
 > Cello State Z was created by Anna.
 
-Provenance Links are historical metadata.
+Provenance Links are historical metadata. In a Revision, they are represented only as entries permitted by its exact versioned schema.
 
 ---
 
