@@ -1,6 +1,6 @@
 # WORK-0012 — Working State lifecycle
 
-Status: PLANNED
+Status: VERIFIED — independently accepted; not yet integrated
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0012-working-state-lifecycle`
@@ -64,6 +64,13 @@ history.
 - Pre-first-Revision state has no Base Revision or synthetic initial
   Revision; successful full materialisation sets Base Revision and source
   mappings without modifying history.
+- Full materialisation can initialize a Project with no Working State;
+  initial partial Adapter failure exposes and persists `recovery_required`
+  without fabricating a Working State, Base Revision, or Adapter reference.
+- Provider-neutral Core record-store round-trip reconstructs committed
+  metadata and restores via its Adapter reference; recovery-only records
+  survive reload. Physical crash durability and provider mechanics remain
+  outside this package.
 - Working State mutation/materialisation does not create or mutate
   historical objects. AdapterWorkingStateRef and its backing mutable state
   are operational, not historical objects, identifiers, or provenance.
@@ -129,3 +136,6 @@ state.
 
 Formatting, focused tests, coverage-map update, independent verification,
 handover, and clean Git state.
+
+Independent verification: ACCEPT. Implementation and test commit:
+`6e1f6e8`. Integration is pending.
