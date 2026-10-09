@@ -5,6 +5,7 @@ To agent: Verifier
 Date: 2026-10-09
 Branch: `work/0009-revision-graph`
 Base commit: `80a488aa56ad878d0acaab11714977ce0f07f77b`
+WORK-0009 implementation commit: `bd64495`
 Verification: Independently ACCEPTED by Verifier; no findings.
 
 ## Completed
@@ -123,16 +124,15 @@ choose shallow/import policy or define repository-wide validation outcomes.
 
 ## Remaining work
 
-- Integrate only through the normal no-fast-forward workflow after acceptance;
-  the independent gate has now passed.
+- Integrate through the normal no-fast-forward workflow; the independent gate
+  has passed.
 - Do not start WORK-0010 through WORK-0014 as part of this package.
 
 ## Git state
 
-Working tree at handover: DIRTY. Implementation and package documentation are
-uncommitted. The preflight `docs/milestones.md` and `docs/project-state.md`
-changes were committed in M2 preflight commit
-`80a488aa56ad878d0acaab11714977ce0f07f77b`.
+Working tree: CLEAN after WORK-0009 closeout commit. The preflight
+`docs/milestones.md` and `docs/project-state.md` changes were committed in
+M2 preflight commit `80a488aa56ad878d0acaab11714977ce0f07f77b`.
 
 Remote push performed: NO for WORK-0009. Remote publishing is `ENABLED` in
 project state.
