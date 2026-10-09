@@ -36,12 +36,14 @@ WORK-0010 is independently verified and integrated at
 automatic Line-deletion retention/pinning; DEC-INTERACTION-001/003 remain
 presentation decisions and do not block the Core Line contract. ADR-0017
 resolves the Release object and admission contract; WORK-0011 is independently
-verified and accepted on `work/0011-releases`, but not yet integrated.
+verified and integrated at `e179d27147ea6efcac3aa46fedcecd34ddd5725f` on
+`spec/0003-canonical-collection-order`. Its feature branch is pushed to
+`origin/work/0011-releases`.
 Accepted, human-approved ADR-0023 resolves DG-0023 only for the exact
 `CreateRelease` integrity/name-conflict overlap, with atomic failure and
 unchanged stored objects/bindings; it defines no general failure precedence.
 DEC-CORE-002 remains separate
 and does not block WORK-0011. WORK-0012 and WORK-0014 remain blocked by
-their recorded M2 decisions/gaps; WORK-0013 remains blocked pending WORK-0011
-integration and the WORK-0012 root contract. WORK-0012 through WORK-0014
-remain unstarted. M2 is IN PROGRESS.
+their recorded M2 decisions/gaps; WORK-0013 remains blocked pending the
+WORK-0012 root contract. WORK-0012 through WORK-0014 remain unstarted.
+M2 is IN PROGRESS.

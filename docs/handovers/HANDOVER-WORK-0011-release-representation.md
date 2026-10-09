@@ -3,8 +3,10 @@
 From agent: OMVCS Core Engineer
 To agent: Project owner / integration
 Date: 2026-10-09
-Branch: `work/0011-releases`
-HEAD at closeout documentation preparation: `3854c3b3699bbb7658bceb0bcfa6f26667633281`
+Feature branch: `work/0011-releases`
+Feature branch HEAD: `1fce69ba40ebbf7d2dd7ec36354adf538f9223f6`
+Integration branch: `spec/0003-canonical-collection-order`
+Integration commit: `e179d27147ea6efcac3aa46fedcecd34ddd5725f`
 
 ## Completed
 
@@ -12,7 +14,7 @@ Implemented the Release model, content-derived identity, same-Project Revision
 admission, and atomic in-memory Core creation boundary for WORK-0011.
 Implementation and required validation are complete. Independent Verifier
 acceptance is ACCEPT with no remaining actionable conformance findings.
-WORK-0011 is VERIFIED but not yet integrated; coverage is `verified`.
+WORK-0011 is VERIFIED and integrated; coverage is `verified`.
 
 Accepted, human-approved ADR-0023 records that Core MUST return the integrity
 violation when one `CreateRelease` request simultaneously encounters an
@@ -70,7 +72,7 @@ WORK-0011 documentation and directly required decisions:
 - `docs/plans/WORK-0013-repository-reachability.md` — Release root dependency.
 - `docs/spec-coverage.md` — WORK-0011 verified after independent acceptance.
 - `docs/milestones.md` and `docs/project-state.md` — M2 remains IN PROGRESS;
-  WORK-0011 verified but not integrated; WORK-0012–0014 unstarted.
+  WORK-0011 verified and integrated; WORK-0012–0014 unstarted.
 - `docs/handovers/HANDOVER-WORK-0011-release-representation.md`.
 
 The working tree at the start of WORK-0011 contained approved, uncommitted
@@ -169,17 +171,20 @@ test run.
 
 ## Remaining work
 
-1. Integrate only after the project owner approves the integration step;
-   no commit or push was made as part of this work.
-2. Keep WORK-0012–0014 unstarted; WORK-0013 remains dependent on integration
-   of WORK-0011 and WORK-0012.
+Keep WORK-0012–0014 unstarted. WORK-0013 remains blocked pending the
+WORK-0012 root contract.
 
 ## Git state
 
-Working tree: CLEAN after the closeout commit sequence.
-Remote push performed: NO as of this handover preparation.
+Working tree: CLEAN after integration and documentation closeout.
+Feature branch push: YES, `origin/work/0011-releases`.
+Integration branch push: YES, `origin/spec/0003-canonical-collection-order`;
+the remote branch points to `e179d27147ea6efcac3aa46fedcecd34ddd5725f`.
 Remote publishing: ENABLED per `docs/project-state.md`.
 
 The closeout commits are grouped as Release specification decisions,
 WORK-0011 implementation/tests, and WORK-0011 verification/package closeout.
-No existing history was rewritten.
+Their SHAs are `9727e2f6b71052445cf5b7399c4dbdcd3d9b2d76`,
+`3854c3b3699bbb7658bceb0bcfa6f26667633281`, and
+`1fce69ba40ebbf7d2dd7ec36354adf538f9223f6`. They were merged no-fast-forward
+without rewriting history; the integration merge commit is the SHA above.

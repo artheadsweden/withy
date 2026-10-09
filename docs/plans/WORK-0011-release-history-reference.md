@@ -1,6 +1,7 @@
 # WORK-0011 — Immutable Release references
 
-Status: VERIFIED — independently accepted; not yet integrated
+Status: VERIFIED — independently accepted; integrated at
+`e179d27147ea6efcac3aa46fedcecd34ddd5725f`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0011-releases`
@@ -114,5 +115,5 @@ does not represent a new implementation audit or test run.
 ## Completion criteria
 
 Formatting, focused and locked workspace tests, warnings-denied Clippy,
-independent verification, coverage-map update, and handover are complete.
-Integration and a clean worktree remain outstanding.
+independent verification, coverage-map update, handover, feature-branch push,
+no-fast-forward integration, and integration-branch push are complete.
