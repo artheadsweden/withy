@@ -1,6 +1,6 @@
 # WORK-0014 — Repository validation
 
-Status: PLANNED — validation contract approved; implementation not started
+Status: VERIFIED — independently accepted; not yet integrated
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0014-repository-validation`
@@ -131,5 +131,6 @@ policy.
 
 ## Completion criteria
 
-Formatting, focused tests, coverage-map update, independent verification,
-handover, and clean Git state.
+Formatting, focused and workspace tests, coverage-map update, independent
+verification, handover, and clean Git state are complete. Integration remains
+pending.
