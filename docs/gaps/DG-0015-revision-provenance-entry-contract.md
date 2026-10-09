@@ -1,4 +1,4 @@
-# DG-0015 — Revision provenance entry contract
+# DG-0015 — Operation-specific Revision provenance
 
 Status: OPEN
 Classification: BLOCKS-FEATURE
@@ -23,46 +23,50 @@ Revision schema authoritative for provenance entry fields, meanings,
 relationship kinds, nested schemas, and collection classifications. It also
 requires `provenance` to be a set-like array that MAY be empty.
 
-The specifications do not define any permitted non-empty provenance entry
-shape or the OMVCS 0.1 schema rules for such entries. At the same time, Core
-§§23 and 42 and INV-COL-003 require or recommend recording source Component
-States and incorporated Contribution scope; Core §68 and other workflow
-examples describe recording fork or conversion provenance. Core §42 also
-shows a conceptual entry with `type`, `source_revision`, `component_id`, and
-`component_state`. It is not established whether that example is valid under
-the exact OMVCS 0.1 Revision schema or whether those operation-level
-requirements can be represented by it. Interaction, Platform Protocol, and
-DAW Adapter workflows refer to provenance as part of fork, integration, or
-conversion outcomes without supplying a common Revision-entry schema.
+The OMVCS 0.1 Revision model requires provenance entries, when present, to
+be validated by the exact available versioned Revision schema; that schema
+owns entry shapes, meanings, and nested collection rules. Generic Core
+validates the schema-directed structure and canonical set-like
+representation and MUST NOT invent a common provenance vocabulary. This
+schema-authority boundary can be implemented generically, as for other
+schema-owned historical metadata.
+
+Separately, Core §§23 and 42 and INV-COL-003 require or recommend recording
+source Component States and incorporated Contribution scope; Core §68 and
+other workflow examples describe recording fork or conversion provenance.
+Core §42 shows a conceptual entry with `type`, `source_revision`,
+`component_id`, and `component_state`. It remains unspecified which concrete
+Revision-schema entries encode these operation-specific facts and exactly
+which operations require them. Interaction, Platform Protocol, and DAW
+Adapter workflows refer to provenance as part of fork, integration, or
+conversion outcomes without supplying a common operation-to-entry mapping.
 
 ## Why the current specifications are insufficient
 
-The exact Revision schema is identified as `omvcs.revision/0.1`, but its
-allowed provenance entry members, value shapes, semantic meanings, and
-operation-specific requiredness are not specified. Treating the Core §42
-example or other illustrative relationships as a valid schema would invent
-semantics. Treating every non-empty provenance array as invalid would also
-choose semantics not stated by ADR-0014. The cross-spec requirements cannot
-therefore be validated or implemented consistently for non-empty provenance.
+Treating Core §42's example as the complete normative schema or assigning it
+operation-specific requiredness would invent semantics. Conversely, the
+generic Revision model need not decide those semantics: it can require the
+exact versioned schema authority to validate entries and apply the specified
+canonical collection rules. The remaining gap is the mapping from operations
+to concrete provenance facts/entries, not the generic Revision body,
+identity, or schema-authority boundary.
 
 ## Affected work
 
-- WORK-0008: Revision provenance admission and non-empty provenance
-  canonicalization/conformance tests.
-- Contribution integration and selective integration provenance.
+- M6 Contribution integration and selective-integration provenance.
 - Fork/import and Adapter-conversion provenance where represented in a
-  Revision.
+  Revision; assign to the relevant work package when planned.
 
 ## Can unaffected work continue?
 
-Yes. The approved Revision body, identity, timestamp, author, message,
-Project State reference, and parent rules are settled. The provenance field's
-required empty representation and generic set-like canonicalization rules are
-also settled. Do not implement or accept non-empty Revision provenance, infer
-entry schemas from examples, or claim the affected workflows' provenance
-requirements are executable until this gap is resolved. WORK-0008 as a
-complete package must not be handed off until its scope and acceptance tests
-can be made executable without guessing.
+Yes. WORK-0008 may implement the approved Revision model, including
+schema-directed validation and canonicalization of provenance entries, using
+an exact-schema authority boundary without hard-coding a generic entry
+vocabulary. Tests may exercise that boundary with test-only schemas and must
+not present those fixtures as normative OMVCS 0.1 entry semantics. Do not
+claim the affected operation-specific provenance requirements are executable
+until this gap is resolved. DG-0015 blocks those provenance-dependent
+operations in M6, not WORK-0008's generic Revision model.
 
 ## Candidate directions
 
@@ -71,11 +75,11 @@ operation-specific requiredness would be a semantic choice.
 
 ## Required decision
 
-Define the permitted non-empty provenance entry contract for the exact
-OMVCS 0.1 Revision schema, including entry members and meanings, nested
-collection rules, and which Core operations require or recommend particular
-provenance facts. Confirm whether the existing Core §42 example is normative,
-must be revised, or remains illustrative only.
+Define how M6 Contribution/integration operations and other applicable
+operations map their required or recommended provenance facts to entries
+accepted by the exact versioned Revision schema. Confirm whether the existing
+Core §42 example is normative for any operation or illustrative only. Do not
+change the generic schema-authority boundary already established by ADR-0014.
 
 ## Resolution
 

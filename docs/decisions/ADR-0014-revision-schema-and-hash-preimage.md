@@ -196,6 +196,7 @@ every illustrative provenance relationship mandatory.
 
 The cross-specification review found that Core §§23 and 42 and
 INV-COL-003 impose or recommend operation-specific provenance facts, while
-their non-empty OMVCS 0.1 Revision encoding remains undefined. DG-0015 records
-this separate issue; it does not alter the approved Revision body or hash
-preimage, but blocks implementation of non-empty provenance until resolved.
+their mapping to concrete schema-approved Revision entries remains undefined.
+DG-0015 records this separate issue; it does not alter the approved Revision
+body or hash preimage and does not block generic schema-directed Revision
+modeling.
