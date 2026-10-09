@@ -1,6 +1,6 @@
 # DG-0014 — Revision schema and canonical hash preimage
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-MILESTONE
 Discovered by: OMVCS Lead
 Discovered during: WORK-0008 preflight
@@ -113,4 +113,21 @@ semantics, set-like parent/provenance ordering, and infrastructure independence.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by the human-approved [ADR-0014 — Revision schema and canonical hash
+preimage](../decisions/ADR-0014-revision-schema-and-hash-preimage.md), with
+corresponding updates to the Core Specification, Glossary, Core Invariants,
+WORK-0008, and specification coverage.
+
+The OMVCS 0.1 Revision body is closed and contains exactly required
+`schema`, `project_state_id`, `parents`, `author_id`, `created_at`, `message`,
+and `provenance` members. Project identity is obtained through the admitted
+Project State; no direct `project_id` is present. Parent Revision references
+must resolve to admitted Revisions for that same Project. Provenance entry
+semantics are owned by the exact versioned Revision schema. The canonical
+timestamp profile is UTC RFC 3339 with uppercase `T` and `Z` and exactly nine
+fractional digits. The canonical hash preimage is exactly the seven-member
+body, with all members participating.
+
+No new Design Gap was discovered. The existing examples elsewhere in the
+specification set concern distinct Platform, Contribution, Release, or Adapter
+objects and do not conflict with the generic Revision body.

@@ -283,10 +283,12 @@ The following collection fields in OMVCS 0.1 schemas have these semantics:
 | Adapter State `metadata` | JSON object map keyed by metadata property name. |
 | Project State `components` | REQUIRED JSON object map from canonical Creative Component Identifier text to typed Component State Identifier; the referenced Component State MUST identify the same Component Identifier as its map key. |
 | Project State `project_metadata` | REQUIRED JSON object map keyed by metadata property name; the exact versioned Project State schema owns permitted keys, requiredness, value shapes, meanings, nested schemas, and nested collection classifications. |
-| Revision `parents` | Set-like collection of direct parent Revisions. |
-| Revision `provenance` | Set-like collection of provenance relationships. |
+| Revision `parents` | REQUIRED set-like collection of direct parent Revisions; MAY be empty. |
+| Revision `provenance` | REQUIRED set-like collection of canonical provenance objects; the exact versioned Revision schema owns entry members, requiredness, meanings, nested schemas, and nested collection classifications. It MAY be empty. |
 
 Every additional array-valued collection included in a hashed Core object, Adapter State, or namespaced extension MUST declare its ordering semantics in the schema that defines it. A schema that does not make this declaration is not valid for hashing.
+
+In OMVCS 0.1, `Revision.parents` and `Revision.provenance` are required set-like arrays and MAY be empty. Their element order has no semantic significance; duplicates are invalid and canonical element-byte sorting under ADR-0001 applies. Each provenance entry MUST be an object validated under the exact versioned Revision schema. Nested arrays in provenance entries MUST also declare their ordering semantics in that schema. Generic Core MUST NOT infer provenance entry meaning from field names or values.
 
 `Project State.components` and `Project State.project_metadata` are required JSON object maps and MAY be empty. The exact versioned Project State schema MUST validate each `project_metadata` key, value shape, meaning, nested schema, and nested collection classification. Project metadata MUST NOT be treated as an unrestricted container for presentation/UI, local-path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational information. Such information is admissible only when an approved Project State schema explicitly defines it as historical Project state and it does not conflict with another Core invariant or ADR.
 
@@ -741,56 +743,74 @@ A Project State candidate MUST NOT be admitted as valid history unless the exact
 
 # 14. Revision
 
-A Revision is the principal immutable historical node.
+A Revision is the principal immutable historical node representing exactly one valid/admitted Project State.
 
-The `parents` and `provenance` arrays are set-like collections: their element order has no semantic meaning, and duplicate elements are invalid. They MUST be normalized as specified in section 5.1 before the Revision is hashed.
+## OMVCS 0.1 historical body
 
-Conceptual structure:
+The closed OMVCS 0.1 Revision historical body is a JSON object containing exactly these REQUIRED members:
+
+| Member | Requirement | Meaning |
+|---|---|---|
+| `schema` | REQUIRED | Exact versioned Revision schema identifier under section 76. |
+| `project_state_id` | REQUIRED | Typed identifier of exactly one resolvable, valid/admitted Project State. |
+| `parents` | REQUIRED | Set-like array of typed direct parent Revision Identifiers; MAY be empty. |
+| `author_id` | REQUIRED | Direct typed ActorId of the author. |
+| `created_at` | REQUIRED | Canonical UTC timestamp under section 15. |
+| `message` | REQUIRED | JSON string describing the Revision; MAY be empty. |
+| `provenance` | REQUIRED | Set-like array of schema-validated canonical provenance objects; MAY be empty. |
+
+No other top-level members are permitted in OMVCS 0.1. In particular, the body has no direct `project_id`: the Revision's Project identity is obtained from its required admitted Project State. Every parent Revision MUST resolve through its own admitted Project State to the same assigned Project Identifier. A parent from another Project prevents admission. This does not define cross-Project move, copy, fork, or identity-preservation semantics.
+
+The exact available versioned Revision schema identified by `schema` MUST validate the candidate before historical admission. An unknown or unavailable schema candidate MAY be preserved outside valid history where supported, but MUST NOT produce a valid Revision or Revision Identifier.
+
+`parents` is REQUIRED. An empty array represents an initial Revision; a normal derived Revision generally has one parent; an integration Revision MAY have multiple parents. Parent order has no semantic significance in generic Core 0.1, there is no generic first-parent concept, and duplicate parent identifiers are invalid. Each parent MUST resolve to a valid/admitted Revision before admission. Parent ancestry and provenance are separate: provenance MUST NOT replace the parent graph, and parent order MUST NOT encode Line, branch, ref, or Release semantics.
+
+`author_id` is directly encoded as an ActorId; it is not wrapped in an `author` object. The ActorId MUST be valid under section 59. Historical admission MUST NOT require current profile, Platform account, profile service, signing key, or credential availability.
+
+`message` is a required JSON string and MAY be empty. Core MUST NOT trim, rewrite whitespace, case-fold, or Unicode-normalize the value; the exact string value participates in identity under the canonical JSON string rules.
+
+`provenance` is REQUIRED and MAY be empty. Each entry MUST be a canonical JSON object. The exact versioned Revision schema owns the permitted entry members, requiredness, value shapes, semantic meanings, relationship kinds, nested object schemas, and nested array classifications. Unknown or disallowed fields, invalid shapes, unclassified nested arrays, or entries rejected by that schema prevent admission. Provenance entries are set-like, sorted by canonical serialized element bytes, and duplicate canonical entries are invalid. No independent provenance-schema identifier is added in OMVCS 0.1.
+
+The Revision Identifier is SHA-256 over the canonical serialized Revision historical-body bytes under the existing sections 5 and 55 rules; no type/domain prefix is included in the digest input. The canonical body contains exactly `schema`, `project_state_id`, `parents`, `author_id`, `created_at`, `message`, and `provenance`. All seven members participate in identity. Validation evidence, validator implementation details, signatures or signature wrappers, Platform account/profile data, storage/Replica information, local DAW/runtime state, credentials, transport wrappers, Line/ref/branch information, Release information, and unknown extension fields MUST NOT enter the body or affect the Revision Identifier.
+
+Normative OMVCS 0.1 body shape:
 
 ```json
 {
   "schema": "omvcs.revision/0.1",
-
-  "project_id": "019aa...",
-
+  "project_state_id": "omvcs:project-state:sha256:STATE...",
   "parents": [
     "omvcs:revision:sha256:PREVIOUS..."
   ],
-
-  "project_state":
-    "omvcs:project-state:sha256:STATE...",
-
-  "author": {
-    "actor_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c"
-  },
-
-  "created_at": "2026-10-08T11:02:17Z",
-
+  "author_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
+  "created_at": "2026-10-08T11:02:17.000000000Z",
   "message": "New bass take and vocal automation",
-
   "provenance": []
 }
 ```
 
-The Revision Identifier is the hash of this canonical object.
+The example illustrates the closed 0.1 shape; exact provenance entry semantics are determined only by the identified, available Revision schema.
 
 ---
 
 # 15. Time
 
-Historical timestamps MUST:
+A Revision's `created_at` MUST:
 
 - use UTC;
-- use RFC 3339 representation;
-- include sufficient precision to preserve ordering where available.
+- use RFC 3339 representation in the canonical OMVCS 0.1 Revision form `YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`;
+- use uppercase `T` and `Z`, and exactly nine fractional-second digits;
+- represent an instant at nanosecond resolution; implementations MUST NOT round or truncate finer-than-nanosecond input into an admitted historical timestamp.
+
+Numeric timezone offsets, omitted fractional seconds, and fewer or more than nine fractional digits are not canonical Revision timestamps and MUST be rejected for historical admission. Calendar/time values MUST otherwise be valid under RFC 3339.
 
 Example:
 
 ```text
-2026-10-08T11:02:17.481Z
+2026-10-08T11:02:17.481000000Z
 ```
 
-Time is informational historical metadata.
+`created_at` is informational historical metadata and participates in Revision identity.
 
 Revision ancestry, not timestamps, defines causal creative history.
 
@@ -1638,9 +1658,9 @@ This prevents the graph alone from being mistaken for precise component-level pr
 
 # 43. Provenance
 
-OMVCS provenance is structured historical metadata.
+OMVCS provenance is structured historical metadata. In OMVCS 0.1, the exact versioned schema of the containing historical object owns the permitted provenance entry fields, shapes, meanings, and nested collection rules. Generic Core does not infer a provenance relationship kind from a key or value.
 
-Core supports relationships including:
+Examples of provenance relationship kinds that a versioned schema MAY permit include:
 
 ```text
 created_by
@@ -1650,7 +1670,7 @@ component_taken_from
 forked_from
 ```
 
-A provenance relation MUST identify its source through stable OMVCS identity whenever possible.
+A provenance relation MUST identify its source through stable OMVCS identity whenever possible, as required by the exact schema that permits that relation.
 
 Free-text attribution MAY supplement structured provenance but MUST NOT replace it where structured identity is available.
 
@@ -2006,7 +2026,10 @@ A full Project validation MAY include:
 
 ```text
 validate canonical object hashes
-validate Revision references
+validate each Revision against its exact available schema and closed 0.1 member set before historical admission or identity calculation
+resolve the referenced Project State and require its valid/admitted status
+resolve each parent Revision and require valid/admitted status and matching Project identity
+validate canonical `created_at`, typed `author_id`, `message`, and schema-owned `provenance`
 validate Project State references
 validate each Project State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
 resolve and validate every Component State referenced by Project State, including equality between each map key and the referenced state's `component_id`
@@ -2024,7 +2047,7 @@ verify available Resource content
 
 Metadata validation MUST NOT require downloading every historical Resource unless deep Resource verification is requested.
 
-The full Project validation above is optional as a repository-wide operation. However, an implementation MUST perform the Project State schema, member, reference-resolution, and admission checks listed above whenever it admits a Project State as valid historical state or calculates its valid Project State Identifier.
+The full Project validation above is optional as a repository-wide operation. However, an implementation MUST perform the Revision schema, member, parent, Project State reference-resolution, and admission checks listed above whenever it admits a Revision as valid historical state or calculates its valid Revision Identifier. It MUST also perform the specified Project State checks whenever it admits a Project State as valid historical state or calculates its valid Project State Identifier.
 
 ---
 
@@ -2113,7 +2136,7 @@ requires divergence resolution.
 
 Core records historical actors by their Actor Identifier (ActorId), as defined in the Glossary. An ActorId is an assigned UUIDv7 serialized in lowercase canonical textual form.
 
-Every Revision MUST record its author as an ActorId. Any other historical object that records an actor MUST use an ActorId rather than a display name, email address, username, Platform account identifier, or signing key.
+Every Revision MUST record its author in the required direct `author_id` member as an ActorId. OMVCS 0.1 MUST NOT wrap it in a generic `author` object. Any other historical object that records an actor MUST use an ActorId rather than a display name, email address, username, Platform account identifier, or signing key.
 
 ActorId is independent of display name, email, username, Platform account, and signing keys. Changing any of those values, including rotating a signing key, MUST NOT change the ActorId or rewrite historical authorship. Platform/account linkage and proof that an account controls or represents an ActorId are separate Platform concerns.
 
@@ -2128,6 +2151,8 @@ ActorId is not a signing identity or proof of authorization. The Platform Protoc
 # 60. Signatures
 
 A signature, when present, MUST sign the immutable object identifier rather than alter the object's identifier.
+
+Revision signatures, signature wrappers, and validation evidence are not members of the OMVCS 0.1 Revision historical body and MUST NOT affect its content-derived identifier.
 
 Conceptually:
 
@@ -2497,6 +2522,8 @@ For Component State, an unknown or unavailable schema version MAY be preserved o
 
 For Project State, an unknown or unavailable schema version MAY be preserved only as unchecked, uninterpreted candidate data where supported. Such preservation MUST NOT establish a valid historical Project State or a valid Project State Identifier. A Project State MUST be validated against the exact available versioned schema before admission, including validation of `project_metadata` keys, values, nested schemas, and collection classifications.
 
+For Revision, an unknown or unavailable schema version MAY be preserved only outside valid history where supported. Such preservation MUST NOT establish a valid historical Revision or a valid Revision Identifier. A Revision MUST be validated against its exact available versioned schema before admission, including its schema-owned provenance entries and nested collection classifications.
+
 Preserving an unknown or unavailable schema version does not make a candidate Resource Reference with `properties` valid for historical admission. Such a candidate MUST remain unchecked and MUST NOT be used to produce or commit a valid historical object until the exact applicable schema or Adapter context can validate it under section 7.
 
 ---
@@ -2514,6 +2541,8 @@ Changing the admissibility or interpretation of Resource Reference `properties` 
 The OMVCS 0.1 Component State top-level member set is closed. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Component State members as 0.1.
 
 The OMVCS 0.1 Project State top-level member set is closed and contains exactly required `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Project State members as 0.1. All five members participate in Project State identity.
+
+The OMVCS 0.1 Revision top-level member set is closed and contains exactly required `schema`, `project_state_id`, `parents`, `author_id`, `created_at`, `message`, and `provenance`. A future top-level member or extension mechanism requires an explicit versioned specification and compatibility decision; implementations MUST NOT silently accept or hash unknown top-level Revision members as 0.1. All seven members participate in Revision identity.
 
 This ensures old creative history remains interpretable.
 
