@@ -1,9 +1,15 @@
 # WORK-0013 — Repository history reachability
 
-Status: VERIFIED — independently accepted and integrated for partial Line/Release scope at `a67e1811ce0e7e15001f8517d379d7da607d3bdf`
+Status: Original Line/Release scope VERIFIED at `a67e1811ce0e7e15001f8517d379d7da607d3bdf`; ADR-0030 extension independently ACCEPTED, pending integration
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`
+ADR-0030/0031 extension branch: `work/0013-working-state-roots`
+
+The original verification and integration record below applies to the
+Line/Release-only implementation at its integration commit. The extension
+section at the end records the separately implemented and independently
+accepted Working State root extension; it remains pending integration.
 
 ## Objective
 
@@ -16,7 +22,7 @@ reachability or global unreachable-object classification.
 
 - Core Specification §§56 and 62.
 - Glossary: Reachability and Repository Metadata.
-- Core Invariants: INV-GC-001–003 and INV-WORK-002–004, INV-WORK-006.
+- Core Invariants: INV-GC-001–003 and INV-WORK-002–004, INV-WORK-006–007.
 - Core §62's minimum-root list bounds the incompleteness of this package;
   WORK-0013 implements only the independently specified Line and Release
   root classes.
@@ -27,9 +33,9 @@ reachability or global unreachable-object classification.
 - WORK-0010 Line root contract (verified).
 - WORK-0011 Release root contract (verified and integrated).
 - WORK-0012 is verified. ADR-0018 says Working State existence alone is not a
-  root; ADR-0025 says `AdapterWorkingStateRef` is not a root. Core §62 also
-  names explicit Working State safety references, but their exact set and
-  edges are unresolved by DG-0027 and are excluded here.
+  root; ADR-0025 says `AdapterWorkingStateRef` is not a root. ADR-0030 now
+  resolves DG-0027 and defines Base Revision and present component-source
+  Component States as roots. The extension is specified below.
 - DG-0016–DG-0018 and DG-0024–DG-0026 are resolved as applicable to the
   root/persistence contracts before this package begins.
 - ADR-0016, ADR-0020, and ADR-0022 resolve the Line record/root contract.
@@ -50,7 +56,9 @@ reachability or global unreachable-object classification.
 - `docs/plans/WORK-0013-repository-reachability.md`
 - `docs/spec-coverage.md`
 - `docs/decision-register.md`
+- `docs/decisions/ADR-0030-working-state-safety-reference-roots.md`
 - `docs/gaps/DG-0027-working-state-safety-reference-roots.md`
+- `docs/gaps/DG-0028-working-state-root-boundary-matching.md`
 - `docs/handovers/` for required package handover.
 - `docs/milestones.md` and `docs/project-state.md` for milestone/status reconciliation.
 
@@ -64,7 +72,7 @@ reachability or global unreachable-object classification.
 - An explicit partial-result boundary: objects not reached from these roots
   are not reported as globally unreachable.
 
-## Acceptance tests
+## Original Line/Release acceptance tests
 
 - Every retained Line and admitted Release is included according to its
   resolved object contract; the Default Line preference adds no duplicate
@@ -74,27 +82,32 @@ reachability or global unreachable-object classification.
 - A reachable historical object remains reachable even when its Resource
   bytes are not locally materialised.
 - Resource availability does not change historical identity or reachability.
-- Objects not reached by the included Line/Release roots are not reported as
-  globally unreachable.
+- Objects not reached by the included roots are not reported as globally
+  unreachable.
 - No deletion, retention-period, archival, pin, or mutation behavior is
   performed.
-- No Contribution, Working State, archival-pin, or pending-publication roots
-  are inferred.
+- In the original implementation no Working State roots were inferred. The
+  extension implements only the ADR-0030 Base/source roots; Contributions,
+  configured archival pins, and pending publication transactions remain
+  unsupported.
 
-## Explicit non-goals
+## Original implementation non-goals
 
 - Garbage collection, physical deletion, retention policy, or automatic
   Line-deletion pinning.
-- Contribution, Working State safety-reference, configured archival-pin, and
-  pending-publication-transaction roots.
+- Contribution, configured archival-pin, and pending-publication-
+  transaction roots remain outside scope. Working State safety references
+  are included only as bounded by ADR-0030.
 - Complete repository reachability, global unreachable-object
   classification, import completeness, or storage Replica availability.
 - Any root or edge not specified by the resolved OMVCS contracts.
 
 ## Known Design Gaps
 
-- DG-0027 blocks Working State safety-reference root coverage. Only the
-  independently resolved Line and Release roots are in scope.
+- DG-0027 is resolved by ADR-0030; the original implementation excluded
+  Working State roots. The extension plan below covers that new scope.
+- ADR-0031 requires absent Working State safety-root targets to remain
+  unresolved without declared-boundary lookup in WORK-0014.
 - ADR-0017 resolves the Release root contract. ADR-0018 establishes that
   Working State existence alone is not a root; ADR-0025 confirms that
   `AdapterWorkingStateRef` itself is not a root.
@@ -124,10 +137,11 @@ reachability or global unreachable-object classification.
   clone the complete current set under their existing locks. They are separate
   read-only traits so existing mutation boundaries/implementations are unchanged.
   Enumeration failure returns an error, never an empty/truncated success.
-- `reachability::partial_line_release_reachability` returns
+- The original `reachability::partial_line_release_reachability` returned
   `PartialReachability`: sorted, deduplicated Line, Release, Revision,
   Project State, Component State, Adapter State, and Resource IDs, plus typed
-  unresolved metadata references and separate identity/cycle defects.
+  unresolved metadata references and separate identity/cycle defects. The
+  extension renames this API to `partial_repository_reachability`.
 - A referenced ID remains reached when its metadata is unresolved or its
   resolver returns the wrong identity. Unknown outgoing edges are not guessed;
   independent branches still continue. Resource IDs are terminal and never
@@ -170,8 +184,9 @@ reachability or global unreachable-object classification.
   Line-movement regression test. That test was added with divergent
   same-Project targets and immutable-history assertions; the Verifier
   confirmed the sole finding was cleared. No actionable findings remain.
-- DG-0027 remains OPEN/BLOCKS-FEATURE for Working State safety-reference
-  roots. Contributions, configured archival pins, and pending publication
+- At original integration, DG-0027 was OPEN/BLOCKS-FEATURE for Working State
+  safety-reference roots. It is now resolved by ADR-0030; the extension is
+  specified below. Contributions, configured archival pins, and pending publication
   transactions also remain required Core §62 roots outside this package.
 - The handover is
   `docs/handovers/HANDOVER-WORK-0013-repository-reachability.md`.
@@ -192,3 +207,81 @@ integration are complete for this partial Line/Release scope. This does not
 claim complete Core §62 reachability. At this package's integration,
 WORK-0014 was blocked and unstarted; its contract is now PLANNED and
 implementation remains unstarted.
+
+## ADR-0030 extension plan — Working State roots
+
+Status: INDEPENDENTLY ACCEPTED; pending integration. The previously verified
+status above applies only to the original integrated Line/Release scope.
+
+ADR-0030 resolves DG-0027. Extend this package to include roots from the
+currently persisted Working State:
+
+- a present Base Revision;
+- each present `ComponentStateId` in the component-source mapping.
+
+Do not root Working State itself, its Line association, its
+`AdapterWorkingStateRef`, recovery condition, or Core change status. A
+pre-first-Revision Working State with no historical component sources may
+contribute zero roots. Traverse each root through existing historical graph
+edges and deduplicate convergent roots/reached objects. The result remains
+partial and MUST NOT classify objects outside its roots as globally
+unreachable.
+
+### Extension acceptance tests
+
+- Base Revision remains rooted independently of Line movement.
+- An absent Base Revision contributes no root.
+- A present component source outside Base Revision ancestry remains reached.
+- Absent component sources contribute no roots; repeated sources deduplicate.
+- Custom Working State roots its Base Revision and cross-Revision component
+  sources without synthesizing a Revision.
+- `AdapterWorkingStateRef`, Line association, recovery condition, and change
+  status do not create Working State-derived roots.
+- Changes to persisted Base Revision/source mappings affect the next
+  calculation; Line movement alone does not.
+- Line, Release, and Working State roots converge into a sorted,
+  deduplicated reached set.
+- Missing Resource bytes do not change reachability; no deletion or
+  retention behavior is added.
+
+### Extension boundaries
+
+- Contributions, configured archival pins, and pending publication
+  transactions remain outside this package. The result remains explicitly
+  partial.
+- Temporary checkpoints remain outside scope under DEC-INTERACTION-004.
+- A missing Working State root target is retained with unresolved-root
+  context. Under ADR-0031, no declared-history-boundary lookup is performed;
+  do not guess or synthesize a boundary tuple.
+- Any API naming update must remain explicit that Core §62 coverage is
+  partial; it must not imply complete repository reachability.
+
+### ADR-0030/0031 extension implementation and tests
+
+Independent Verifier ACCEPT; no findings. Focused reachability 30 passed,
+focused validation 18 passed, workspace 274 passed; rustfmt, warnings-denied
+Core Clippy, and `git diff --check` passed.
+
+- Added `WorkingStateEnumerationBoundary` and a complete read-only current
+  record enumeration over all Projects in the in-memory Core repository.
+  Enumeration failure is explicit; no record, Adapter reference, recovery
+  condition, or change status is fabricated or used as a root.
+- `partial_repository_reachability` includes each current record's present
+  Base Revision and present source Component States, preserves distinct
+  unresolved root context, and follows the existing Revision/Component
+  metadata graph. The result remains partial; Contributions, archival pins,
+  and pending publication transactions remain excluded.
+- Focused reachability coverage includes Base-root independence from Line
+  movement, absent Base/source and pre-first-Revision records, custom source
+  outside Base ancestry, current persisted updates, convergent/deduplicated
+  roots, operational-field exclusions, unresolved targets without fabricated
+  metadata context, enumeration failure, read-only behavior, Resource-byte
+  independence, and no global-unreachable result.
+- Final focused command:
+  `cargo test --locked -p omvcs-core --test repository_reachability` —
+  30 passed, 0 failed.
+- Final workspace command:
+  `cargo test --workspace --locked -q` — 274 passed, 0 failed.
+- `cargo fmt --all -- --check`, warnings-denied Core Clippy, and
+  `git diff --check` passed. Independent Verifier ACCEPT; integration remains
+  pending.

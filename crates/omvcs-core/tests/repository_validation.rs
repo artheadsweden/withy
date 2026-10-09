@@ -5,6 +5,7 @@ use std::collections::BTreeMap;
 
 use omvcs_core::reachability::{
     HistoricalId, PartialReachability, ReachabilityRoot, UnresolvedRootReference,
+    UnresolvedWorkingStateRootReference, WorkingStateRoot,
 };
 use omvcs_core::repository_validation::{
     CoverageStatus, DeclaredBoundaryLookup, DeclaredBoundaryQuery, HistoryCompleteness,
@@ -113,6 +114,106 @@ fn unresolved_release_target_is_reported_at_the_report_level() {
             target: MetadataIdentifier::Revision(actual_target),
         } if *actual_root == root && *actual_target == target
     )));
+}
+
+#[test]
+fn unresolved_working_state_roots_are_unresolved_without_boundary_lookup() {
+    let base = RevisionId::from_digest([41; 32]);
+    let source = omvcs_model::ComponentStateId::from_digest([42; 32]);
+    let component_id: omvcs_model::CreativeComponentId = "019cc17d-1b22-7a41-9fe9-c345c468f830"
+        .parse()
+        .expect("CreativeComponentId");
+    let mut fixture = Fixture::new(vec![candidate(
+        revision(43),
+        Some(project(1)),
+        Vec::new(),
+        Vec::new(),
+    )]);
+    fixture.reachability = Ok(PartialReachability {
+        revisions: vec![base],
+        component_states: vec![source],
+        unresolved: vec![
+            HistoricalId::Revision(base),
+            HistoricalId::ComponentState(source),
+        ],
+        unresolved_working_state_root_references: vec![
+            UnresolvedWorkingStateRootReference {
+                root: WorkingStateRoot::BaseRevision {
+                    project_id: project(1),
+                },
+                target: HistoricalId::Revision(base),
+            },
+            UnresolvedWorkingStateRootReference {
+                root: WorkingStateRoot::ComponentSource {
+                    project_id: project(1),
+                    component_id,
+                },
+                target: HistoricalId::ComponentState(source),
+            },
+        ],
+        ..PartialReachability::default()
+    });
+
+    let report = fixture
+        .validate(
+            ValidationScope::Repository,
+            ResourceVerificationDepth::MetadataOnly,
+        )
+        .expect("unresolved Working State roots are report findings");
+
+    assert_eq!(report.history_completeness, HistoryCompleteness::Unresolved);
+    assert_eq!(report.metadata_integrity, MetadataIntegrity::Indeterminate);
+    assert_eq!(fixture.boundary_queries.get(), 0);
+    assert!(report.findings.iter().any(|finding| matches!(
+        finding,
+        ValidationFinding::UnresolvedWorkingStateRootReference {
+            root: WorkingStateRoot::BaseRevision { project_id },
+            target: MetadataIdentifier::Revision(actual),
+        } if *project_id == project(1) && *actual == base
+    )));
+    assert!(report.findings.iter().any(|finding| matches!(
+        finding,
+        ValidationFinding::UnresolvedWorkingStateRootReference {
+            root: WorkingStateRoot::ComponentSource {
+                project_id,
+                component_id: actual_component,
+            },
+            target: MetadataIdentifier::ComponentState(actual_target),
+        } if *project_id == project(1)
+            && *actual_component == component_id
+            && *actual_target == source
+    )));
+    assert!(!report.findings.iter().any(|finding| matches!(
+        finding,
+        ValidationFinding::UnresolvedReachabilityMetadata { .. }
+            | ValidationFinding::UnresolvedRootReference { .. }
+    )));
+    assert_eq!(
+        report
+            .coverage
+            .required_roots
+            .iter()
+            .find(|root| root.provider == RootProvider::WorkingStateSafetyReferences)
+            .expect("Working State root coverage")
+            .status,
+        CoverageStatus::Complete
+    );
+    for provider in [
+        RootProvider::Contributions,
+        RootProvider::ArchivalPins,
+        RootProvider::PendingPublicationTransactions,
+    ] {
+        assert_eq!(
+            report
+                .coverage
+                .required_roots
+                .iter()
+                .find(|root| root.provider == provider)
+                .expect("unsupported later root coverage")
+                .status,
+            CoverageStatus::Partial
+        );
+    }
 }
 
 #[test]
@@ -269,7 +370,7 @@ impl RepositoryValidationBoundary for Fixture {
         ))
     }
 
-    fn partial_line_release_reachability(
+    fn partial_repository_reachability(
         &self,
         _scope: ValidationScope,
     ) -> Result<PartialReachability, ProviderFailure> {
@@ -1042,6 +1143,10 @@ fn provider_errors_are_completed_reports_with_partial_coverage() {
         coverage.provider == RootProvider::LinesAndReleases
             && coverage.status == CoverageStatus::Unavailable
     }));
+    assert!(root_report.coverage.required_roots.iter().any(|coverage| {
+        coverage.provider == RootProvider::WorkingStateSafetyReferences
+            && coverage.status == CoverageStatus::Unavailable
+    }));
     assert_eq!(
         root_report
             .coverage
@@ -1054,7 +1159,7 @@ fn provider_errors_are_completed_reports_with_partial_coverage() {
     assert!(
         root_report
             .coverage
-            .partial_line_release_reachability
+            .partial_repository_reachability
             .is_none()
     );
 }
@@ -1134,7 +1239,7 @@ fn partial_reachability_never_exposes_a_global_unreachable_claim() {
         )
         .expect("report");
     assert_eq!(
-        report.coverage.partial_line_release_reachability,
+        report.coverage.partial_repository_reachability,
         Some(partial)
     );
     assert_eq!(
@@ -1145,16 +1250,26 @@ fn partial_reachability_never_exposes_a_global_unreachable_claim() {
             .find(|coverage| coverage.provider == RootProvider::LinesAndReleases)
             .expect("Line/Release provider")
             .status,
-        CoverageStatus::Partial
+        CoverageStatus::Complete
     );
     assert_eq!(
         report
             .coverage
             .required_roots
             .iter()
-            .filter(|coverage| coverage.status == CoverageStatus::Unavailable)
+            .filter(|coverage| coverage.status == CoverageStatus::Partial)
             .count(),
-        4
+        3
+    );
+    assert_eq!(
+        report
+            .coverage
+            .required_roots
+            .iter()
+            .find(|coverage| { coverage.provider == RootProvider::WorkingStateSafetyReferences })
+            .expect("Working State provider")
+            .status,
+        CoverageStatus::Complete
     );
     assert!(!report.findings.iter().any(|finding| matches!(
         finding,

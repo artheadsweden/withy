@@ -9,11 +9,18 @@ use omvcs_core::line::{
 use omvcs_core::reachability::{
     AdmittedAdapterStateResourceResolver, HistoricalId, PartialReachability, ReachabilityDefect,
     ReachabilityError, ReachabilityRoot, UnresolvedRootReference,
-    partial_line_release_reachability,
+    UnresolvedWorkingStateRootReference, WorkingStateRoot, WorkingStateRootReference,
+    partial_repository_reachability,
 };
 use omvcs_core::release::{
     InMemoryReleaseRepository, ReleaseEnumerationBoundary, ReleaseOperationBoundary,
     ReleaseOperationError,
+};
+use omvcs_core::working_state::{
+    AdapterPrepareError, AdapterReferenceError, AdapterRestoreError, AdapterWorkingStateRef,
+    ComponentSourceSelection, CoreChangeStatus, HistoricalComponentSource,
+    InMemoryWorkingStateRepository, ReplacementAuthorization, WorkingState, WorkingStateAdapter,
+    WorkingStateEnumerationBoundary, WorkingStateEnumerationError, WorkingStatePreparation,
 };
 use omvcs_model::canonical::MetadataSchema;
 use omvcs_model::component_state::{ComponentStateCandidate, ComponentStateSchemaValidator};
@@ -115,6 +122,41 @@ impl AdmittedAdapterStateResourceResolver for Adapters {
     }
 }
 
+struct WorkingStateTestAdapter {
+    reference: Vec<u8>,
+    change_status: CoreChangeStatus,
+    restore_error: Option<AdapterRestoreError>,
+}
+
+impl WorkingStateAdapter for WorkingStateTestAdapter {
+    fn detect_core_changes(&self, _: &WorkingState) -> CoreChangeStatus {
+        self.change_status
+    }
+
+    fn prepare_working_state(
+        &self,
+        _: &WorkingStatePreparation,
+    ) -> Result<AdapterWorkingStateRef, AdapterPrepareError> {
+        Ok(AdapterWorkingStateRef::new(self.reference.clone()))
+    }
+
+    fn validate_working_state_ref(
+        &self,
+        _: ProjectId,
+        _: &AdapterWorkingStateRef,
+    ) -> Result<(), AdapterReferenceError> {
+        Ok(())
+    }
+
+    fn restore_working_state(
+        &self,
+        _: ProjectId,
+        _: &AdapterWorkingStateRef,
+    ) -> Result<(), AdapterRestoreError> {
+        self.restore_error.map_or(Ok(()), Err)
+    }
+}
+
 fn project(n: u8) -> ProjectId {
     format!("019cc17d-1b22-7a41-9fe9-c345c468f8{n:02x}")
         .parse()
@@ -136,6 +178,7 @@ fn component() -> CreativeComponentId {
 struct Fixture {
     lines: InMemoryLineRepository,
     releases: InMemoryReleaseRepository,
+    working_states: InMemoryWorkingStateRepository,
     revisions: BTreeMap<RevisionId, Revision>,
     projects: BTreeMap<ProjectStateId, ProjectState>,
     components: BTreeMap<ComponentStateId, ComponentState>,
@@ -200,6 +243,7 @@ impl Fixture {
         let mut fixture = Self {
             lines: InMemoryLineRepository::new([project(1), project(2)]),
             releases: InMemoryReleaseRepository::new([project(1), project(2)]),
+            working_states: InMemoryWorkingStateRepository::new([project(1), project(2)]),
             revisions: BTreeMap::new(),
             projects: BTreeMap::from([(state_id, state)]),
             components,
@@ -273,15 +317,41 @@ impl Fixture {
         components: &dyn ComponentStateResolver,
         adapters: &dyn AdmittedAdapterStateResourceResolver,
     ) -> PartialReachability {
-        partial_line_release_reachability(
+        partial_repository_reachability(
             &self.lines,
             &self.releases,
+            &self.working_states,
             revisions,
             projects,
             components,
             adapters,
         )
         .expect("enumerated roots")
+    }
+
+    fn materialise_working_state(
+        &self,
+        project_id: ProjectId,
+        revision_id: RevisionId,
+        line_id: Option<omvcs_model::LineId>,
+    ) -> WorkingState {
+        self.working_states
+            .materialise_working_state(
+                project_id,
+                revision_id,
+                line_id,
+                ReplacementAuthorization::DiscardCurrentWorkingState,
+                &WorkingStateTestAdapter {
+                    reference: vec![1, 2, 3],
+                    change_status: CoreChangeStatus::Unchanged,
+                    restore_error: None,
+                },
+                &self.revisions,
+                &self.projects,
+                &self.components,
+                &self.lines,
+            )
+            .expect("materialise test Working State")
     }
 
     fn other_project_revision(&mut self) -> RevisionId {
@@ -300,6 +370,340 @@ impl Fixture {
         self.projects.insert(id, state);
         self.revision(id, vec![], "other Project")
     }
+}
+
+#[test]
+fn working_state_base_revision_remains_a_root_when_its_line_moves() {
+    let mut f = Fixture::new();
+    let line = f.line(project(1), "main", f.child);
+    f.materialise_working_state(project(1), f.child, Some(line.line_id()));
+    let persisted_before = f
+        .working_states
+        .current_working_states()
+        .expect("enumerate persisted Working State");
+    let moved_target = f.revision(f.state, vec![], "divergent Line target");
+
+    f.lines
+        .move_line(
+            line.line_id(),
+            line.target_revision(),
+            line.generation(),
+            moved_target,
+            &f.revisions,
+            &f.projects,
+        )
+        .expect("move associated Line");
+
+    let result = f.reach();
+    assert!(result.revisions.contains(&f.child));
+    assert!(result.revisions.contains(&moved_target));
+    assert!(result.revisions.contains(&f.initial));
+    assert_eq!(
+        result.revisions.len(),
+        3,
+        "Line and Base roots converge while retaining Base ancestry"
+    );
+    assert_eq!(
+        result
+            .component_states
+            .iter()
+            .filter(|&&id| id == f.child_component)
+            .count(),
+        1,
+        "the Base graph and component-source root converge"
+    );
+    assert_eq!(
+        result.working_state_roots,
+        vec![
+            WorkingStateRootReference {
+                root: WorkingStateRoot::BaseRevision {
+                    project_id: project(1),
+                },
+                target: HistoricalId::Revision(f.child),
+            },
+            WorkingStateRootReference {
+                root: WorkingStateRoot::ComponentSource {
+                    project_id: project(1),
+                    component_id: component(),
+                },
+                target: HistoricalId::ComponentState(f.child_component),
+            },
+        ]
+    );
+    assert_eq!(
+        f.working_states
+            .current_working_states()
+            .expect("enumerate unchanged Working State"),
+        persisted_before
+    );
+}
+
+#[test]
+fn present_base_revision_is_a_root_without_any_component_sources() {
+    let mut f = Fixture::new();
+    let project_state: ProjectStateCandidate = serde_json::from_value(json!({
+        "schema": SCHEMA,
+        "project_id": project(1).to_string(),
+        "components": {},
+        "adapter_state_id": f.adapter.to_string(),
+        "project_metadata": {}
+    }))
+    .expect("empty Project State candidate");
+    let project_state = project_state
+        .admit(&[&Schema], &f.components, &f.adapters)
+        .expect("admit empty Project State");
+    let project_state_id = project_state.project_state_id();
+    f.projects.insert(project_state_id, project_state);
+    let base = f.revision(project_state_id, vec![], "Base-only history");
+    let working_state = f.materialise_working_state(project(1), base, None);
+    assert!(working_state.component_sources().is_empty());
+
+    let result = f.reach();
+
+    assert_eq!(result.revisions, vec![base]);
+    assert_eq!(
+        result.working_state_roots,
+        vec![WorkingStateRootReference {
+            root: WorkingStateRoot::BaseRevision {
+                project_id: project(1),
+            },
+            target: HistoricalId::Revision(base),
+        }]
+    );
+    assert_eq!(result.component_states, Vec::<ComponentStateId>::new());
+}
+
+#[test]
+#[allow(clippy::too_many_lines)]
+fn current_persisted_base_and_custom_component_sources_change_next_reachability() {
+    let mut f = Fixture::new();
+    let source_resource = ResourceId::from_digest([91; 32]);
+    let detached = ComponentStateCandidate::new(
+        SCHEMA,
+        component(),
+        vec![ResourceReferenceCandidate::new(
+            source_resource,
+            ResourceByteLength::new(4096).expect("valid Resource length"),
+        )],
+        BTreeMap::new(),
+    )
+    .with_parents(vec![])
+    .admit(&[&Schema], &[])
+    .expect("admit custom source Component State");
+    let detached_id = detached.component_state_id();
+    f.components.insert(detached_id, detached);
+    let custom_project_state: ProjectStateCandidate = serde_json::from_value(json!({
+        "schema": SCHEMA,
+        "project_id": project(1).to_string(),
+        "components": {component().to_string(): detached_id.to_string()},
+        "adapter_state_id": f.adapter.to_string(),
+        "project_metadata": {}
+    }))
+    .expect("custom Project State candidate");
+    let custom_project_state = custom_project_state
+        .admit(&[&Schema], &f.components, &f.adapters)
+        .expect("admit custom Project State");
+    let custom_project_state_id = custom_project_state.project_state_id();
+    f.projects
+        .insert(custom_project_state_id, custom_project_state);
+    let custom_revision = f.revision(custom_project_state_id, vec![], "custom component source");
+
+    f.materialise_working_state(project(1), f.child, None);
+    let before = f.reach();
+    assert!(before.revisions.contains(&f.child));
+    assert!(!before.component_states.contains(&detached_id));
+    assert_eq!(
+        before
+            .component_states
+            .iter()
+            .filter(|&&id| id == f.child_component)
+            .count(),
+        1,
+        "the Base Revision graph and current source map converge without duplication"
+    );
+
+    f.working_states
+        .materialise_custom_working_state(
+            project(1),
+            &[ComponentSourceSelection {
+                component_id: component(),
+                source: Some(HistoricalComponentSource {
+                    revision_id: custom_revision,
+                    component_state_id: detached_id,
+                }),
+            }],
+            ReplacementAuthorization::DiscardCurrentWorkingState,
+            &WorkingStateTestAdapter {
+                reference: vec![4, 5, 6],
+                change_status: CoreChangeStatus::Unchanged,
+                restore_error: None,
+            },
+            &f.revisions,
+            &f.projects,
+            &f.components,
+        )
+        .expect("commit custom component source");
+
+    let after = f.reach();
+    assert!(after.revisions.contains(&f.child));
+    assert!(!after.revisions.contains(&custom_revision));
+    assert!(after.component_states.contains(&detached_id));
+    assert!(after.resources.contains(&source_resource));
+    assert_eq!(
+        after
+            .component_states
+            .iter()
+            .filter(|&&id| id == detached_id)
+            .count(),
+        1,
+        "custom source converges with the root set without duplicate IDs"
+    );
+
+    f.components.remove(&detached_id);
+    let unresolved = f.reach();
+    assert!(unresolved.component_states.contains(&detached_id));
+    assert!(
+        unresolved
+            .unresolved
+            .contains(&HistoricalId::ComponentState(detached_id))
+    );
+    assert_eq!(
+        unresolved.unresolved_working_state_root_references,
+        vec![UnresolvedWorkingStateRootReference {
+            root: WorkingStateRoot::ComponentSource {
+                project_id: project(1),
+                component_id: component(),
+            },
+            target: HistoricalId::ComponentState(detached_id),
+        }]
+    );
+
+    let replacement_base = f.revision(f.state, vec![], "replacement Base Revision");
+    f.materialise_working_state(project(1), replacement_base, None);
+    let updated = f.reach();
+    assert!(updated.revisions.contains(&replacement_base));
+    assert!(!updated.revisions.contains(&f.child));
+    assert!(!updated.component_states.contains(&detached_id));
+}
+
+#[test]
+fn unresolved_working_state_base_target_is_reached_without_fabricated_metadata_context() {
+    let mut f = Fixture::new();
+    f.materialise_working_state(project(1), f.child, None);
+    f.revisions.remove(&f.child);
+
+    let result = f.reach();
+    assert!(result.revisions.contains(&f.child));
+    assert!(result.unresolved.contains(&HistoricalId::Revision(f.child)));
+    assert_eq!(
+        result.unresolved_working_state_root_references,
+        vec![UnresolvedWorkingStateRootReference {
+            root: WorkingStateRoot::BaseRevision {
+                project_id: project(1),
+            },
+            target: HistoricalId::Revision(f.child),
+        }]
+    );
+    assert_eq!(
+        result.unresolved_root_references,
+        Vec::<UnresolvedRootReference>::new()
+    );
+    assert_eq!(result.defects, Vec::<ReachabilityDefect>::new());
+}
+
+#[test]
+fn pre_first_revision_and_operational_working_state_fields_add_no_roots() {
+    let f = Fixture::new();
+    let local_component = CreativeComponentId::new();
+    f.working_states
+        .create_initial_working_state(project(1))
+        .expect("create pre-first-Revision Working State");
+    f.working_states
+        .create_initial_working_state(project(2))
+        .expect("create another Project Working State");
+    let line = f.line(project(1), "operational association", f.child);
+    f.working_states
+        .materialise_custom_working_state(
+            project(1),
+            &[ComponentSourceSelection {
+                component_id: local_component,
+                source: None,
+            }],
+            ReplacementAuthorization::DiscardCurrentWorkingState,
+            &WorkingStateTestAdapter {
+                reference: vec![7, 8, 9],
+                change_status: CoreChangeStatus::Changed,
+                restore_error: None,
+            },
+            &f.revisions,
+            &f.projects,
+            &f.components,
+        )
+        .expect("commit local component with absent historical source");
+    f.working_states
+        .associate_working_state_line(project(1), Some(line.line_id()), &f.lines)
+        .expect("associate operational Line");
+    f.lines
+        .delete_line(line.line_id(), line.generation())
+        .expect("remove the independently rooted Line");
+
+    let adapter_with_partial_restore = WorkingStateTestAdapter {
+        reference: vec![7, 8, 9],
+        change_status: CoreChangeStatus::Changed,
+        restore_error: Some(AdapterRestoreError::PartialFailure),
+    };
+    let inspection = f
+        .working_states
+        .inspect_working_state(
+            project(1),
+            &WorkingStateTestAdapter {
+                reference: vec![7, 8, 9],
+                change_status: CoreChangeStatus::Changed,
+                restore_error: None,
+            },
+        )
+        .expect("inspect operational status");
+    assert_eq!(inspection.change_status, CoreChangeStatus::Changed);
+    assert!(
+        inspection
+            .working_state
+            .adapter_working_state_ref()
+            .is_some()
+    );
+    assert_eq!(inspection.working_state.line_id(), Some(line.line_id()));
+    assert_eq!(inspection.working_state.base_revision_id(), None);
+    assert_eq!(
+        inspection
+            .working_state
+            .component_sources()
+            .get(&local_component),
+        Some(&None)
+    );
+    assert_eq!(
+        f.working_states
+            .restore_committed_working_state(project(1), &adapter_with_partial_restore),
+        Err(omvcs_core::working_state::WorkingStateError::AdapterPartialFailureRecoveryRequired)
+    );
+    assert!(
+        f.working_states
+            .inspect_working_state(project(1), &adapter_with_partial_restore)
+            .expect("inspect recovery status")
+            .recovery_condition
+            .is_some()
+    );
+    assert_eq!(
+        f.working_states
+            .current_working_states()
+            .expect("enumerate Working State records")
+            .len(),
+        2,
+        "current records are enumerated across Projects"
+    );
+    assert_eq!(
+        f.reach(),
+        PartialReachability::default(),
+        "record existence, Line association, Adapter reference, recovery, change status, and absent sources do not root history"
+    );
 }
 
 // Core §62; ADR-0016/0017: enumerate all roots, not just a selected Project.
@@ -769,13 +1173,24 @@ fn reachability_does_not_mutate_roots_preferences_or_immutable_metadata() {
         .set_default_line(project(1), None, Some(line.line_id()))
         .expect("Default Line");
     let release = f.release(project(1), "release", f.child);
+    f.materialise_working_state(project(1), f.child, Some(line.line_id()));
     let lines = f.lines.retained_lines().expect("Lines");
+    let working_states = f
+        .working_states
+        .current_working_states()
+        .expect("Working State records");
     let release_bytes = release.canonical_body().to_vec();
     let revision_bytes = f.revisions[&f.child].canonical_body().to_vec();
     let project_bytes = f.projects[&f.state].canonical_body().to_vec();
     let component_bytes = f.components[&f.child_component].canonical_body().to_vec();
     assert_eq!(f.reach(), f.reach());
     assert_eq!(f.lines.retained_lines().expect("Lines"), lines);
+    assert_eq!(
+        f.working_states
+            .current_working_states()
+            .expect("unchanged Working State records"),
+        working_states
+    );
     assert_eq!(f.lines.default_line(project(1)), Ok(Some(line.line_id())));
     assert_eq!(
         f.releases.admitted_releases().expect("Releases")[0].canonical_body(),
@@ -793,14 +1208,15 @@ fn reachability_does_not_mutate_roots_preferences_or_immutable_metadata() {
 fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unreachable() {
     let mut f = Fixture::new();
     // Resolvers contain history, but existence or an operational use/name cannot
-    // make it a root. No Working State, Contribution, pin or transaction input
-    // exists in the operation's public boundary.
+    // make it a root. No current Working State, Contribution, pin or transaction
+    // record exists for this Repository.
     let unselected = f.revision(f.state, vec![], "operational reference, not a root");
     assert_eq!(f.reach(), PartialReachability::default());
     f.line(project(1), "retained", f.initial);
     let PartialReachability {
         lines,
         releases,
+        working_state_roots,
         revisions,
         project_states,
         component_states,
@@ -808,10 +1224,12 @@ fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unr
         resources,
         unresolved,
         unresolved_root_references,
+        unresolved_working_state_root_references,
         defects,
     } = f.reach(); // exhaustive result shape: no global unreachable/completeness field
     assert_eq!(lines.len(), 1);
     assert_eq!(releases, Vec::<omvcs_model::ReleaseId>::new());
+    assert_eq!(working_state_roots, Vec::<WorkingStateRootReference>::new());
     assert_eq!(revisions, vec![f.initial]);
     assert!(!revisions.contains(&unselected));
     assert_eq!(project_states.len(), 1);
@@ -823,6 +1241,10 @@ fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unr
         unresolved_root_references,
         Vec::<UnresolvedRootReference>::new()
     );
+    assert_eq!(
+        unresolved_working_state_root_references,
+        Vec::<UnresolvedWorkingStateRootReference>::new()
+    );
     assert_eq!(defects, Vec::<ReachabilityDefect>::new());
     assert!(f.revisions.contains_key(&unselected));
 }
@@ -830,8 +1252,10 @@ fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unr
 struct Roots {
     lines: Vec<Line>,
     releases: Vec<Release>,
+    working_states: Vec<WorkingState>,
     fail_lines: bool,
     fail_releases: bool,
+    fail_working_states: bool,
 }
 impl LineEnumerationBoundary for Roots {
     fn retained_lines(&self) -> Result<Vec<Line>, LineOperationError> {
@@ -851,6 +1275,15 @@ impl ReleaseEnumerationBoundary for Roots {
         }
     }
 }
+impl WorkingStateEnumerationBoundary for Roots {
+    fn current_working_states(&self) -> Result<Vec<WorkingState>, WorkingStateEnumerationError> {
+        if self.fail_working_states {
+            Err(WorkingStateEnumerationError::Unavailable)
+        } else {
+            Ok(self.working_states.clone())
+        }
+    }
+}
 
 #[test]
 fn enumeration_order_and_duplicate_root_records_do_not_change_the_result() {
@@ -861,11 +1294,14 @@ fn enumeration_order_and_duplicate_root_records_do_not_change_the_result() {
     let roots = Roots {
         lines: vec![second, first.clone(), first],
         releases: vec![release.clone(), release],
+        working_states: Vec::new(),
         fail_lines: false,
         fail_releases: false,
+        fail_working_states: false,
     };
     assert_eq!(
-        partial_line_release_reachability(
+        partial_repository_reachability(
+            &roots,
             &roots,
             &roots,
             &f.revisions,
@@ -891,15 +1327,24 @@ fn failed_root_enumeration_is_not_reported_as_an_empty_successful_result() {
             true,
             ReachabilityError::Releases(ReleaseOperationError::RepositoryUnavailable),
         ),
+        (
+            false,
+            false,
+            ReachabilityError::WorkingStates(WorkingStateEnumerationError::Unavailable),
+        ),
     ] {
         let roots = Roots {
             lines: vec![],
             releases: vec![],
+            working_states: vec![],
             fail_lines,
             fail_releases,
+            fail_working_states: expected
+                == ReachabilityError::WorkingStates(WorkingStateEnumerationError::Unavailable),
         };
         assert_eq!(
-            partial_line_release_reachability(
+            partial_repository_reachability(
+                &roots,
                 &roots,
                 &roots,
                 &f.revisions,

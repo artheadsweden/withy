@@ -56,17 +56,26 @@ WORK-0012 is independently verified and integrated at
 and integrated at `a67e1811ce0e7e15001f8517d379d7da607d3bdf` on
 `spec/0003-canonical-collection-order` for the explicitly partial Line/Release
 root subset; its feature branch is pushed to
-`origin/work/0013-repository-reachability`. DG-0027 blocks Working State
-safety-reference root coverage. Contributions, configured
+`origin/work/0013-repository-reachability`. At WORK-0013's original
+integration, DG-0027 remained open and Working State safety-reference roots
+were excluded. Contributions, configured
 archival pins, and pending publication transactions remain required by Core
 §62 but are excluded from this bounded package; it does not claim complete
 reachability or global unreachable status. AdapterWorkingStateRef is not
 itself a reachability root. Human-approved ADR-0027–ADR-0029 resolve
 DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014 is independently accepted
 and integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0`. Repository
-validation reuses partial Line/Release reachability, reports unsupported
-Core §62 roots, and MUST NOT claim complete reachability or global
-unreachable status. DG-0027, Contributions, configured archival pins, and
-pending publication transactions remain outside this package.
+validation originally reused partial Line/Release reachability, reported
+unsupported Core §62 roots, and did not claim complete reachability or global
+unreachable status. At WORK-0014's original integration, DG-0027 and the
+other unsupported root classes were outside its accepted scope.
+ADR-0030 resolves DG-0027: current Working State Base Revision and present
+component-source Component States are safety-reference roots. DG-0028 is
+resolved by ADR-0031: absent Working-State-root targets are unresolved, with
+no declared-boundary lookup. The required WORK-0013/0014 implementation
+extension on `work/0013-working-state-roots` passed acceptance validation
+and received independent Verifier ACCEPT with no findings; integration
+remains pending for M2 closeout. Contributions, configured archival pins,
+and pending publication transactions remain outside the M2 root set.
 DEC-CORE-005/008, DEC-INTERACTION-004, and DG-0015 remain separate. M2 is IN
 PROGRESS. No M3 work has started.

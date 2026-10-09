@@ -1,6 +1,6 @@
 # DG-0027 — Working State safety-reference reachability roots
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: WORK-0013 preflight
@@ -11,7 +11,7 @@ Date: 2026-10-09
 - `Specs/OMVCS Core Specification.md` §§19, 62–64, 82–83.
 - `Specs/OMVCS Glossary.md`, Working State, Base Revision, Adapter Working
   State Reference, and Reachability.
-- `Specs/OMVCS Core Invariants Specification.md`, INV-WORK-001–006 and
+- `Specs/OMVCS Core Invariants Specification.md`, INV-WORK-001–007 and
   INV-GC-001–003.
 - `Specs/OMVCS Interaction Specification.md` §§13–14, 33–36, 123, and 308,
   item 4.
@@ -84,4 +84,14 @@ under DEC-INTERACTION-004.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved [ADR-0030](../decisions/ADR-0030-working-state-safety-reference-roots.md).
+The current persisted Working State contributes roots for a present Base
+Revision and every present component-source `ComponentStateId`. Working
+State itself, `line_id`, `AdapterWorkingStateRef`, recovery condition, and
+Core change status are not additional roots. Temporary checkpoints remain
+separate under DEC-INTERACTION-004. Contributions, configured archival pins,
+and pending publication transactions remain outside this decision.
+
+The related question of applying declared-history-boundary matching to
+missing Working State safety-reference targets is tracked separately by
+[DG-0028](DG-0028-working-state-root-boundary-matching.md).
