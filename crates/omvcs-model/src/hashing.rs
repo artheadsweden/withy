@@ -7,7 +7,7 @@
 
 use sha2::{Digest, Sha256};
 
-use crate::{AdapterStateId, ComponentStateId, ProjectStateId, ResourceId, RevisionId};
+use crate::{AdapterStateId, ComponentStateId, ProjectStateId, ReleaseId, ResourceId, RevisionId};
 
 fn sha256(bytes: &[u8]) -> [u8; 32] {
     let digest = Sha256::digest(bytes);
@@ -59,4 +59,14 @@ pub fn hash_project_state_metadata(canonical_metadata: &[u8]) -> ProjectStateId 
 #[must_use]
 pub fn hash_revision_metadata(canonical_metadata: &[u8]) -> RevisionId {
     RevisionId::from_digest(sha256(canonical_metadata))
+}
+
+/// Calculates a Release Identifier from its canonical metadata body bytes.
+///
+/// `canonical_metadata` must be the RFC 8785 serialization of the complete
+/// admitted Release body. The bytes are hashed as-is, without an object-type
+/// prefix.
+#[must_use]
+pub fn hash_release_metadata(canonical_metadata: &[u8]) -> ReleaseId {
+    ReleaseId::from_digest(sha256(canonical_metadata))
 }

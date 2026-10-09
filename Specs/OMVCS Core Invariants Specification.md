@@ -200,6 +200,26 @@ not remove the currently designated Line; its Default Line check,
 existence/generation checks, and deletion MUST be part of one atomic
 decision, preventing a dangling designation under concurrent updates.
 
+## INV-HIST-012 — Release identity and body are immutable
+
+An admitted OMVCS 0.1 Release MUST be a closed, seven-member,
+Project-scoped historical metadata object with a content-derived ReleaseId
+as defined in Core §18. Its exact available versioned schema MUST validate
+the body before admission. All seven required members MUST participate in
+identity; unknown top-level members MUST be rejected.
+
+The Release's admitted Project and target Revision MUST match, and the
+target MUST resolve as valid/admitted metadata. Resource-byte availability
+MUST NOT be required for admission. All body members, including the target
+and name, are immutable after admission. Release names MUST be unique within
+their Project by exact string/code-point equality. Every admitted Release is
+a reachability root for its target Revision.
+
+OMVCS 0.1 defines creation/admission only; it defines no Release update or
+deletion operation. Reference Render is neither a Release body member nor a
+`CreateRelease` precondition; other Reference Render policy remains separate
+under DEC-CORE-002. A Release MUST NOT acquire Git tag semantics.
+
 ---
 
 # 2. Resource identity and storage

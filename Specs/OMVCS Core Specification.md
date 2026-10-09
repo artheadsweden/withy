@@ -220,6 +220,7 @@ omvcs:resource:sha256:96d2...
 omvcs:component-state:sha256:b371...
 omvcs:project-state:sha256:84aa...
 omvcs:revision:sha256:0ca7...
+omvcs:release:sha256:1a2b...
 ```
 
 Object type is part of the identifier namespace.
@@ -960,48 +961,170 @@ separate under DEC-CORE-008.
 
 # 18. Release
 
-A Release permanently identifies one Revision.
+A Release is immutable, Project-scoped historical repository metadata,
+content-addressed by its complete admitted body, and distinct from a mutable
+Line. Every admitted Release is a reachability root for its target Revision.
+A Release identifies one Revision for as long as that Release exists.
+OMVCS 0.1 defines `CreateRelease`; it defines no Release update or
+deletion operation.
 
-Conceptual structure:
+## OMVCS 0.1 closed Release body
+
+The Release body MUST contain exactly these seven REQUIRED top-level
+members. Unknown additional members are invalid; `null` is not a valid
+substitute for any member.
+
+| Member | Requirement | Meaning |
+|---|---|---|
+| `schema` | REQUIRED | Exact versioned Release schema identifier; OMVCS 0.1 uses `omvcs.release/0.1`. |
+| `project_id` | REQUIRED | Typed assigned Project Identifier owning the Release and defining its name namespace. |
+| `name` | REQUIRED | Non-empty human-readable Release name, unique within `project_id`. |
+| `revision_id` | REQUIRED | Typed Revision Identifier resolving to valid/admitted metadata in the same Project. |
+| `created_at` | REQUIRED | Canonical UTC nanosecond timestamp under §15. |
+| `creator_id` | REQUIRED | Direct typed ActorId under §59. |
+| `description` | REQUIRED | JSON string; MAY be empty. |
+
+The exact versioned Release schema identified by `schema` MUST be known,
+available, and validate the body before admission. An unknown or unavailable
+schema candidate MAY be preserved externally where supported, but MUST NOT
+be admitted as a valid OMVCS Release or produce a valid Release Identifier.
+No arbitrary top-level extension members are defined in OMVCS 0.1; future
+extensions require an approved schema/version change.
+
+The Project identified by `project_id` MUST exist. It owns the Release and
+defines the namespace for Release-name uniqueness. At admission,
+`revision_id` MUST resolve to a valid/admitted Revision; the Project State
+referenced by that Revision MUST resolve as valid/admitted, and its
+`project_id` MUST equal the Release's `project_id`. A cross-Project target
+is invalid. Resource bytes need not be available or locally materialised
+for Release admission.
+
+Release-name equality is exact string/code-point equality. Core MUST NOT
+case-fold, use locale-sensitive comparison, normalize for a filesystem,
+apply Git ref normalization, or parse/normalize semantic versions. Names
+MUST NOT be empty; no other character restrictions apply beyond generic
+string and serialization rules. Different Projects MAY use the same Release
+name. Because Release is immutable, its name cannot subsequently change.
+
+`created_at` MUST use the exact canonical timestamp profile in §15:
+`YYYY-MM-DDTHH:MM:SS.nnnnnnnnnZ`, UTC, uppercase `T` and `Z`, and exactly
+nine fractional-second digits. Offsets, missing/fewer/more fractional
+digits, and inputs with finer precision that would require rounding or
+truncation are invalid. The timestamp is informational and MUST NOT
+determine ancestry or graph ordering; it participates in Release identity.
+The operation input supplies the timestamp; Core validates it.
+
+`creator_id` is a direct ActorId, not a nested creator/profile/account
+object. Platform account ID, email, username, display name, signing key,
+and credentials are not Release creator identity. `creator_id` records
+historical attribution and does not itself prove authorization or current
+Platform-account control. It participates in Release identity.
+
+`description` MUST be present as a JSON string and MAY be empty. Omission
+and `null` are invalid; the empty string means no descriptive text was
+supplied. Core MUST NOT trim, rewrite whitespace, case-normalize, or
+Unicode-normalize it beyond canonical JSON string handling. It participates
+in Release identity.
+
+Illustrative body shape only (the identifiers below are placeholders, not a
+valid Release or canonical/hash test vector):
 
 ```json
 {
   "schema": "omvcs.release/0.1",
-
-  "project_id": "019aa...",
-
+  "project_id": "019cc17d-1b22-7a41-9fe9-c345c468f82e",
   "name": "1.0",
-
-  "revision":
-    "omvcs:revision:sha256:ABC...",
-
-  "created_at":
-    "2026-10-08T13:42:00Z",
-
-  "creator": {
-    "actor_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c"
-  },
-
-  "description":
-    "First public mix"
+  "revision_id": "omvcs:revision:sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "created_at": "2026-10-09T01:23:45.123456789Z",
+  "creator_id": "019cc17d-1b22-7a41-9fe9-c345c468f82c",
+  "description": "First public mix"
 }
 ```
 
-A Release target MUST NOT be changed.
+## Release identity
 
-The human-readable Release name MUST be unique within its namespace.
-
-If `1.0` already exists, another target requires another Release such as:
-
-```text
-1.0.1
-```
-
-or:
+`ReleaseId` is a typed content-derived identifier. It is SHA-256 over exactly
+the UTF-8 RFC 8785/JCS canonical serialization of the closed Release body
+above. All seven members are always present and participate in identity.
+The digest input contains no type/domain prefix. The typed textual
+representation is:
 
 ```text
-1.0-remaster
+omvcs:release:sha256:<64-lowercase-hex-digits>
 ```
+
+No transport envelope, signature, validation evidence, storage information,
+Platform metadata, authorization data, or object-type prefix participates in
+the digest. The Release body has no arrays; RFC 8785 object-member
+canonicalization is the only collection ordering rule needed for OMVCS 0.1.
+The body itself MUST still be serialized canonically for hashing and
+verification even though its fields are closed.
+
+## CreateRelease
+
+`CreateRelease` takes a ProjectId, non-empty Release name, admitted
+RevisionId, creator ActorId, canonical creation timestamp, and description
+string. Core constructs the body using the applicable exact Release schema
+version.
+
+Preconditions:
+
+- the Project context exists;
+- the exact Release schema is known, available, and validates the candidate;
+- the target Revision resolves as valid/admitted metadata, and its admitted
+  Project State resolves to the same Project as `project_id`;
+- the Release name is non-empty and is not bound to a different admitted
+  Release in that Project;
+- creator_id is a valid ActorId;
+- created_at satisfies the canonical timestamp profile;
+- description is a JSON string.
+
+Resource bytes, local materialisation, and Reference Render are not
+preconditions. Reference Render policy remains separate under
+DEC-CORE-002. Authorization is external to the Release body and follows the
+repository/Platform authority boundary.
+
+Release body construction, identity derivation, Project/name uniqueness
+checking, and admission MUST behave atomically at the Core operation
+boundary. Failure MUST leave no partially admitted Release and MUST NOT
+claim a name. Success returns the admitted Release and its ReleaseId.
+
+Repeated creation of the exact same already-admitted Release body is
+idempotent success only when the computed ReleaseId already exists, its
+canonical body bytes are identical, and the Project/name binding refers to
+that same Release. It returns the existing Release and identifier without
+creating another object. A Project/name already bound to a different
+ReleaseId is a name conflict. If an existing ReleaseId resolves to
+non-identical canonical body bytes, this is an integrity violation, not a
+duplicate success. When one `CreateRelease` request simultaneously encounters
+this existing same-ReleaseId/different-canonical-body integrity violation and
+a Project/name binding conflict, Core MUST return the integrity violation.
+The name conflict MUST NOT mask it. For this overlap, failure MUST remain
+atomic and MUST leave all stored objects and Project/name bindings unchanged.
+This rule applies only to these two simultaneous conditions; it does not
+define a general failure-precedence framework or other precondition ordering.
+Failure MUST NOT mutate either existing object or claim the requested name.
+Core MUST NOT silently replace either object.
+
+## Immutability and lifecycle
+
+Once admitted, none of the seven Release body members may change. OMVCS 0.1
+defines no `RenameRelease`, `MoveRelease`, `UpdateRelease`, mutation
+generation, Release CAS update, `DeleteRelease`, or Release reflog. Another
+name, description, creator/time assertion, target Revision, or other
+historical body requires another Release, subject to Project-scoped name
+uniqueness. This 0.1 operation boundary does not decide what later OMVCS
+versions may define.
+
+An admitted Release is a repository reachability root with the edge:
+
+```text
+Release -> revision_id
+```
+
+Reachability then follows the immutable Revision metadata graph. Resource-byte
+availability is distinct from metadata reachability. Release reachability
+calculation is defined for WORK-0013; WORK-0011 MUST NOT implement traversal.
 
 ---
 
@@ -2108,7 +2231,15 @@ validate `project_metadata` under the exact Project State schema, including nest
 validate Component State references
 validate each Component State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
 validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
-validate Release targets
+validate each Release against its exact available `omvcs.release/0.1`
+  schema and closed seven-member body before historical admission or identity
+  calculation; verify its content-derived ReleaseId
+resolve its Project and target Revision as valid/admitted metadata and require
+  the target Revision's Project State to identify the same Project
+require exact Project-scoped Release-name uniqueness
+verify an identical ReleaseId resolves to byte-identical canonical body
+  bytes; treat a different body under an existing ReleaseId as an integrity
+  violation
 validate each Line against its exact closed member set, assigned Line
   Identifier profile, and approved generation profile; require unique Line
   Identifiers and names within each Project; resolve its Project and target
@@ -2289,6 +2420,11 @@ configured archival pins
 Working State safety references
 pending publication transactions
 ```
+
+Each admitted Release is a root whose edge is `Release -> revision_id`.
+Traversal then follows the Revision metadata graph. Release metadata and
+Revision metadata reachability MUST NOT depend on local Resource-byte
+availability.
 
 Reachability traverses:
 
@@ -2584,6 +2720,10 @@ Removing a Line record MUST NOT itself delete any Revision, Project State,
 Component State, or Resource. Automatic pin/retention behavior remains
 governed separately by DEC-CORE-008.
 
+OMVCS 0.1 defines no `DeleteRelease` or `UpdateRelease` operation. Hiding or
+removing a Platform presentation does not delete or mutate the Release body.
+This omission does not define Release deletion for future OMVCS versions.
+
 Deleting a platform page does not delete creator-controlled storage.
 
 ---
@@ -2797,6 +2937,9 @@ RecoverRepository
 Names shown here are normative technical concepts, not necessarily UI labels.
 The Line operation contracts, including `SetDefaultLine`, are specified in
 §§16–17.
+The Release body, admission, identity, and `CreateRelease` contract are
+specified in §18. WORK-0013 owns reachability traversal from admitted
+Release roots.
 
 ---
 
@@ -3076,7 +3219,8 @@ There are a few areas where we should deliberately avoid pretending we have made
 They belong inside this Core Specification and should be resolved before Core 0.1 is frozen:
 
 1. Whether fixed 8 MiB chunking remains the reference storage representation or we adopt deterministic content-defined chunking.
-2. Exact rules for reference renders: optional globally, required for Releases, or adapter-dependent.
+2. Remaining Reference Render policy and association rules, excluding a
+   Release body member or `CreateRelease` precondition as specified in §18.
 3. Exact minimum durability policy for published Revisions.
 4. Whether complete metadata history is mandatory locally or may itself be sparse.
 5. Exact retention period before unreachable Resources become eligible for garbage collection.
@@ -3157,7 +3301,8 @@ The central OMVCS Core model can therefore be stated very compactly:
 
 > Lines identify evolving creative directions.
 
-> Releases permanently identify meaningful historical states.
+> A Release immutably identifies a meaningful historical state for as long
+> as that Release exists.
 
 > Contributions introduce independently developed history.
 
