@@ -1,6 +1,6 @@
 # WORK-0014 — Repository validation
 
-Status: Original Line/Release validation scope VERIFIED at `3f37fa1a981fa06408616b080edb6c56355bc1b0`; ADR-0030/0031 extension independently ACCEPTED, pending integration
+Status: VERIFIED — original Line/Release validation scope integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0`; ADR-0030/0031 Working State-root extension independently accepted and integrated at `3eb1c3e01fa01904f8925f9bcdf3171059594c50`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0014-repository-validation`
@@ -9,8 +9,8 @@ ADR-0030/0031 extension branch: `work/0013-working-state-roots`
 The original verification and implementation details through the original
 completion criteria below record the accepted Line/Release-only scope. The
 extension section at the end records the separately implemented and
-independently accepted Working State root extension; it remains pending
-integration.
+independently accepted Working State root extension, integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`.
 
 ## Objective
 
@@ -166,7 +166,8 @@ after WORK-0013 adds those roots:
 DG-0028 is resolved by ADR-0031. Missing Working State safety-root targets
 are `unresolved`; do not infer a referring Identifier or edge kind, issue a
 declared-boundary lookup, or report `declared_incomplete`. The extension
-below is implemented and independently accepted; integration remains pending.
+below is implemented, independently accepted, and integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`.
 The original verified Line/Release validation remains accepted within its
 original scope.
 
@@ -203,5 +204,5 @@ warnings-denied Core Clippy, and `git diff --check` passed.
 - Final workspace command:
   `cargo test --workspace --locked -q` — 274 passed, 0 failed.
 - `cargo fmt --all -- --check`, warnings-denied Core Clippy, and
-  `git diff --check` passed. Independent Verifier ACCEPT; integration remains
-  pending.
+  `git diff --check` passed. Independent Verifier ACCEPT; integrated at
+  `3eb1c3e01fa01904f8925f9bcdf3171059594c50`.

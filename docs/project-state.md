@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M2 — Local repository history
+Current milestone: M3 — Storage abstraction (next; work-package planning required)
 
 ## Specification state
 
@@ -72,10 +72,16 @@ other unsupported root classes were outside its accepted scope.
 ADR-0030 resolves DG-0027: current Working State Base Revision and present
 component-source Component States are safety-reference roots. DG-0028 is
 resolved by ADR-0031: absent Working-State-root targets are unresolved, with
-no declared-boundary lookup. The required WORK-0013/0014 implementation
-extension on `work/0013-working-state-roots` passed acceptance validation
-and received independent Verifier ACCEPT with no findings; integration
-remains pending for M2 closeout. Contributions, configured archival pins,
-and pending publication transactions remain outside the M2 root set.
-DEC-CORE-005/008, DEC-INTERACTION-004, and DG-0015 remain separate. M2 is IN
-PROGRESS. No M3 work has started.
+no declared-boundary lookup. The required WORK-0013/0014 implementation extension on
+`work/0013-working-state-roots` passed acceptance validation and received
+independent Verifier ACCEPT with no findings; it is integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`. The M2 closeout audit found
+WORK-0009 through WORK-0014 verified/integrated at their bounded scopes and
+no open M2-blocking Design Gap. DG-0015 remains open for M6 Contribution
+semantics; DEC-CORE-005/008 and DEC-INTERACTION-004 remain separate.
+Contributions, configured archival pins, and pending publication
+transactions remain unsupported Core §62 root classes; reachability is
+explicitly partial and does not classify global unreachability. M2 is
+COMPLETE at the stated integration commit. M3 is next, but no M3 work
+package or implementation has started; bounded work packages are required
+before production work begins.

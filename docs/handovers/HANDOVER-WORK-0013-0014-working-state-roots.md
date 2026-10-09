@@ -119,20 +119,21 @@ checkpoints.
 - No physical Working State persistence adapter, storage-provider mechanics,
   FFI, repair, garbage collection, deletion, or temporary-checkpoint policy
   was added.
-- Integration and M2 closeout are pending.
+- M2 closeout is recorded complete at the integration commit below.
 
 ## Remaining work
 
-Integrate the accepted extension into `spec/0003-canonical-collection-order`,
-update final project status, and verify local/remote synchronization. Do not
-add Contributions, archival pins, pending publication transactions,
-temporary checkpoints, repair, GC, storage-adapter persistence, FFI, or M3
-implementation in this extension.
+Verify the integration branch has been pushed and its local/remote tips
+match. Do not add Contributions, archival pins, pending publication
+transactions, temporary checkpoints, repair, GC, storage-adapter persistence,
+FFI, or M3 implementation in this extension.
 
 ## Git state
 
 Implementation and focused tests are committed at `b96ed7a`
-(`core(WORK-0013/0014): add Working State safety roots`).
-Documentation/status closeout and this handover are pending commit.
-Feature-branch push and integration have not yet occurred. Remote publishing
-is ENABLED in `docs/project-state.md`.
+(`core(WORK-0013/0014): add Working State safety roots`); verification
+documentation is committed at `1ac35dc`. The feature branch was pushed to
+`origin/work/0013-working-state-roots`. The integration merge commit is
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50` on
+`spec/0003-canonical-collection-order`. Remote publishing is ENABLED in
+`docs/project-state.md`.

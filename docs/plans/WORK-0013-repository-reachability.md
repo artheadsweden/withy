@@ -1,6 +1,6 @@
 # WORK-0013 — Repository history reachability
 
-Status: Original Line/Release scope VERIFIED at `a67e1811ce0e7e15001f8517d379d7da607d3bdf`; ADR-0030 extension independently ACCEPTED, pending integration
+Status: VERIFIED — original Line/Release scope integrated at `a67e1811ce0e7e15001f8517d379d7da607d3bdf`; ADR-0030/0031 Working State-root extension independently accepted and integrated at `3eb1c3e01fa01904f8925f9bcdf3171059594c50`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`
@@ -9,7 +9,8 @@ ADR-0030/0031 extension branch: `work/0013-working-state-roots`
 The original verification and integration record below applies to the
 Line/Release-only implementation at its integration commit. The extension
 section at the end records the separately implemented and independently
-accepted Working State root extension; it remains pending integration.
+accepted Working State root extension, integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`.
 
 ## Objective
 
@@ -210,8 +211,9 @@ implementation remains unstarted.
 
 ## ADR-0030 extension plan — Working State roots
 
-Status: INDEPENDENTLY ACCEPTED; pending integration. The previously verified
-status above applies only to the original integrated Line/Release scope.
+Status: INDEPENDENTLY ACCEPTED AND INTEGRATED at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`. The previously verified status
+above applies only to the original Line/Release scope.
 
 ADR-0030 resolves DG-0027. Extend this package to include roots from the
 currently persisted Working State:

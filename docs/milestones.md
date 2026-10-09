@@ -27,7 +27,8 @@ Status: COMPLETE. WORK-0001 through WORK-0008 are verified and integrated at `ab
 
 ## M2 — Local repository history
 
-Status: IN PROGRESS. WORK-0009 is verified and integrated at
+Status: COMPLETE at integration commit
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`. WORK-0009 is verified and integrated at
 `3139bc5eeb4e29ce931e217b6e815a3a88b75772`. DG-0016, DG-0020, DG-0021,
 and DG-0022 are resolved by ADR-0016, ADR-0020, ADR-0021, and ADR-0022.
 WORK-0010 is independently verified and integrated at
@@ -57,20 +58,24 @@ present Base Revision and present component-source Component States are
 safety-reference roots. ADR-0031 resolves DG-0028: missing Working State
 safety-reference targets are `unresolved` without a declared-boundary
 lookup. The WORK-0013/0014 implementation extensions are independently
-accepted with no findings and await integration on
-`work/0013-working-state-roots`. Contributions, configured archival pins,
-and pending publication transactions remain required by Core §62 but are
-outside this extension. Reachability remains partial and cannot claim global
-unreachable status.
+accepted with no findings and integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`. Contributions, configured
+archival pins, and pending publication transactions remain required by Core
+§62 but are outside this extension. Reachability remains partial and cannot
+claim global unreachable status.
 AdapterWorkingStateRef is not itself a reachability root. ADR-0027–0029
 resolve DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014 was independently
 accepted and integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0` for
 the partial Line/Release scope. The ADR-0030/0031 Working State-root
-extension has independently passed implementation verification and awaits
-integration. Contributions, configured archival pins, and pending
-publication transactions remain outside the M2 root set.
-DEC-CORE-005/008, DEC-INTERACTION-004, and DG-0015 remain separate. M2
-remains IN PROGRESS. No M3 work has started.
+extension has independently passed implementation verification and is
+integrated at `3eb1c3e01fa01904f8925f9bcdf3171059594c50`. The M2 closeout
+audit found all WORK-0009–WORK-0014 packages verified/integrated at their
+bounded scopes and no open M2-blocking Design Gap. DG-0015 remains open for
+M6 Contribution semantics; DEC-CORE-005/008 and DEC-INTERACTION-004 remain
+separate. Coverage of Core §62 remains partial: Contributions, configured
+archival pins, and pending publication transactions are still unsupported,
+and no global-unreachable claim is exposed. M2 is COMPLETE. No M3 work has
+started.
 
 - Lines;
 - Releases;
@@ -80,6 +85,9 @@ remains IN PROGRESS. No M3 work has started.
 - repository validation.
 
 ## M3 — Storage abstraction
+
+Status: NEXT; no work package or implementation has started. Define bounded
+work packages before beginning production implementation.
 
 - generic storage contract;
 - mock storage;
