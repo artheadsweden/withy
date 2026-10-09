@@ -115,6 +115,50 @@ impl ReleaseCandidate {
         &self.description
     }
 
+    /// Verifies the canonical body-derived Identifier without resolving the
+    /// target Revision or its Project State.
+    ///
+    /// The exact Release schema, closed body, name, timestamp, and
+    /// schema-owned checks still apply. This does not establish historical
+    /// admission or validate the target.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unavailable/ambiguous schema, invalid body,
+    /// timestamp, name, or canonical representation.
+    pub fn verify_body_identifier(
+        &self,
+        schemas: &[&dyn ReleaseSchemaValidator],
+    ) -> Result<ReleaseId, ReleaseAdmissionError> {
+        if self.schema != RELEASE_SCHEMA {
+            return Err(ReleaseAdmissionError::UnavailableSchema);
+        }
+        let mut matching_schemas = schemas
+            .iter()
+            .copied()
+            .filter(|schema| schema.schema() == self.schema);
+        let schema = matching_schemas
+            .next()
+            .ok_or(ReleaseAdmissionError::UnavailableSchema)?;
+        if matching_schemas.next().is_some() {
+            return Err(ReleaseAdmissionError::NonUniqueSchemaAuthority);
+        }
+        if self.name.is_empty() {
+            return Err(ReleaseAdmissionError::InvalidName);
+        }
+        if !is_valid_utc_nanosecond_timestamp(&self.created_at) {
+            return Err(ReleaseAdmissionError::InvalidTimestamp);
+        }
+        schema
+            .validate_release(self)
+            .map_err(ReleaseAdmissionError::SchemaRejected)?;
+        let body = self.body_value();
+        let body_json =
+            serde_json::to_vec(&body).map_err(|_| CanonicalMetadataError::Canonicalization)?;
+        let canonical_body = canonicalize_metadata_body(&body_json, &release_body_schema())?;
+        Ok(hash_release_metadata(&canonical_body))
+    }
+
     /// Validates and admits this candidate as immutable historical metadata.
     ///
     /// The exact Release schema authority must be uniquely available. The

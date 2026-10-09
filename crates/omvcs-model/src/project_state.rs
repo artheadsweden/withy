@@ -90,6 +90,83 @@ pub struct ProjectStateCandidate {
 }
 
 impl ProjectStateCandidate {
+    /// Verifies the canonical body-derived Identifier without resolving
+    /// Component State or Adapter State references.
+    ///
+    /// The exact schema, complete closed body, nested metadata shape,
+    /// collection classifications, and schema-owned metadata rules are still
+    /// required. This method does not establish historical admission.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unavailable/ambiguous exact schema, invalid
+    /// schema/body, rejected metadata, or invalid canonical metadata.
+    pub fn verify_body_identifier(
+        &self,
+        schemas: &[&dyn ProjectStateSchemaValidator],
+    ) -> Result<ProjectStateId, ProjectStateAdmissionError> {
+        let mut matching_schemas = schemas
+            .iter()
+            .copied()
+            .filter(|schema| schema.schema() == self.schema);
+        let schema = matching_schemas
+            .next()
+            .ok_or(ProjectStateAdmissionError::UnavailableSchema)?;
+        if matching_schemas.next().is_some() {
+            return Err(ProjectStateAdmissionError::NonUniqueSchemaAuthority);
+        }
+
+        let metadata_schema = schema.project_metadata_schema();
+        if !matches!(
+            metadata_schema,
+            MetadataSchema::Struct(_) | MetadataSchema::Map(_)
+        ) {
+            return Err(ProjectStateAdmissionError::InvalidSchemaDefinition);
+        }
+        let metadata_json = serde_json::to_vec(&self.project_metadata)
+            .map_err(|_| CanonicalMetadataError::Canonicalization)?;
+        let normalized_metadata_bytes =
+            canonicalize_metadata_body(&metadata_json, &metadata_schema)?;
+        let normalized_metadata: BTreeMap<String, Value> =
+            serde_json::from_slice(&normalized_metadata_bytes)
+                .map_err(|_| CanonicalMetadataError::InvalidJson)?;
+        schema
+            .validate_project_metadata(&normalized_metadata)
+            .map_err(ProjectStateAdmissionError::MetadataRejected)?;
+
+        let components = Value::Object(
+            self.components
+                .iter()
+                .map(|(component_id, state_id)| {
+                    (
+                        component_id.to_string(),
+                        Value::String(state_id.to_string()),
+                    )
+                })
+                .collect(),
+        );
+        let project_metadata = Value::Object(
+            normalized_metadata
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
+        );
+        let mut body = serde_json::Map::new();
+        body.insert("schema".to_owned(), Value::String(self.schema.clone()));
+        body.insert(
+            "project_id".to_owned(),
+            Value::String(self.project_id.to_string()),
+        );
+        body.insert("components".to_owned(), components);
+        body.insert(
+            "adapter_state_id".to_owned(),
+            Value::String(self.adapter_state_id.to_string()),
+        );
+        body.insert("project_metadata".to_owned(), project_metadata);
+        let canonical_body = canonicalize_prevalidated_body(&Value::Object(body))?;
+        Ok(hash_project_state_metadata(&canonical_body))
+    }
+
     /// Validates and admits this candidate as immutable historical Project State.
     ///
     /// The exact schema must be uniquely available. Every component reference
