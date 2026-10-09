@@ -1,8 +1,9 @@
-//! Partial historical metadata reachability from retained Lines and admitted Releases.
+//! Partial historical metadata reachability from currently supported roots.
 //!
 //! Core §62 has additional required root classes deliberately absent here. This
 //! module cannot establish global unreachability, authorize deletion, or report
-//! repository completeness. It never accesses Resource bytes or Working State.
+//! repository completeness. It never accesses Resource bytes or operational
+//! Working State fields beyond their explicit historical safety references.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
@@ -10,11 +11,15 @@ use std::fmt;
 use omvcs_model::project_state::{AdmittedAdapterStateResolver, ComponentStateResolver};
 use omvcs_model::revision::{AdmittedProjectStateResolver, AdmittedRevisionResolver};
 use omvcs_model::{
-    AdapterStateId, ComponentStateId, LineId, ProjectStateId, ReleaseId, ResourceId, RevisionId,
+    AdapterStateId, ComponentStateId, CreativeComponentId, LineId, ProjectId, ProjectStateId,
+    ReleaseId, ResourceId, RevisionId,
 };
 
 use crate::line::{LineEnumerationBoundary, LineOperationError};
 use crate::release::{ReleaseEnumerationBoundary, ReleaseOperationError};
+use crate::working_state::{
+    WorkingState, WorkingStateEnumerationBoundary, WorkingStateEnumerationError,
+};
 
 /// Trusted projection of the generic Resource edges of an admitted Adapter State.
 ///
@@ -60,6 +65,35 @@ pub enum ReachabilityRoot {
     Release(ReleaseId),
 }
 
+/// Context identifying an explicit historical reference in a current
+/// persisted Working State. Project identity is context only; it is not a
+/// fabricated historical Working State Identifier or edge kind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum WorkingStateRoot {
+    /// The Working State's present Base Revision.
+    BaseRevision {
+        /// Project owning the current Working State record.
+        project_id: ProjectId,
+    },
+    /// A present source entry for one Creative Component.
+    ComponentSource {
+        /// Project owning the current Working State record.
+        project_id: ProjectId,
+        /// Component whose source entry contains the historical target.
+        component_id: CreativeComponentId,
+    },
+}
+
+/// One explicit historical safety reference from a currently persisted
+/// Working State record.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct WorkingStateRootReference {
+    /// Project and operational field context supplying the reference.
+    pub root: WorkingStateRoot,
+    /// Referenced historical identifier.
+    pub target: HistoricalId,
+}
+
 /// A root's direct Revision target whose admitted metadata was unresolved.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct UnresolvedRootReference {
@@ -67,6 +101,17 @@ pub struct UnresolvedRootReference {
     pub root: ReachabilityRoot,
     /// The directly referenced Revision identifier.
     pub target: RevisionId,
+}
+
+/// A current Working State safety-reference target whose admitted metadata
+/// was unresolved. This records root context without a metadata edge kind or
+/// a referring historical Identifier.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct UnresolvedWorkingStateRootReference {
+    /// Project and operational field context supplying the root reference.
+    pub root: WorkingStateRoot,
+    /// Referenced historical Identifier, retained even when metadata is absent.
+    pub target: HistoricalId,
 }
 
 /// A defect is not an unresolved lookup and does not make an ID unreachable.
@@ -94,16 +139,19 @@ pub enum ReachabilityDefect {
 /// admitted historical metadata, never missing Resource bytes. Defects are
 /// separate. Absence from these lists has NO global unreachability meaning.
 ///
-/// Included roots are only the enumerated retained Lines and admitted Releases.
-/// Working State safety references (DG-0027), Contributions, archival pins and
-/// pending publication transactions are excluded even when every lookup succeeds.
-/// Enumerations are individual reads, not a cross-boundary transaction snapshot.
+/// Included roots are enumerated retained Lines, admitted Releases, and the
+/// present Base Revision/component-source references in current persisted
+/// Working State records. Contributions, configured archival pins, and
+/// pending publication transactions remain excluded, even when every lookup
+/// succeeds. Enumerations are individual reads, not a cross-boundary snapshot.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct PartialReachability {
     /// Included retained Line roots; Default Line adds no second root.
     pub lines: Vec<LineId>,
     /// Included admitted Release roots.
     pub releases: Vec<ReleaseId>,
+    /// Present Base Revision/source roots from current Working State records.
+    pub working_state_roots: Vec<WorkingStateRootReference>,
     /// Revision IDs reached by roots and Revision parent edges.
     pub revisions: Vec<RevisionId>,
     /// Project State IDs referenced by reached resolved Revisions.
@@ -118,6 +166,8 @@ pub struct PartialReachability {
     pub unresolved: Vec<HistoricalId>,
     /// Direct Line/Release root targets whose Revision metadata is unresolved.
     pub unresolved_root_references: Vec<UnresolvedRootReference>,
+    /// Direct Working State safety-root targets whose metadata is unresolved.
+    pub unresolved_working_state_root_references: Vec<UnresolvedWorkingStateRootReference>,
     /// Identity and graph defects, not unresolved references.
     pub defects: Vec<ReachabilityDefect>,
 }
@@ -129,6 +179,8 @@ pub enum ReachabilityError {
     Lines(LineOperationError),
     /// Admitted Release enumeration failed.
     Releases(ReleaseOperationError),
+    /// Current persisted Working State enumeration failed.
+    WorkingStates(WorkingStateEnumerationError),
 }
 
 impl fmt::Display for ReachabilityError {
@@ -136,13 +188,15 @@ impl fmt::Display for ReachabilityError {
         match self {
             Self::Lines(error) => write!(f, "Line enumeration failed: {error}"),
             Self::Releases(error) => write!(f, "Release enumeration failed: {error}"),
+            Self::WorkingStates(error) => write!(f, "{error}"),
         }
     }
 }
 
 impl std::error::Error for ReachabilityError {}
 
-/// Traverses approved historical edges from all retained Lines and admitted Releases.
+/// Traverses approved historical edges from retained Lines, admitted Releases,
+/// and current persisted Working State safety references.
 ///
 /// Consumes trusted admitted immutable metadata, not import-validation candidates.
 /// Uses the iterative active-path ancestry strategy from WORK-0009, but collects
@@ -150,14 +204,18 @@ impl std::error::Error for ReachabilityError {}
 /// API: a missing parent must not hide another parent's resources.
 /// Only asserted Component State parentage is followed; omitted lineage is not
 /// inferred. Resource IDs are terminal edges, with no availability lookup.
+/// Operational Working State fields other than its Base Revision and present
+/// source map entries are not read as roots.
 ///
 /// # Errors
 ///
-/// Returns an error if either included root class cannot be enumerated completely.
+/// Returns an error if any included root class cannot be enumerated completely.
 /// Metadata lookup failures and defects are retained in the partial result.
-pub fn partial_line_release_reachability(
+#[allow(clippy::too_many_lines)]
+pub fn partial_repository_reachability(
     lines: &dyn LineEnumerationBoundary,
     releases: &dyn ReleaseEnumerationBoundary,
+    working_states: &dyn WorkingStateEnumerationBoundary,
     revisions: &dyn AdmittedRevisionResolver,
     project_states: &dyn AdmittedProjectStateResolver,
     component_states: &dyn ComponentStateResolver,
@@ -167,8 +225,23 @@ pub fn partial_line_release_reachability(
     let releases = releases
         .admitted_releases()
         .map_err(ReachabilityError::Releases)?;
+    let working_states = working_states
+        .current_working_states()
+        .map_err(ReachabilityError::WorkingStates)?;
     let root_references = collect_root_references(&lines, &releases);
-    let roots = root_references.iter().map(|(_, target)| *target).collect();
+    let working_state_root_references = collect_working_state_root_references(&working_states);
+    let mut roots: BTreeSet<_> = root_references.iter().map(|(_, target)| *target).collect();
+    let mut working_state_component_roots = BTreeSet::new();
+    for (_, target) in &working_state_root_references {
+        match target {
+            WorkingStateRootTarget::BaseRevision(id) => {
+                roots.insert(*id);
+            }
+            WorkingStateRootTarget::ComponentSource(id) => {
+                working_state_component_roots.insert(*id);
+            }
+        }
+    }
     let mut unresolved = BTreeSet::new();
     let mut defects = BTreeSet::new();
     let revision_graph = walk(
@@ -183,7 +256,7 @@ pub fn partial_line_release_reachability(
         &mut defects,
     );
     let mut reached_projects = BTreeSet::new();
-    let mut reached_components = BTreeSet::new();
+    let mut reached_components = working_state_component_roots;
     let mut reached_adapters = BTreeSet::new();
     for revision in revision_graph.nodes.values() {
         reached_projects.insert(revision.project_state_id());
@@ -242,9 +315,29 @@ pub fn partial_line_release_reachability(
             target: *target,
         })
         .collect();
+    let unresolved_working_state_root_references = working_state_root_references
+        .iter()
+        .filter_map(|(root, target)| {
+            let target_id = target.historical_id();
+            unresolved
+                .contains(&target_id)
+                .then_some(UnresolvedWorkingStateRootReference {
+                    root: *root,
+                    target: target_id,
+                })
+        })
+        .collect();
+    let working_state_roots = working_state_root_references
+        .iter()
+        .map(|(root, target)| WorkingStateRootReference {
+            root: *root,
+            target: target.historical_id(),
+        })
+        .collect();
     Ok(PartialReachability {
         lines: sorted(lines.iter().map(crate::line::Line::line_id)),
         releases: sorted(releases.iter().map(omvcs_model::Release::release_id)),
+        working_state_roots,
         revisions: revision_graph.reached.into_iter().collect(),
         project_states: reached_projects.into_iter().collect(),
         component_states: component_graph.reached.into_iter().collect(),
@@ -252,6 +345,7 @@ pub fn partial_line_release_reachability(
         resources: resources.into_iter().collect(),
         unresolved: unresolved.into_iter().collect(),
         unresolved_root_references,
+        unresolved_working_state_root_references,
         defects: defects.into_iter().collect(),
     })
 }
@@ -275,6 +369,49 @@ fn collect_root_references(
             )
         }))
         .collect()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum WorkingStateRootTarget {
+    BaseRevision(RevisionId),
+    ComponentSource(ComponentStateId),
+}
+
+impl WorkingStateRootTarget {
+    const fn historical_id(self) -> HistoricalId {
+        match self {
+            Self::BaseRevision(id) => HistoricalId::Revision(id),
+            Self::ComponentSource(id) => HistoricalId::ComponentState(id),
+        }
+    }
+}
+
+fn collect_working_state_root_references(
+    working_states: &[WorkingState],
+) -> Vec<(WorkingStateRoot, WorkingStateRootTarget)> {
+    let mut roots = BTreeSet::new();
+    for working_state in working_states {
+        if let Some(id) = working_state.base_revision_id() {
+            roots.insert((
+                WorkingStateRoot::BaseRevision {
+                    project_id: working_state.project_id(),
+                },
+                WorkingStateRootTarget::BaseRevision(id),
+            ));
+        }
+        for (&component_id, source) in working_state.component_sources() {
+            if let Some(id) = source {
+                roots.insert((
+                    WorkingStateRoot::ComponentSource {
+                        project_id: working_state.project_id(),
+                        component_id,
+                    },
+                    WorkingStateRootTarget::ComponentSource(*id),
+                ));
+            }
+        }
+    }
+    roots.into_iter().collect()
 }
 
 fn collect_adapter_resources(

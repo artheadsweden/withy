@@ -174,6 +174,37 @@ pub trait WorkingStateRecordStore: Send + Sync {
     fn commit(&self, record: &PersistedWorkingState) -> Result<(), WorkingStatePersistenceError>;
 }
 
+/// Read-only enumeration of all currently persisted Working State records
+/// across every Project in a Repository.
+///
+/// Recovery-only records do not contain a Working State and contribute no
+/// record to this enumeration. Success MUST return the complete current set
+/// for this read; failure MUST NOT masquerade as an empty or truncated set.
+/// This does not promise a snapshot shared with other Repository reads.
+pub trait WorkingStateEnumerationBoundary {
+    /// Returns all current Core Working State records without modifying them.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when complete enumeration cannot be performed.
+    fn current_working_states(&self) -> Result<Vec<WorkingState>, WorkingStateEnumerationError>;
+}
+
+/// Failure to enumerate current Working State records completely.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WorkingStateEnumerationError {
+    /// The repository's Working State records could not be read completely.
+    Unavailable,
+}
+
+impl fmt::Display for WorkingStateEnumerationError {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("Working State enumeration is unavailable")
+    }
+}
+
+impl std::error::Error for WorkingStateEnumerationError {}
+
 impl WorkingState {
     /// Returns the associated Project.
     #[must_use]
@@ -351,6 +382,15 @@ struct RepositoryState {
 pub struct InMemoryWorkingStateRepository {
     state: Mutex<RepositoryState>,
     record_store: Option<Arc<dyn WorkingStateRecordStore>>,
+}
+
+impl WorkingStateEnumerationBoundary for InMemoryWorkingStateRepository {
+    fn current_working_states(&self) -> Result<Vec<WorkingState>, WorkingStateEnumerationError> {
+        self.state
+            .lock()
+            .map(|state| state.working_states.values().cloned().collect())
+            .map_err(|_| WorkingStateEnumerationError::Unavailable)
+    }
 }
 
 impl InMemoryWorkingStateRepository {

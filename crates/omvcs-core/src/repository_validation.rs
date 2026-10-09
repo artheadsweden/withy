@@ -14,7 +14,7 @@ use omvcs_model::{
 };
 
 use crate::reachability::{
-    HistoricalId, PartialReachability, ReachabilityDefect, ReachabilityRoot,
+    HistoricalId, PartialReachability, ReachabilityDefect, ReachabilityRoot, WorkingStateRoot,
 };
 
 /// The explicitly requested extent of a repository validation.
@@ -337,13 +337,13 @@ pub enum CoverageStatus {
 /// Required Core §62 root/provider classes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RootProvider {
-    /// Current Line targets and admitted Releases (WORK-0013 partial traversal).
+    /// Current retained Line targets and admitted Releases enumerated by WORK-0013.
     LinesAndReleases,
     /// Open Contributions.
     Contributions,
     /// Configured archival pins.
     ArchivalPins,
-    /// Explicit Working State safety references.
+    /// Present Base Revision and source Component States in current Working State records.
     WorkingStateSafetyReferences,
     /// Pending publication transactions.
     PendingPublicationTransactions,
@@ -376,8 +376,8 @@ pub struct ValidationCoverage {
     pub resource_verification: Option<CoverageStatus>,
     /// Required root/provider coverage.
     pub required_roots: Vec<RootProviderCoverage>,
-    /// Explicitly partial Line/Release reachability result, when obtained.
-    pub partial_line_release_reachability: Option<PartialReachability>,
+    /// Explicitly partial repository reachability result, when obtained.
+    pub partial_repository_reachability: Option<PartialReachability>,
     /// Capabilities not assessed or unavailable.
     pub unavailable_capabilities: Vec<String>,
 }
@@ -432,8 +432,8 @@ pub enum ValidationFinding {
         /// Missing required target.
         target: MetadataIdentifier,
     },
-    /// Metadata reached during partial Line/Release traversal was unresolved,
-    /// but no referring metadata edge is available in the reachability result.
+    /// Metadata reached during partial repository traversal was unresolved,
+    /// but no referring metadata edge or Working State root context applies.
     UnresolvedReachabilityMetadata {
         /// Unresolved historical object identifier.
         target: MetadataIdentifier,
@@ -445,6 +445,14 @@ pub enum ValidationFinding {
         /// Enumerated Line or admitted Release that supplies the root.
         root: ReachabilityRoot,
         /// Directly referenced Revision with unavailable metadata.
+        target: MetadataIdentifier,
+    },
+    /// A current persisted Working State directly references missing
+    /// historical metadata. No historical referrer or edge kind is assigned.
+    UnresolvedWorkingStateRootReference {
+        /// Project and operational field context supplying the safety root.
+        root: WorkingStateRoot,
+        /// Directly referenced historical metadata Identifier.
         target: MetadataIdentifier,
     },
     /// Required target absent with exact boundary declaration.
@@ -533,8 +541,9 @@ impl std::error::Error for InvocationError {}
 /// already available and MUST NOT fetch, materialise, or mutate availability
 /// or verification records. A `deep_resources` success MUST report
 /// [`VerificationStrength::FullContent`]. A corrupt result MUST be based on a
-/// full Resource identity check. The Line/Release method may expose only the
-/// WORK-0013 partial result; it must not infer other Core §62 roots.
+/// full Resource identity check. The repository-reachability method exposes
+/// only the WORK-0013 partial result, including Lines, Releases, and Working
+/// State safety references; it must not infer other Core §62 roots.
 pub trait RepositoryValidationBoundary {
     /// Establishes an open/readable Repository and, for Project scope, an
     /// existing readable Project. Called before report construction.
@@ -589,13 +598,13 @@ pub trait RepositoryValidationBoundary {
         depth: ResourceVerificationDepth,
     ) -> Result<ResourceVerification, ProviderFailure>;
 
-    /// Returns existing WORK-0013 partial Line/Release reachability for scope.
+    /// Returns existing WORK-0013 partial repository reachability for scope.
     ///
     /// # Errors
     ///
     /// Returns an enumeration/provider failure, which becomes an incomplete
     /// report finding.
-    fn partial_line_release_reachability(
+    fn partial_repository_reachability(
         &self,
         scope: ValidationScope,
     ) -> Result<PartialReachability, ProviderFailure>;
@@ -633,7 +642,7 @@ pub fn validate_repository(
                 != ResourceVerificationDepth::MetadataOnly)
                 .then_some(CoverageStatus::Unavailable),
             required_roots: Vec::new(),
-            partial_line_release_reachability: None,
+            partial_repository_reachability: None,
             unavailable_capabilities: Vec::new(),
         },
         findings: Vec::new(),
@@ -834,22 +843,39 @@ pub fn validate_repository(
 
     add_cycles(&scope_objects, &mut report.findings);
 
-    match boundary.partial_line_release_reachability(request.scope) {
+    match boundary.partial_repository_reachability(request.scope) {
         Ok(partial) => {
-            if !partial.unresolved.is_empty() || !partial.unresolved_root_references.is_empty() {
+            if !partial.unresolved.is_empty()
+                || !partial.unresolved_root_references.is_empty()
+                || !partial.unresolved_working_state_root_references.is_empty()
+            {
                 has_unresolved = true;
             }
-            let contextualized_root_targets = partial
+            let mut contextualized_root_targets = partial
                 .unresolved_root_references
                 .iter()
                 .map(|root_reference| HistoricalId::Revision(root_reference.target))
                 .collect::<BTreeSet<_>>();
+            contextualized_root_targets.extend(
+                partial
+                    .unresolved_working_state_root_references
+                    .iter()
+                    .map(|root_reference| root_reference.target),
+            );
             for root_reference in &partial.unresolved_root_references {
                 report
                     .findings
                     .push(ValidationFinding::UnresolvedRootReference {
                         root: root_reference.root,
                         target: MetadataIdentifier::Revision(root_reference.target),
+                    });
+            }
+            for root_reference in &partial.unresolved_working_state_root_references {
+                report
+                    .findings
+                    .push(ValidationFinding::UnresolvedWorkingStateRootReference {
+                        root: root_reference.root,
+                        target: historical_identifier(root_reference.target),
                     });
             }
             for target in &partial.unresolved {
@@ -879,18 +905,26 @@ pub fn validate_repository(
                     }
                 }
             }
-            report.coverage.partial_line_release_reachability = Some(partial);
+            report.coverage.partial_repository_reachability = Some(partial);
             report.coverage.required_roots.push(RootProviderCoverage {
                 provider: RootProvider::LinesAndReleases,
-                status: CoverageStatus::Partial,
-                unavailable_capability: Some(
-                    "WORK-0013 covers retained Lines and admitted Releases only".to_owned(),
-                ),
+                status: CoverageStatus::Complete,
+                unavailable_capability: None,
+            });
+            report.coverage.required_roots.push(RootProviderCoverage {
+                provider: RootProvider::WorkingStateSafetyReferences,
+                status: CoverageStatus::Complete,
+                unavailable_capability: None,
             });
         }
         Err(error) => {
             report.coverage.required_roots.push(RootProviderCoverage {
                 provider: RootProvider::LinesAndReleases,
+                status: CoverageStatus::Unavailable,
+                unavailable_capability: Some(error.capability.clone()),
+            });
+            report.coverage.required_roots.push(RootProviderCoverage {
+                provider: RootProvider::WorkingStateSafetyReferences,
                 status: CoverageStatus::Unavailable,
                 unavailable_capability: Some(error.capability.clone()),
             });
@@ -904,23 +938,22 @@ pub fn validate_repository(
     for provider in [
         RootProvider::Contributions,
         RootProvider::ArchivalPins,
-        RootProvider::WorkingStateSafetyReferences,
         RootProvider::PendingPublicationTransactions,
     ] {
         let capability = match provider {
             RootProvider::Contributions => "Contribution roots are not implemented",
             RootProvider::ArchivalPins => "configured archival-pin roots are not implemented",
-            RootProvider::WorkingStateSafetyReferences => {
-                "Working State safety-reference roots are unresolved (DG-0027)"
-            }
             RootProvider::PendingPublicationTransactions => {
                 "pending-publication roots are not implemented"
+            }
+            RootProvider::WorkingStateSafetyReferences => {
+                "Working State safety-reference roots are supplied by WORK-0013"
             }
             RootProvider::LinesAndReleases => "Line and Release coverage is supplied by WORK-0013",
         };
         report.coverage.required_roots.push(RootProviderCoverage {
             provider,
-            status: CoverageStatus::Unavailable,
+            status: CoverageStatus::Partial,
             unavailable_capability: Some(capability.to_owned()),
         });
     }
