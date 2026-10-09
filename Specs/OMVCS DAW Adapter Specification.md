@@ -359,6 +359,10 @@ Capture MUST NOT itself create a Revision.
 
 Capture produces input for OMVCS Core.
 
+Capture Result describes a proposed historical capture. It MUST NOT be used
+as the durable reference for mutable Working State; that boundary is defined
+by `PrepareWorkingState` and `RestoreWorkingState` in §183.
+
 ---
 
 # 12. Capture result
@@ -791,6 +795,10 @@ unknown
 ```
 
 An Adapter MUST NOT report `unchanged` unless it has sufficient evidence.
+This Adapter result is evidence for Core's derived Working State comparison
+status, not a persisted Core `modified` Boolean. Core comparison status and
+DAW-native dirty/unsaved state are distinct; neither may silently substitute
+for the other.
 
 ---
 
@@ -1478,6 +1486,8 @@ OMVCS says unchanged
 ```
 
 These are not necessarily identical.
+DAW-native dirty state MUST NOT be substituted for Core's derived
+`unchanged`/`changed`/`unknown` Working State comparison status.
 
 ---
 
@@ -2842,6 +2852,9 @@ DetectChanges
 RestoreState
 ValidateRestoredState
 
+PrepareWorkingState
+RestoreWorkingState
+
 ReportDependencies
 AssessReproducibility
 ```
@@ -3284,6 +3297,69 @@ Its design belongs to the already agreed:
 > **Ardour Reference Adapter Design**
 
 The Ardour implementation MUST conform to this generic contract.
+
+---
+
+# 183. Persistent mutable Working State boundary
+
+`PrepareWorkingState` and `RestoreWorkingState` address mutable local
+Adapter-owned Working State. They are distinct from `CaptureState` and
+`RestoreState`, which serve historical capture/materialisation.
+
+## PrepareWorkingState
+
+Inputs:
+
+```text
+current or requested mutable Working State
+applicable Project association
+```
+
+Output:
+
+```text
+an opaque AdapterWorkingStateRef identifying complete recoverable mutable
+Adapter-owned Working State
+```
+
+The Adapter owns the representation and durable state behind the reference.
+The reference MUST NOT contain credentials and MUST NOT be a ResourceId,
+AdapterStateId, historical identity, or provenance. Preparing a reference
+does not create an Adapter State, Project State, or Revision.
+
+Preparation MUST leave the current committed mutable state recoverable until
+Core commits the new reference and related Core Working State metadata.
+Preparation failure MUST leave the previous Core reference authoritative.
+
+## RestoreWorkingState
+
+Input:
+
+```text
+the committed AdapterWorkingStateRef
+```
+
+Output:
+
+```text
+restore/validation result and recovery condition
+```
+
+The Adapter MUST explicitly report missing, invalid, unavailable, or
+unrestorable references. It MUST NOT fabricate state or silently substitute
+historical Adapter State while reporting exact recovery.
+
+## Core commit and recovery status
+
+Core owns which reference is committed. Core MUST atomically commit the
+reference with Base Revision, optional Line association, and component-source
+mapping when changed by one operation. Adapter preparation is not itself a
+Core commit. A partial Adapter failure MUST be reported distinctly from Core
+comparison status; automatic destructive retry is prohibited. Recovery
+condition values and operation results are defined in the Core contract.
+
+The logical prepare/commit boundary does not prescribe provider-specific
+durability, transaction-log, or physical cleanup mechanics.
 
 This specification MUST NOT be changed merely to expose an Ardour-specific convenience unless the concept generalises to other DAWs.
 

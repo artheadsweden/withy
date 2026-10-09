@@ -1,6 +1,6 @@
 # WORK-0013 — Repository history reachability
 
-Status: BLOCKED — WORK-0012 root contract
+Status: BLOCKED — WORK-0012 verification
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`
@@ -14,16 +14,22 @@ specifications, without treating reachability as permission to delete data.
 
 - Core Specification §§56 and 62.
 - Glossary: Reachability and Repository Metadata.
-- Core Invariants: INV-GC-001–003 and INV-WORK-002–004.
+- Core Invariants: INV-GC-001–003 and INV-WORK-002–004, INV-WORK-006.
 
 ## Dependencies
 
 - WORK-0009 complete Revision ancestry traversal.
 - WORK-0010 Line root contract (verified).
 - WORK-0011 Release root contract (verified and integrated).
-- WORK-0012 Working State root/persistence contract.
-- DG-0016–DG-0018 must be resolved as applicable to the root contracts before
-  this package begins.
+- ADR-0018 and ADR-0025 define Working State's non-root status and the
+  mutable Adapter reference boundary. Core §62 explicitly includes only
+  Working State safety references as roots; the Working State record and
+  AdapterWorkingStateRef are not inferred roots.
+- WORK-0012 must be verified before WORK-0013 starts; its persisted
+  `AdapterWorkingStateRef` is operational state, not a historical safety
+  reference or reachability root.
+- DG-0016–DG-0018 and DG-0024–DG-0026 are resolved as applicable to the
+  root/persistence contracts before this package begins.
 - ADR-0016, ADR-0020, and ADR-0022 resolve the Line record/root contract.
 - ADR-0021 resolves the Default Line preference; it designates an existing
   Line and is not a separate historical root.
@@ -69,8 +75,10 @@ specifications, without treating reachability as permission to delete data.
 
 ## Known Design Gaps
 
-- DG-0018 blocks the complete Working State root contract. ADR-0017 resolves
-  the Release root contract.
+- No open Design Gap blocks the root classes currently stated in Core §62.
+- ADR-0017 resolves the Release root contract; ADR-0018 resolves the
+  Working State/non-root distinction; ADR-0025 confirms that the
+  AdapterWorkingStateRef itself is not a root.
 - DG-0016 and DG-0021 are resolved by ADR-0016 and ADR-0021 respectively.
 - DEC-CORE-005 and DEC-CORE-008 remain open for later deletion/retention
   behavior and are explicit non-goals here.

@@ -368,7 +368,12 @@ Renaming a Resource for presentation or local working purposes MUST NOT by itsel
 
 A Project State is immutable historical state.
 
-A Working State is mutable local state.
+A Working State is mutable local Project operational state, distinct from
+immutable history and not content-addressed historical metadata.
+
+The Core Working State representation is persistent local operational
+metadata and may survive process or DAW restart. It has no required
+content-derived historical identifier.
 
 Changes in Working State MUST NOT alter historical Project State until a new Revision is explicitly created.
 
@@ -381,6 +386,9 @@ A user MAY construct a Working State from Component States originating from diff
 This MUST NOT create a Revision automatically.
 
 A new Revision exists only when the user explicitly publishes that Working State.
+The Working State's component-source mapping is operational metadata, not
+historical provenance. Selecting a component from another Revision does not
+change the Working State Base Revision.
 
 ---
 
@@ -389,6 +397,12 @@ A new Revision exists only when the user explicitly publishes that Working State
 ## INV-WORK-001 — Materialisation does not alter history
 
 Materialising, opening or switching to a Revision MUST NOT create a new Revision.
+
+Successful full materialisation sets the Working State Base Revision to the
+target Revision and establishes the represented Components' source mapping
+from its Project State. It does not mutate the source historical objects.
+Materialisation or publication completion MUST NOT advance the Base Revision
+implicitly; a change requires an explicit successful rematerialisation.
 
 ---
 
@@ -413,6 +427,36 @@ Local storage is a materialised working/cache environment, not the authoritative
 Local modifications MUST remain distinguishable from the Base Revision until explicitly captured and published.
 
 An implementation MUST NOT silently incorporate local work into an existing Revision.
+
+Base Revision is not inferred from or advanced with an associated Line's
+target. A Working State MAY have no Line association. Core comparison status
+is derived as `unchanged`, `changed`, or `unknown` and is distinct from
+DAW-native dirty/unsaved state.
+
+---
+
+## INV-WORK-005 — Destructive replacement requires scoped authorization
+
+Working State replacement MUST default to preserving local work. If Core
+comparison status is `changed` or `unknown`, replacement MUST NOT proceed
+without explicit authorization for that invocation. Authorization MUST NOT
+be remembered or reused. Refusal MUST leave persisted Working State and live
+Adapter state unchanged. This authorization is distinct from DAW-native
+dirty-state acknowledgement and does not require a temporary checkpoint.
+
+---
+
+## INV-WORK-006 — Adapter Working State is operational and recoverable
+
+Mutable Adapter-owned Working State MUST be referenced by an opaque
+`AdapterWorkingStateRef` in persistent Core operational metadata. It MUST
+NOT be represented as immutable historical Adapter State or create
+historical identity/provenance merely by being durable. Adapter preparation
+failure MUST leave the previously committed Core record authoritative.
+Core MUST commit the Adapter reference and related Working State metadata
+atomically. Invalid or unavailable references and partial Adapter failures
+MUST be reported as recovery conditions, distinct from Core comparison
+status; exact recovery MUST NOT be claimed without validation.
 
 ---
 

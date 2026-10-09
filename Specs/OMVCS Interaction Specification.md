@@ -485,7 +485,22 @@ Unpublished changes
 Unknown change state
 Conflict
 Restore/materialisation incomplete
+Working State recovery required
 ```
+
+Core's derived `unchanged`, `changed`, or `unknown` Working State comparison
+status is distinct from DAW-native unsaved/dirty state. The interface MUST
+NOT substitute one for the other.
+
+The interface MUST default to preserving current Working State. When Core
+comparison status is `changed` or `unknown`, destructive replacement
+requires explicit authorization for that operation. The authorization is
+not remembered and is distinct from any DAW-native dirty-state
+acknowledgement. A temporary safety checkpoint is not a prerequisite.
+
+If recovery condition is `unconfirmed` or `recovery_required`, the interface
+MUST NOT present the current live state as confirmed to match the committed
+Working State reference.
 
 Recommended musician-facing messages:
 
@@ -897,6 +912,12 @@ may proceed directly.
 
 If Current Work has changes, the UI MUST NOT silently discard them.
 
+Core comparison status `changed` or `unknown` requires an explicit
+operation-scoped discard authorization before replacement. The default
+choice preserves Current Work; a refusal MUST leave it unchanged. The UI
+MUST NOT imply that creating a safety checkpoint is required or itself
+authorizes discarding Current Work.
+
 It SHOULD offer semantically clear choices such as:
 
 ```text
@@ -1042,7 +1063,10 @@ Current work
 Based on Version 7
 ```
 
-If the user edits it, new work branches naturally from Version 7.
+If the user edits it, the edits remain Working State based on Version 7.
+The Working State remains based on Version 7 unless a later explicit
+rematerialisation operation changes its Base Revision. Moving a Line MUST
+NOT silently advance that Base Revision or replace the current Working State.
 
 ---
 
@@ -1116,6 +1140,9 @@ will ordinarily Materialise the head Revision of that Line.
 This changes the client's selected/current Line context, not the shared
 Project Default Line. Changing the shared preference is a separate
 `SetDefaultLine` operation.
+The optional Line association records only the Line in whose context the
+Working State is being used; it does not make the Working State follow later
+Line movement.
 
 Unpublished Working State safety rules still apply.
 

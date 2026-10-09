@@ -331,7 +331,10 @@ not part of the digest input.
 
 ## Working State
 
-A **Working State** is the current locally editable state materialised for a user.
+A **Working State** is the current locally editable state materialised for a
+user. It is mutable local Project operational state, distinct from immutable
+Project State and Revision history. It is not content-addressed historical
+metadata and is not itself a reachability root merely by existing.
 
 A Working State is not necessarily part of Project history.
 
@@ -344,30 +347,39 @@ It MAY contain:
 - selectively substituted Component States;
 - unresolved contribution work.
 
-A Working State becomes historical only when captured as a Revision.
-
-**Git analogy:** working tree, but DAW- and resource-aware.
+A Working State becomes historical only when captured and explicitly
+published as a Revision. Materialising or modifying it MUST NOT itself create
+or mutate a Revision.
 
 ---
 
 ## Base Revision
 
-The **Base Revision** is the Revision from which a Working State was initially materialised.
+The **Base Revision** is the optional Revision from which a Working State was
+initially materialised or explicitly rematerialised.
 
-OMVCS MUST retain this relationship so that it can determine:
+When present, OMVCS retains this relationship as the Working State's starting
+or reference Revision. It is not inferred from the current Line head and
+does not advance when that Line moves. Before a Project has a Revision, the
+Base Revision is absent; no null or implicit initial Revision is created.
 
-- what changed;
-- what is inherited;
-- what contribution is being proposed;
-- whether upstream history moved meanwhile.
+A custom Working State MAY have a Base Revision even when some component
+sources come from other Revisions.
 
-A custom Working State MAY still have a Base Revision even if some components were subsequently substituted from other Revisions.
+Core change comparison status is derived as `unchanged`, `changed`, or
+`unknown`; it is not immutable persisted truth. DAW-native dirty/unsaved
+state is distinct from this Core comparison status.
+
+Mutable Adapter-owned working content is identified operationally through
+an optional `AdapterWorkingStateRef`. Its durability does not make it
+historical Adapter State or provenance.
 
 ---
 
 ## Materialisation
 
-**Materialisation** is the operation that transforms OMVCS metadata and remote Resource Objects into a usable local Working State.
+**Materialisation** is the operation that transforms OMVCS metadata and
+available Resource Objects into a usable local Working State.
 
 Materialisation MAY require:
 
@@ -379,8 +391,12 @@ Materialisation MAY require:
 - restoring DAW State through a DAW Adapter.
 
 Materialisation MUST NOT create a new Revision.
-
-**Git analogy:** checkout, but broader.
+On successful full materialisation, the target Revision becomes the Base
+Revision and represented Components' source mapping is established from its
+Project State. Materialisation does not mutate the source historical
+objects. Replacing existing `changed` or `unknown` Working State requires explicit,
+operation-scoped `discard_current_working_state` authorization. The default
+is to preserve the existing state; see ADR-0024.
 
 ---
 
@@ -392,13 +408,26 @@ OMVCS assumes full historical metadata can exist locally while historical media 
 
 This is a fundamental OMVCS behaviour, not merely an optimisation.
 
-**Git analogy:** sparse checkout plus remote large-object retrieval, but central to OMVCS design.
-
 ---
 
 ## Custom Working State
 
 A **Custom Working State** is a local Working State assembled from Component States that did not previously coexist in a single Revision.
+
+## Adapter Working State Reference
+
+An **AdapterWorkingStateRef** is an opaque Adapter-defined operational
+reference to durable mutable DAW/project Working State. Core persists the
+currently committed reference and coordinates it with the rest of the Core
+Working State record. It is not a ResourceId, AdapterStateId, historical
+identity, or provenance.
+
+## Working State recovery condition
+
+The **Working State recovery condition** reports whether live Adapter state
+is confirmed to correspond to the committed AdapterWorkingStateRef:
+`confirmed`, `unconfirmed`, or `recovery_required`. It is operational status,
+not historical metadata or Core comparison status.
 
 Example:
 
@@ -412,12 +441,20 @@ A Custom Working State MUST NOT automatically become a Revision.
 It exists for experimentation until explicitly published.
 
 If published, OMVCS creates a new Revision describing the resulting Project State.
+Its operational component-source mapping records the immutable source
+Component State for each represented Component when one exists. A locally
+created Component may have no historical source yet. Selecting another
+Component State does not itself change the Working State's Base Revision.
 
 ---
 
 ## Local Modification
 
-A **Local Modification** is any detectable difference between the current Working State and its recorded OMVCS state.
+A **Local Modification** is a difference Core can establish between the
+current Working State and its applicable recorded source/base comparison
+state. Core comparison status is `unchanged`, `changed`, or `unknown`;
+unknown means available evidence is insufficient. This is separate from
+DAW-native dirty/unsaved state.
 
 Examples:
 

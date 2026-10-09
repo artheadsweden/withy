@@ -41,9 +41,16 @@ independently verified and integrated at
 `origin/work/0011-releases`. Accepted, human-approved ADR-0023 resolves DG-0023 only for the
 exact `CreateRelease` integrity/name-conflict overlap, with atomic failure
 and unchanged stored objects/bindings; it defines no general failure precedence.
-DEC-CORE-002 does not block the Release contract. WORK-0012 and WORK-0014
-remain blocked by their M2 preflight gaps; WORK-0013 remains blocked pending
-the WORK-0012 root contract. WORK-0012 through WORK-0014 remain unstarted.
+DEC-CORE-002 does not block the Release contract. Human-approved ADR-0018
+resolves DG-0018's Working State semantics. Human-approved ADR-0024–ADR-0026
+resolve DG-0024–DG-0026 respectively: destructive replacement
+authorization, AdapterWorkingStateRef persistence/recovery, and operation
+failure/retry/idempotency contracts. WORK-0012 is PLANNED and remains
+unstarted. DEC-INTERACTION-004 remains separate for temporary checkpoints
+and does not block WORK-0012. WORK-0013 remains blocked pending WORK-0012
+verification and its reachability contract; AdapterWorkingStateRef is not
+itself a reachability root. WORK-0014 remains blocked by its M2 preflight
+gaps. WORK-0012 through WORK-0014 remain unstarted.
 
 - Lines;
 - Releases;

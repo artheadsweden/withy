@@ -2411,14 +2411,26 @@ This argues strongly for immutable staging/snapshot capture.
 If Version 15 completes after new edits:
 
 ```text
-Current Working State base may logically advance to Version 15
+Current Working State Base Revision remains the Revision from which it was
+initially materialised or explicitly rematerialised
 ```
 
-only if the subsequent local changes can still be understood as descendants of the captured state.
-
-The Core Specification may need careful implementation logic here.
+Publication completion MUST NOT implicitly advance or replace the current
+Working State Base Revision, even if later local changes can be understood
+as descendants of the captured state. Any Base Revision change requires an
+explicit successful rematerialisation operation under Core's Working State
+contract.
 
 The Adapter MUST NOT reset current work.
+
+Mutable current-session state that must survive process/DAW restart is
+represented through the Adapter-owned opaque `AdapterWorkingStateRef`
+boundary, not by extending immutable historical Adapter State. The Adapter
+prepares recoverable mutable state before Core commits a replacement
+reference. If restoration or activation fails after destructive work begins,
+the Adapter MUST report the failure so Core can retain its last committed
+metadata and expose the recovery-required condition. This is operational
+state, not a Revision or reachability root by itself.
 
 ---
 
@@ -2541,8 +2553,8 @@ User-directed substitution may be allowed as degraded Working State.
 If user intentionally chooses another file:
 
 ```text
-Working State becomes modified
-Reproducibility = partial/modified
+Core Working State comparison status = changed
+Reproducibility = partial
 ```
 
 Publishing creates new history.

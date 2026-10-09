@@ -1,6 +1,6 @@
 # DG-0018 — Working State lifecycle and Base Revision contract
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: M2 preflight
@@ -12,9 +12,9 @@ Date: 2026-10-09
 - `Specs/OMVCS Glossary.md`, Working State, Base Revision, Materialisation,
   Selective Materialisation, Custom Working State, and Local Modification.
 - `Specs/OMVCS Core Invariants Specification.md`, INV-PROJ-004–005,
-  INV-WORK-001–004, and INV-GC-001–002.
+  INV-WORK-001–006, and INV-GC-001–002.
 - `Specs/OMVCS DAW Adapter Specification.md` §§9, 11–13, 30, 35–44, 65–69,
-  119, 153, and 159–162.
+  119, 153, 159–163, and 183.
 - `Specs/OMVCS Interaction Specification.md` §§13–14, 33–36, 43, 121–124,
   and 262–267.
 - Existing `DEC-INTERACTION-004` in `docs/decision-register.md` (temporary
@@ -78,8 +78,9 @@ Base-advance rule.
 
 ## Candidate directions
 
-None recorded. Nullability, persistence, Line association, and Base
-advancement are not selected.
+None were selected when this gap was opened. The human-approved decisions
+made to resolve it are recorded in ADR-0018; the remaining subcontracts are
+tracked by DG-0024–DG-0026.
 
 ## Required decision
 
@@ -93,4 +94,16 @@ temporary checkpoint behavior separately under DEC-INTERACTION-004.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved
+[ADR-0018](../decisions/ADR-0018-working-state-lifecycle-and-base-contract.md)
+and its approved subordinate contracts:
+[ADR-0024](../decisions/ADR-0024-working-state-destructive-replacement-authorization.md),
+[ADR-0025](../decisions/ADR-0025-adapter-working-state-persistence-boundary.md),
+and
+[ADR-0026](../decisions/ADR-0026-working-state-operation-results-retry-and-partial-failure.md).
+The affected Specs define the Core Working State classification, Base
+Revision and optional Line association, pre-first-Revision state,
+component-source mapping, derived Core change status, destructive
+replacement authorization, AdapterWorkingStateRef persistence/recovery, and
+operation failure/retry/idempotency behavior. Temporary checkpoints remain
+separate under DEC-INTERACTION-004.

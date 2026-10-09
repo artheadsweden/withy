@@ -173,6 +173,11 @@ working caches
 ```
 
 Working data does not become historical merely by existing.
+The Core Working State representation is persistent local repository
+operational metadata and MAY survive process or DAW restart. It is distinct
+from Project State and Revision history, is not Platform-owned, and has no
+content-derived historical identifier. Ephemeral runtime details that do not
+affect recoverable Working State semantics need not be persisted.
 
 ---
 
@@ -1130,39 +1135,43 @@ calculation is defined for WORK-0013; WORK-0011 MUST NOT implement traversal.
 
 # 19. Working State
 
-The Working State exists locally.
+The Working State is mutable local Project operational state. The Core
+Working State representation is persistent local repository metadata; it
+MAY survive process or DAW restart. It is not an immutable historical object,
+is not content-addressed, and is not itself a reachability root merely by
+existing.
 
-It has:
+The conceptual Core record identifies the Project and records:
 
 ```text
 Project
-Base Revision
-currently materialised Project State
-local Resource paths
-local modifications
-unpublished resources
-adapter working state
+optional Base Revision
+optional associated Line
+component source mapping
+optional AdapterWorkingStateRef for current mutable Adapter-owned content
 ```
 
-Conceptually:
+For each Creative Component represented in the Working State, the source map
+identifies the `ComponentStateId` from which it was last materialised or
+adopted, when such a historical source exists. A locally created component
+may have no source Component State. This map is operational state, not
+historical provenance.
 
-```json
-{
-  "project_id": "019aa...",
+The conceptual representation above does not define a closed serialized
+schema. Core persists the currently authoritative
+`AdapterWorkingStateRef`; the Adapter owns the mutable state represented by
+that opaque reference. The reference is operational metadata, not historical
+identity or provenance. Immutable historical Adapter State MUST NOT be
+extended to represent mutable Working State. Core and Adapter ownership,
+prepare/commit, and restart recovery requirements are specified in
+§§82–83 and the DAW Adapter Contract.
+Working State recovery condition is separately reported operational status,
+not a member of immutable historical metadata or the Core comparison result.
 
-  "base_revision":
-    "omvcs:revision:sha256:BASE...",
-
-  "materialised_state":
-    "omvcs:project-state:sha256:STATE...",
-
-  "modified": true,
-
-  "custom_component_sources": {}
-}
-```
-
-The Working State is not content-addressed because it is intentionally mutable.
+OMVCS 0.1 does not require a globally stable content-derived Working State
+identifier. An internal handle, if needed, MUST NOT be presented as
+historical identity or provenance. A Working State is not itself Platform-
+owned and is distinct from DAW-native dirty or unsaved state.
 
 ---
 
@@ -1215,6 +1224,41 @@ Materialising a Revision consists conceptually of:
 
 Failure at steps 6–11 MUST NOT silently report successful materialisation.
 
+Before replacing an existing Working State, Core MUST compare its current
+derived status with the recorded source/base state. If status is `changed`
+or `unknown`, replacement MUST be refused unless this invocation supplies
+explicit `discard_current_working_state` authorization. The default is
+`preserve`. Authorization is operation-scoped and MUST NOT be remembered or
+reused. This rule does not replace any separate DAW-native dirty-state
+acknowledgement.
+
+On successful full materialisation, Core records the target Revision as the
+Base Revision, establishes the represented Components' source mapping from
+that Revision's Project State, and begins Core comparison status as
+`unchanged`. Materialisation MUST NOT mutate the source Revision, Project
+State, Component States, or Resources, and MUST NOT create a Revision.
+Resource bytes need not be available where the applicable selective
+materialisation contract permits their absence.
+
+An optional Line association is set or retained only as explicitly specified
+by the invoking operation. Movement of the associated Line MUST NOT advance
+the Base Revision or silently rematerialise the Working State.
+
+Core prepares the complete recoverable Adapter-owned state before committing
+the new Core Working State record. The record's Adapter reference and
+associated Base Revision, Line, and component-source mapping changes are
+committed atomically. A failure before this commit leaves the old record
+authoritative. If Adapter work partially changes live state and cannot be
+completed or rolled back, Core MUST return
+`adapter_partial_failure_recovery_required`, retain the last committed
+record as authoritative, and report recovery as `recovery_required`; it MUST
+NOT automatically retry or report normal success.
+
+After restart, Core MUST restore or validate the committed Adapter reference.
+If it is missing, invalid, unavailable, or unrestorable, Core MUST report
+the recovery condition and MUST NOT fabricate state or silently fall back
+to historical Adapter State while claiming exact recovery.
+
 ---
 
 # 22. Selective Materialisation
@@ -1240,6 +1284,11 @@ optional cache
 ```
 
 rather than 400 GB.
+
+Selective materialisation does not change the Base Revision. The component
+source map describes each represented Component's immutable source when one
+exists; local components without an admitted historical source have no
+source `ComponentStateId`.
 
 ---
 
@@ -1274,9 +1323,36 @@ new Revision
 
 Provenance SHOULD record the source Component States. This provenance records known origins and MUST NOT be populated with fabricated lineage.
 
+The current Working State's component-source map is mutable operational
+metadata and is not Revision provenance. Selecting a source Component State
+from another Revision does not change the Working State's Base Revision.
+Custom Working State has no Revision Identifier until the resulting state is
+explicitly published.
+
 ---
 
 # 24. Change detection
+
+Core Working State comparison status is derived and has exactly these
+results:
+
+```text
+unchanged
+changed
+unknown
+```
+
+`unchanged` means Core can establish semantic equality with the applicable
+recorded source/base comparison state. `changed` means Core can establish a
+relevant difference. `unknown` means available evidence is insufficient.
+This status MUST NOT be treated as immutable persisted truth. Implementations
+MAY cache comparison evidence or results operationally, but stale cached
+status MUST NOT override the current comparison.
+
+DAW-native dirty/unsaved state is distinct from Core Working State comparison
+status. Neither MUST be silently substituted for the other. Adapter evidence
+may contribute to Core comparison only under the applicable Core/Adapter
+comparison contract.
 
 Core defines three levels of possible change information.
 
@@ -1350,6 +1426,11 @@ Mirror permitted metadata to platform
 ```
 
 Platform mirroring is not required for Revision durability.
+
+Publication completion alone MUST NOT advance or replace the current Working
+State's Base Revision. A Base Revision change requires an explicit successful
+rematerialisation operation subject to this section's replacement
+authorization and failure contract.
 
 ---
 
@@ -2421,6 +2502,11 @@ Working State safety references
 pending publication transactions
 ```
 
+The Working State itself is not a root merely because it exists. Only
+explicit Working State safety references are roots; their lifecycle and
+protection semantics remain subject to the applicable reachability and
+checkpoint decisions.
+
 Each admitted Release is a root whose edge is `Release -> revision_id`.
 Traversal then follows the Revision metadata graph. Release metadata and
 Revision metadata reachability MUST NOT depend on local Resource-byte
@@ -2892,6 +2978,7 @@ OMVCS 0.1 Core should expose at least the following logical operations:
 
 ```text
 CreateProject
+CreateInitialWorkingState
 OpenProject
 ValidateRepository
 
@@ -2900,8 +2987,11 @@ UpdateComponentMetadata
 
 MaterialiseRevision
 MaterialiseCustomState
+AssociateWorkingStateLine
 InspectWorkingState
 DetectChanges
+PrepareWorkingState
+RestoreWorkingState
 
 PublishRevision
 
@@ -2940,6 +3030,9 @@ The Line operation contracts, including `SetDefaultLine`, are specified in
 The Release body, admission, identity, and `CreateRelease` contract are
 specified in §18. WORK-0013 owns reachability traversal from admitted
 Release roots.
+Working State operations MUST follow §§19–24 and the operation-specific
+contracts below. Temporary safety checkpoints remain separate under
+DEC-INTERACTION-004.
 
 ---
 
@@ -2961,6 +3054,61 @@ Result
 ```
 
 Coding agents MUST NOT implement operations whose failure semantics are left implicit.
+
+For the Working State operation set, the following additional contracts
+apply:
+
+- `CreateInitialWorkingState` requires valid Project context and no existing
+  Working State. Otherwise it returns `working_state_already_exists`
+  without mutation.
+- `InspectWorkingState` is read-only and returns persisted Core metadata,
+  derived Core comparison status, and recovery condition. Repeated reads
+  are idempotent; comparison may differ when mutable content changes.
+- `AssociateWorkingStateLine` changes only the optional association.
+  Repeating the current association succeeds as a no-op. It MUST NOT change
+  Base Revision, Adapter content, or history.
+- Full and custom/selective materialisation validate Project and admitted
+  target/source metadata before Adapter replacement. Full rematerialisation
+  updates Base Revision only on successful Core commit; custom/selective
+  materialisation does not change Base Revision and updates selected
+  component-source mappings and the AdapterWorkingStateRef as required by
+  the operation.
+- When replacing `changed` or `unknown` state, materialisation defaults to
+  preserving it and requires per-invocation
+  `discard_current_working_state` authorization. Refusal returns
+  `replacement_requires_authorization`, changes neither persisted Core
+  metadata nor live Adapter state, and creates no history.
+- Adapter preparation failure leaves the previous Core record authoritative.
+  A partial destructive Adapter failure returns
+  `adapter_partial_failure_recovery_required`; the committed Core record
+  remains authoritative, recovery status is `recovery_required`, and no
+  automatic retry is permitted.
+- Invalid, unavailable, or unrestorable `AdapterWorkingStateRef` results
+  MUST be explicit and MUST NOT be presented as exact recovery.
+- A retry is a new invocation: it re-reads current state, revalidates
+  metadata and authorization, and does not inherit authorization from a
+  previous attempt. Destructive materialisation has no general idempotency
+  guarantee; it is a successful no-op only when Core can establish that no
+  destructive Adapter work is required.
+- Recovery condition is separate from Core comparison status and has at
+  least `confirmed`, `unconfirmed`, and `recovery_required` values.
+- Operation results MUST distinguish at least invalid/missing Project
+  context; missing, unadmitted, or cross-Project Revision/Component State
+  sources; replacement requiring authorization; Adapter preparation/capture
+  failure; Adapter restore failure; Adapter partial failure requiring
+  recovery; invalid, missing, unavailable, or unrestorable
+  AdapterWorkingStateRef; Working State already existing when initial
+  creation requires absence; successful operation; and defined successful
+  no-op.
+- A failed operation before its Core commit point MUST leave the previously
+  committed Core Working State record authoritative. If failure occurs
+  after that commit point, the newly committed record remains authoritative.
+  Any mismatch between the committed record and live Adapter state MUST be
+  represented by the recovery condition, not hidden by rollback claims or
+  Core comparison status.
+
+These are logical contract requirements. They do not prescribe provider
+storage, transaction-log, retention, or M3/M4 recovery mechanics.
 
 ---
 
