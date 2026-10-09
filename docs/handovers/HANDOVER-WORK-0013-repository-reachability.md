@@ -152,8 +152,11 @@ implementation or DG-0015.
   same-Project/schema guarantees remain owned by existing admission APIs.
 - Independent verification is complete and accepted. Feature branch pushed to
   `origin/work/0013-repository-reachability`; the no-fast-forward integration
-  merge is recorded above. Integration branch documentation commit/push state
-  is recorded after that closeout push.
+  merge is recorded above. Integration closeout documentation commit
+  `03366ec6c9193d1eb32fe9f7bf9fa620e0f46aae` was pushed to
+  `origin/spec/0003-canonical-collection-order` and verified synchronized.
+  This final handover status update is also included in the explicitly pushed
+  integration branch closeout.
 
 ## Remaining work
 
@@ -163,9 +166,11 @@ other excluded root classes remain outstanding. Do not start WORK-0014.
 
 ## Git state
 
-Working tree: CLEAN after the integration documentation commit.
+Working tree: CLEAN after the final handover status commit.
 Remote push performed: YES — feature branch `work/0013-repository-reachability`
-was pushed to `origin`; integration branch push status recorded after closeout.
+was pushed to `origin`; integration branch was explicitly pushed to
+`origin/spec/0003-canonical-collection-order` and verified synchronized after
+the closeout commits.
 Remote publishing: ENABLED in `docs/project-state.md`; configured remote is
 `origin`.
 Independent Verifier review: ACCEPT after the sole test finding was cleared.
