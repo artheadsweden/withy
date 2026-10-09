@@ -1,6 +1,6 @@
 # WORK-0013 — Repository history reachability
 
-Status: BLOCKED — WORK-0010, WORK-0011, and WORK-0012
+Status: BLOCKED — WORK-0011 integration and WORK-0012
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`
@@ -19,8 +19,8 @@ specifications, without treating reachability as permission to delete data.
 ## Dependencies
 
 - WORK-0009 complete Revision ancestry traversal.
-- WORK-0010 Line root contract.
-- WORK-0011 Release root contract.
+- WORK-0010 Line root contract (verified).
+- WORK-0011 Release root contract (verified; integration pending).
 - WORK-0012 Working State root/persistence contract.
 - DG-0016–DG-0018 must be resolved as applicable to the root contracts before
   this package begins.
@@ -69,8 +69,8 @@ specifications, without treating reachability as permission to delete data.
 
 ## Known Design Gaps
 
-- DG-0017–DG-0018 block the complete Release and Working State root
-  contracts.
+- DG-0018 blocks the complete Working State root contract. ADR-0017 resolves
+  the Release root contract.
 - DG-0016 and DG-0021 are resolved by ADR-0016 and ADR-0021 respectively.
 - DEC-CORE-005 and DEC-CORE-008 remain open for later deletion/retention
   behavior and are explicit non-goals here.
