@@ -7,3 +7,4 @@
 pub mod line;
 pub mod release;
 pub mod revision_graph;
+pub mod working_state;

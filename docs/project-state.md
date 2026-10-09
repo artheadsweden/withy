@@ -47,9 +47,11 @@ and does not block WORK-0011. Human-approved ADR-0018 resolves DG-0018's
 Working State semantics. Human-approved ADR-0024–ADR-0026 resolve
 DG-0024–DG-0026 for destructive replacement authorization,
 AdapterWorkingStateRef persistence/recovery, and operation
-failure/retry/idempotency contracts. WORK-0012 is PLANNED and remains
-unstarted. DEC-INTERACTION-004 remains separate for temporary checkpoints
-and does not block WORK-0012. WORK-0013 remains blocked pending WORK-0012
-verification and the reachability contract; AdapterWorkingStateRef is not
+failure/retry/idempotency contracts. DEC-INTERACTION-004 remains separate
+for temporary checkpoints and does not block WORK-0012. WORK-0012 is
+independently verified and accepted on `work/0012-working-state-lifecycle`;
+implementation is committed at `6e1f6e8`, but integration is pending.
+WORK-0013 remains blocked pending WORK-0012 integration
+and the reachability contract; AdapterWorkingStateRef is not
 itself a reachability root. WORK-0014 remains blocked by its recorded M2
-gaps. WORK-0012 through WORK-0014 remain unstarted. M2 is IN PROGRESS.
+gaps. WORK-0013 and WORK-0014 remain unstarted. M2 is IN PROGRESS.

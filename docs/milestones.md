@@ -45,12 +45,14 @@ DEC-CORE-002 does not block the Release contract. Human-approved ADR-0018
 resolves DG-0018's Working State semantics. Human-approved ADR-0024–ADR-0026
 resolve DG-0024–DG-0026 respectively: destructive replacement
 authorization, AdapterWorkingStateRef persistence/recovery, and operation
-failure/retry/idempotency contracts. WORK-0012 is PLANNED and remains
-unstarted. DEC-INTERACTION-004 remains separate for temporary checkpoints
-and does not block WORK-0012. WORK-0013 remains blocked pending WORK-0012
-verification and its reachability contract; AdapterWorkingStateRef is not
-itself a reachability root. WORK-0014 remains blocked by its M2 preflight
-gaps. WORK-0012 through WORK-0014 remain unstarted.
+failure/retry/idempotency contracts. DEC-INTERACTION-004 remains separate
+for temporary checkpoints and does not block WORK-0012. WORK-0012 is independently verified and accepted on
+`work/0012-working-state-lifecycle`; implementation is committed at
+`6e1f6e8`, but integration is pending. WORK-0013 remains unstarted and
+blocked pending WORK-0012
+integration and its reachability contract; AdapterWorkingStateRef is not
+itself a reachability root. WORK-0014 remains unstarted and blocked by its
+M2 preflight gaps.
 
 - Lines;
 - Releases;
