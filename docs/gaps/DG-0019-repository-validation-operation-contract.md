@@ -116,8 +116,7 @@ unchanged: a declaration does not admit an object whose required target is
 absent. Such data may be preserved outside admitted history where
 supported.
 
-WORK-0014 is PLANNED, not started. It may implement partial coverage using
-the current Line/Release reachability boundary, but MUST report unsupported
-Core §62 roots and MUST NOT claim complete history or global unreachable
-status. DEC-CORE-005, DEC-CORE-008, DG-0015, DG-0027, and
-DEC-INTERACTION-004 remain separate and unresolved.
+WORK-0014 implements partial coverage using the Line/Release reachability
+boundary, reports unsupported Core §62 roots, and MUST NOT claim complete
+reachability or global unreachable status. DEC-CORE-005, DEC-CORE-008,
+DG-0015, DG-0027, and DEC-INTERACTION-004 remain separate and unresolved.

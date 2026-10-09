@@ -1,6 +1,6 @@
 # WORK-0014 — Repository validation
 
-Status: VERIFIED — independently accepted; not yet integrated
+Status: VERIFIED — independently accepted and integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0014-repository-validation`
@@ -132,5 +132,6 @@ policy.
 ## Completion criteria
 
 Formatting, focused and workspace tests, coverage-map update, independent
-verification, handover, and clean Git state are complete. Integration remains
-pending.
+verification, handover, integration, and clean Git state are complete. The
+initial implementation retains explicitly partial coverage for unsupported
+Core §62 root providers and does not claim global unreachability.

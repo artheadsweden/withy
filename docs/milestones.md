@@ -57,14 +57,14 @@ configured archival pins, and pending publication transactions remain required
 by Core §62 but are excluded from this bounded package; WORK-0013 therefore
 does not claim complete reachability or global unreachable status.
 AdapterWorkingStateRef is not itself a reachability root. ADR-0027–0029
-resolve DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014's validation
-contract is executable and the package is PLANNED, not started. Its first
-implementation MUST report partial/unavailable coverage for unresolved
-Core §62 root classes: DG-0027 still blocks Working State safety-reference
-roots, while Contributions, archival pins, and pending publication
-transactions remain unimplemented. WORK-0014 MUST NOT claim complete
-reachability or global unreachable status. DEC-CORE-005/008,
-DEC-INTERACTION-004, and DG-0015 remain separate. M2 remains IN PROGRESS.
+resolve DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014 is independently
+accepted and integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0`.
+Repository validation reuses partial Line/Release reachability, reports
+unsupported Core §62 roots, and MUST NOT claim complete reachability or
+global unreachable status. DG-0027, Contributions, configured archival
+pins, and pending publication transactions remain outside this package.
+DEC-CORE-005/008, DEC-INTERACTION-004, and DG-0015 remain separate. M2
+remains IN PROGRESS. No M3 work has started.
 
 - Lines;
 - Releases;
