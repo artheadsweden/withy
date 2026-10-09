@@ -58,6 +58,26 @@ pub struct InMemoryReleaseRepository {
     state: Mutex<RepositoryState>,
 }
 
+/// Read-only enumeration of all admitted Releases across every repository Project.
+///
+/// Success MUST return the complete admitted set for this read, not a selected
+/// Project or page. Failure MUST NOT masquerade as an empty or truncated set.
+/// This does not promise a snapshot shared with other repositories or reads.
+pub trait ReleaseEnumerationBoundary {
+    /// Returns all admitted immutable Releases without modifying them.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when complete enumeration cannot be performed.
+    fn admitted_releases(&self) -> Result<Vec<Release>, ReleaseOperationError>;
+}
+
+impl ReleaseEnumerationBoundary for InMemoryReleaseRepository {
+    fn admitted_releases(&self) -> Result<Vec<Release>, ReleaseOperationError> {
+        Ok(self.lock()?.releases.values().cloned().collect())
+    }
+}
+
 impl InMemoryReleaseRepository {
     /// Creates a reference repository with the supplied existing Projects.
     #[must_use]
