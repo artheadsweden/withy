@@ -27,7 +27,7 @@ Status: COMPLETE. WORK-0001 through WORK-0008 are verified and integrated at `ab
 
 ## M2 — Local repository history
 
-Status: PREFLIGHT COMPLETE. WORK-0009 is the first planned, unblocked package; other feature packages await the decisions and gap resolutions identified in the M2 preflight. Production implementation has not started.
+Status: IN PROGRESS. WORK-0009 is the first unblocked package; other feature packages await the decisions and gap resolutions identified in the M2 preflight.
 
 - Lines;
 - Releases;
