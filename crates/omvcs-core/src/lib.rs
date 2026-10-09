@@ -5,6 +5,7 @@
 #![forbid(unsafe_code)]
 
 pub mod line;
+pub mod reachability;
 pub mod release;
 pub mod revision_graph;
 pub mod working_state;

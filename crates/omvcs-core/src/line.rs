@@ -407,6 +407,27 @@ pub struct InMemoryLineRepository {
     state: Mutex<RepositoryState>,
 }
 
+/// Read-only enumeration of all retained Lines across every repository Project.
+///
+/// Success MUST return the complete retained set for this read, not a selected
+/// Project, page, local selection, or Default Line. Failure MUST NOT masquerade
+/// as an empty or truncated set. This does not promise a snapshot shared with
+/// other repositories or reads.
+pub trait LineEnumerationBoundary {
+    /// Returns all retained Line records without modifying them.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when complete enumeration cannot be performed.
+    fn retained_lines(&self) -> Result<Vec<Line>, LineOperationError>;
+}
+
+impl LineEnumerationBoundary for InMemoryLineRepository {
+    fn retained_lines(&self) -> Result<Vec<Line>, LineOperationError> {
+        Ok(self.lock()?.lines.values().cloned().collect())
+    }
+}
+
 impl InMemoryLineRepository {
     /// Creates a reference repository with the supplied existing Projects.
     #[must_use]
