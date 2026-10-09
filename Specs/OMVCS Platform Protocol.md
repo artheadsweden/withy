@@ -597,25 +597,35 @@ The Platform must not independently invent repository history.
 
 The Platform MAY display Releases prominently.
 
-A mirrored Release MUST retain:
+A mirrored Release MUST retain the authoritative OMVCS `ReleaseId` and the
+complete admitted Release body without replacing or changing its identity.
+For OMVCS 0.1 this body contains:
 
 ```text
-Release name
-target Revision
-creator
+schema
+project_id
+name
+revision_id
 created_at
+creator_id
 description
 ```
 
-The target MUST remain immutable.
+The Platform MAY add separate presentation metadata, but MUST NOT modify the
+Release body or redefine the Release name namespace, identity, or target.
+The target and every other Release body member remain immutable.
 
 ---
 
 # 30. Release deletion from Platform
 
-Hiding/removing a Release presentation from the Platform MUST NOT mutate the underlying OMVCS Release object.
+Hiding or removing a Release presentation from the Platform MUST NOT mutate
+or delete the underlying OMVCS Release object. OMVCS 0.1 defines no
+`DeleteRelease` operation.
 
-If the Project wishes to deprecate a Release, that should be represented separately.
+If the Project wishes to deprecate a Release, that should be represented
+separately as presentation or other metadata; it MUST NOT imply an
+OMVCS Release mutation or deletion.
 
 ---
 

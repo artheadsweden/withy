@@ -1637,22 +1637,31 @@ identifies a meaningful immutable Version.
 The UI SHOULD require selecting:
 
 ```text
-Version
+target Version
 Release name
-optional description
-visibility
+optional user-entered description
 ```
+
+The UI MUST provide a description string to Core; when the user supplies no
+description, it MUST use the empty string. The Release body always contains
+the required `description` member. Visibility is separate Platform or
+presentation metadata and is not a Release body member or `CreateRelease`
+precondition.
 
 ---
 
 # 82. Release immutability
 
-The UI MUST communicate that the target Version cannot later be silently changed.
+The UI MUST communicate that the admitted Release body is immutable: its
+Project, name, target Version, creation time, creator, and description cannot
+later be changed. In particular, the target Version cannot later be silently
+changed.
 
 Example:
 
 ```text
-Release 1.0 will permanently refer to Version 28.
+Release 1.0 will continue to refer to Version 28 for as long as that Release
+exists.
 ```
 
 ---
@@ -1679,13 +1688,15 @@ as ordinary behaviour.
 
 # 84. Reference mix for Release
 
-If a Reference Render is missing and Project policy recommends or requires it, the UI SHOULD prompt:
+If a Reference Render is missing and separate Project policy recommends it,
+the UI MAY prompt before or after Release creation:
 
 ```text
 Create reference mix
 ```
 
-before completing Release.
+This prompt is not a `CreateRelease` precondition under Core §18.
+DEC-CORE-002 remains separate and may define other Reference Render policy.
 
 ---
 

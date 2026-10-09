@@ -296,7 +296,11 @@ cleared.
 
 ## Release
 
-A **Release** is an immutable, named reference to a specific Revision intended to identify a meaningful published or milestone state.
+A **Release** is an immutable, Project-scoped historical metadata object
+that content-addressably identifies one admitted Revision and serves as a
+repository reachability root for that Revision. A Release is distinct from a
+mutable Line. The OMVCS 0.1 Release body and identity are defined in Core
+§18.
 
 Examples:
 
@@ -305,11 +309,21 @@ Examples:
 > Album version  
 > Release 1.0
 
-A Release MUST continue pointing to the same Revision permanently.
+A Release MUST continue pointing to the same Revision for as long as that
+Release exists.
 
 If another state is desired, a new Release MUST be created.
 
-**Git analogy:** immutable tag/release.
+**Git analogy only:** an immutable tag/release is a limited comparison.
+OMVCS Release identity, naming, lifecycle, and operation semantics are
+defined by OMVCS, not Git.
+
+## Release Identifier
+
+A **Release Identifier (ReleaseId)** is the typed content-derived identifier
+of the canonical OMVCS 0.1 Release body. It uses the textual form
+`omvcs:release:sha256:<64-lowercase-hex-digits>`; the object-type prefix is
+not part of the digest input.
 
 ---
 
@@ -1271,7 +1285,7 @@ For developers and coding agents familiar with Git:
 | Tree | Project State | Partial |
 | Blob | Resource Object | Partial |
 | Branch | Line | Limited conceptual similarity; Line behavior is defined by OMVCS, not Git branch semantics |
-| Tag | Release | Strong |
+| Tag | Release | Limited analogy only; no Git tag semantics |
 | Working tree | Working State | Partial |
 | Checkout | Materialisation | Partial |
 | Sparse checkout | Selective Materialisation | Partial |
