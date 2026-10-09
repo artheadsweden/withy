@@ -5,6 +5,8 @@ To agent: OMVCS Lead (WORK-0013 closeout)
 Date: 2026-10-09
 Branch: `work/0013-repository-reachability`
 Implementation base HEAD: `0b33ed2b99e8fbf9ab8871d2bda584af8807aa31`
+Feature commits: `87823e7`, `646f04d`, `c49eab3`
+No-fast-forward integration merge: `a67e1811ce0e7e15001f8517d379d7da607d3bdf`
 
 ## Completed
 
@@ -98,7 +100,7 @@ Existing tests were not changed.
   25 passed, 0 failed (final run).
 - `cargo test -p omvcs-core --locked --lib reachability::tests`:
   3 passed, 0 failed.
-- `cargo test --workspace --locked`:
+- `cargo test --workspace --locked` (post-closeout commits):
   246 passed, 0 failed (239 unit/integration + 7 doc tests).
 - `cargo fmt --all`, then `cargo fmt --all -- --check`: passed.
 - `cargo clippy -p omvcs-core --all-targets --locked -- -D warnings`: passed.
@@ -148,20 +150,22 @@ implementation or DG-0015.
   implementation; these boundaries consume the independently specified contracts.
 - Read-only traversal is not repository-wide import validation. Exact admitted
   same-Project/schema guarantees remain owned by existing admission APIs.
-- Independent verification is complete and accepted. Closeout commit/push/
-  integration details will be recorded after those operations.
+- Independent verification is complete and accepted. Feature branch pushed to
+  `origin/work/0013-repository-reachability`; the no-fast-forward integration
+  merge is recorded above. Integration branch documentation commit/push state
+  is recorded after that closeout push.
 
 ## Remaining work
 
-Closeout/integration is authorized and in progress. The implementation does
-not complete all Core §62 root coverage; DG-0027 and the other excluded root
-classes remain outstanding. Do not start WORK-0014.
+WORK-0013 is integrated for the partial Line/Release scope only. The
+implementation does not complete all Core §62 root coverage; DG-0027 and the
+other excluded root classes remain outstanding. Do not start WORK-0014.
 
 ## Git state
 
-Working tree: DIRTY at implementation base — intended WORK-0013 code, tests,
-DG-0027/preflight and closeout documentation only; no unrelated paths found.
-Remote push performed: NO as of handover preparation.
+Working tree: CLEAN after the integration documentation commit.
+Remote push performed: YES — feature branch `work/0013-repository-reachability`
+was pushed to `origin`; integration branch push status recorded after closeout.
 Remote publishing: ENABLED in `docs/project-state.md`; configured remote is
 `origin`.
 Independent Verifier review: ACCEPT after the sole test finding was cleared.

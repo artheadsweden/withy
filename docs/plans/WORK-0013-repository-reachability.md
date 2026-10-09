@@ -1,6 +1,6 @@
 # WORK-0013 — Repository history reachability
 
-Status: VERIFIED — independently accepted; partial Line/Release scope only; closeout in progress
+Status: VERIFIED — independently accepted and integrated for partial Line/Release scope at `a67e1811ce0e7e15001f8517d379d7da607d3bdf`
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0013-repository-reachability`
@@ -187,7 +187,6 @@ authorizes deletion or depends on local Resource bytes.
 ## Completion criteria
 
 Implementation formatting, focused/workspace tests, strict Clippy,
-coverage-map reconciliation, independent verification, and handover are
-complete for this partial Line/Release scope. This does not claim complete
-Core §62 reachability. Closeout commits and integration remain in progress;
-WORK-0014 remains unstarted.
+coverage-map reconciliation, independent verification, handover, and
+integration are complete for this partial Line/Release scope. This does not
+claim complete Core §62 reachability. WORK-0014 remains blocked and unstarted.

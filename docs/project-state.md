@@ -53,9 +53,11 @@ WORK-0012 is independently verified and integrated at
 `fd68d969da671546ec1e00f5362a75c0a52ed61f` on
 `spec/0003-canonical-collection-order`; its feature branch is pushed to
 `origin/work/0012-working-state-lifecycle`. WORK-0013 is independently verified
-on `work/0013-repository-reachability` for the explicitly partial Line/Release
-root subset, but is not committed, integrated, or pushed. DG-0027 blocks
-Working State safety-reference root coverage. Contributions, configured
+and integrated at `a67e1811ce0e7e15001f8517d379d7da607d3bdf` on
+`spec/0003-canonical-collection-order` for the explicitly partial Line/Release
+root subset; its feature branch is pushed to
+`origin/work/0013-repository-reachability`. DG-0027 blocks Working State
+safety-reference root coverage. Contributions, configured
 archival pins, and pending publication transactions remain required by Core
 §62 but are excluded from this bounded package; it does not claim complete
 reachability or global unreachable status. AdapterWorkingStateRef is not

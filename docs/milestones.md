@@ -48,15 +48,17 @@ authorization, AdapterWorkingStateRef persistence/recovery, and operation
 failure/retry/idempotency contracts. DEC-INTERACTION-004 remains separate
 for temporary checkpoints and does not block WORK-0012. WORK-0012 is independently verified and integrated at
 `fd68d969da671546ec1e00f5362a75c0a52ed61f`; its feature branch is pushed to
-`origin/work/0012-working-state-lifecycle`. WORK-0013 is independently
-verified on `work/0013-repository-reachability` for the explicitly partial
-Line/Release root subset; it is not committed, integrated, or pushed. DG-0027
-blocks Working State safety-reference root coverage. Contributions, configured
-archival pins, and pending publication transactions remain required by Core
-§62 but are excluded from this bounded package; WORK-0013 therefore does not
-claim complete reachability or global unreachable status. AdapterWorkingStateRef
-is not itself a reachability root. WORK-0014 remains unstarted and blocked by
-DG-0019 and its other M2 preflight gaps. M2 remains IN PROGRESS.
+`origin/work/0012-working-state-lifecycle`. WORK-0013 is independently verified and integrated at
+`a67e1811ce0e7e15001f8517d379d7da607d3bdf` for the explicitly partial
+Line/Release root subset on `spec/0003-canonical-collection-order`; its
+feature branch is pushed to `origin/work/0013-repository-reachability`.
+DG-0027 blocks Working State safety-reference root coverage. Contributions,
+configured archival pins, and pending publication transactions remain required
+by Core §62 but are excluded from this bounded package; WORK-0013 therefore
+does not claim complete reachability or global unreachable status.
+AdapterWorkingStateRef is not itself a reachability root. WORK-0014 remains
+unstarted and blocked by DG-0019 and its other M2 preflight gaps. M2 remains
+IN PROGRESS.
 
 - Lines;
 - Releases;
