@@ -101,6 +101,7 @@ macro_rules! assigned_identifier {
 
 assigned_identifier!(ProjectId);
 assigned_identifier!(CreativeComponentId);
+assigned_identifier!(LineId);
 assigned_identifier!(StorageEndpointId);
 assigned_identifier!(ContributionId);
 assigned_identifier!(ActorId);

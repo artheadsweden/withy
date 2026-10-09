@@ -4,4 +4,5 @@
 
 #![forbid(unsafe_code)]
 
+pub mod line;
 pub mod revision_graph;

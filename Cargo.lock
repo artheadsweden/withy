@@ -145,6 +145,7 @@ name = "omvcs-core"
 version = "0.0.0"
 dependencies = [
  "omvcs-model",
+ "serde",
  "serde_json",
 ]
 

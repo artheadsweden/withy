@@ -1,9 +1,9 @@
 # WORK-0010 — Line history references
 
-Status: PLANNED
+Status: VERIFIED — independently accepted
 Owner agent: Core Engineer
 Milestone: M2
-Branch: `work/0010-line-history-reference`
+Branch: `work/0010-lines`
 
 ## Objective
 
@@ -14,8 +14,9 @@ to Revisions, without importing Git branch or ref semantics.
 
 - Core Specification §§4.1, 16–17, 56–58, 74, and 82–83.
 - Glossary: Line and Default Line.
-- Core Invariants: INV-HIST-005, INV-HIST-010, INV-GC-001, and INV-UX-002.
-- ADR-0016, ADR-0020, and ADR-0022.
+- Core Invariants: INV-HIST-005, INV-HIST-010, INV-HIST-011, INV-GC-001,
+  and INV-UX-002.
+- ADR-0016, ADR-0020, ADR-0021, and ADR-0022.
 
 ## Dependencies
 
@@ -38,7 +39,15 @@ to Revisions, without importing Git branch or ref semantics.
 ## Allowed scope
 
 - `crates/omvcs-core/`
-- Focused Line model, reference-validation, and lifecycle tests.
+- `crates/omvcs-model/src/lib.rs` for the typed assigned `LineId`, reusing
+  the existing UUIDv7 identifier profile.
+- Focused Line model, reference-validation, atomic operation-contract, and
+  lifecycle tests in `crates/omvcs-core/`.
+- `docs/spec-coverage.md` and a WORK-0010 handover.
+
+The narrow model-crate addition is required because Core operations expose
+the assigned `LineId` as a typed identifier; it does not expand WORK-0010
+into general identifier or historical-object model work.
 
 ## Deliverables
 
@@ -49,8 +58,10 @@ to Revisions, without importing Git branch or ref semantics.
   Resource-byte availability.
 - DeleteLine with atomic `line_id` plus `expected_generation`; no
   historical-object deletion.
-- Optional Project-scoped Default Line preference persisted as repository-
-  owned operational metadata, plus atomic `SetDefaultLine`.
+- Optional Project-scoped Default Line preference as repository-owned
+  operational metadata, plus atomic `SetDefaultLine`; WORK-0010 defines and
+  tests the Core operation boundary, while durable Repository Home adapter
+  persistence remains with the applicable repository/storage work.
 
 ## Acceptance tests
 
@@ -87,6 +98,9 @@ to Revisions, without importing Git branch or ref semantics.
   set it.
 - Repository Home is authoritative; Platform mirrors and client-local
   current-Line selection cannot redefine the shared value.
+- The in-memory reference boundary proves atomic Core contract behavior; it
+  does not claim durable Repository Home persistence or define M3/M4 storage
+  transactions.
 - Deleting the current Default Line fails atomically; concurrent
   SetDefaultLine/DeleteLine decisions cannot leave a dangling reference.
 - DEC-CORE-008 retention/pinning tests are excluded; no such policy is
