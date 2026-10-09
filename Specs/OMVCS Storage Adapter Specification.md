@@ -984,7 +984,7 @@ Repeated writes of the same immutable metadata object MUST be idempotent.
 Mutable records such as:
 
 ```text
-Line heads
+Line targets
 Storage Map current generation
 Repository Home state
 sync markers

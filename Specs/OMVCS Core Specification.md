@@ -148,7 +148,8 @@ Resource Replicas
 Availability
 preferred replicas
 synchronization state
-Line heads
+Line targets
+optional Project-scoped Default Line preference
 Platform synchronization state
 ```
 
@@ -185,6 +186,7 @@ The following entities use globally unique assigned identifiers:
 
 - Project;
 - Creative Component;
+- Line;
 - Storage Endpoint;
 - Contribution;
 - Actor.
@@ -820,73 +822,139 @@ Implementations MUST NOT infer ancestry merely from timestamps.
 
 # 16. Line
 
-A Line is a mutable named reference.
+A Line is mutable operational repository metadata, not a content-addressed
+historical object. The OMVCS 0.1 Line record is a closed object containing
+exactly these REQUIRED members:
 
-Conceptually:
+| Member | Meaning |
+|---|---|
+| `line_id` | Assigned Line Identifier using the UUIDv7 lowercase canonical textual form in §4.1; immutable for the Line's lifetime. |
+| `project_id` | Typed assigned Project Identifier; immutable for the Line's lifetime. |
+| `name` | Current human-readable Line name; mutable. |
+| `target_revision` | Typed Revision Identifier of exactly one target Revision. |
+| `generation` | Unsigned monotonic version token for this mutable Line record. |
 
-```json
-{
-  "line_id": "019dd...",
-  "project_id": "019aa...",
-  "name": "main",
-  "target_revision":
-    "omvcs:revision:sha256:ABC...",
-  "generation": 17
-}
-```
+Unknown additional members are invalid in OMVCS 0.1. The identifier is
+independent of the Line name and target. A Line MUST NOT move between
+Projects. Cross-Project Line transfer and copy semantics are not defined.
+The Line record is operational metadata, not a canonical hashed historical
+object; it has no `schema` member.
 
-The Line object itself is operational metadata.
+Line names MUST be unique within their Project. Equality uses exact
+string/code-point equality; Core MUST NOT case-fold, use locale-sensitive
+comparison, normalize for a filesystem, or apply Git-style ref normalization.
+Different Projects MAY contain Lines with the same name. No additional
+character restrictions apply beyond generic string and serialization rules.
 
-Moving:
+The target MUST resolve as valid/admitted Revision metadata and MUST belong
+to the Project named by `project_id`. Resource-byte availability is not
+required to validate the target. Multiple Lines MAY point to the same
+Revision. A Line always has exactly one target; there is no null or unborn
+Line in OMVCS 0.1. `CreateLine` therefore requires an already-admitted
+target Revision.
 
-```text
-main -> Revision 17
-```
+`generation` begins at zero. Every successful mutation of the Line record
+increments it by exactly one, including movement and rename. Failed
+mutations MUST leave all fields unchanged and MUST NOT increment it.
+`generation` MUST be a JSON number representing an exact non-negative
+integer in the inclusive range `0 ..= 9007199254740991` (`2^53 - 1`).
+Negative, fractional, greater-than-maximum, string, and alternate
+representations are invalid. The value's canonical JSON serialization, where
+applied, MUST follow RFC 8785/JCS number serialization under §5. Host-language
+integer width MUST NOT change the accepted or emitted domain; implementations
+MAY use a wider internal type. If the current value is `9007199254740991`,
+any operation requiring another increment MUST fail atomically and leave the
+Line unchanged. Generation MUST NOT wrap, reset, silently saturate, or reuse
+an earlier value. These are Line-specific rules under ADR-0020; ADR-0008's
+Resource `byte_length` range does not define a general OMVCS integer profile.
 
-to:
+`CreateLine` requires a Project ID, requested name, and admitted target
+Revision ID. It succeeds only if the target is valid/admitted in that
+Project and the name is unused there. Success atomically creates a fresh
+assigned `line_id` and the supplied immutable `project_id`, `name`, and
+`target_revision`, with `generation` zero. Failure leaves no partial Line.
 
-```text
-main -> Revision 18
-```
+A Default Line is an optional Project-scoped repository operational
+preference represented conceptually as `ProjectId -> optional LineId`. When
+present, it MUST designate an existing Line in that Project. The preference
+is persisted in Repository Home, which is authoritative for it; a Platform
+MAY mirror it but MUST NOT redefine it. It is not a Line member, a distinct
+Line type, or a historical object. `CreateLine` MUST NOT implicitly set it.
+A client-local selected/current Line is separate and changing that local
+selection MUST NOT change the shared preference. `SetDefaultLine` and
+deletion constraints are specified in §17.
 
-does not modify either Revision.
+Moving a Line does not modify either Revision, its ancestry, or other
+historical objects.
 
 ---
 
-# 17. Concurrent Line updates
+# 17. Line and Default Line updates
 
-Line movement MUST use compare-and-swap semantics.
+Every `expected_generation` input to `MoveLine`, `RenameLine`, and
+`DeleteLine` uses the same JSON-number representation and exact integer
+domain as the Line `generation` field in §16. An invalid representation is
+a validation failure, not a stale-generation conflict.
 
-A client attempting:
+`MoveLine` is an atomic compare-and-swap operation requiring `line_id`,
+expected current `target_revision`, expected current `generation`, and a
+new target Revision ID. The operation succeeds only if the Line exists,
+both expected values match, and the new target resolves as valid/admitted
+metadata in the same Project as the Line. Success changes only
+`target_revision` and increments `generation` exactly once. `line_id`,
+`project_id`, and `name` remain unchanged.
 
-```text
-main:
-Revision 17 -> Revision 18
-```
+A stale target or generation is a conflict. A missing Line, invalid target,
+or cross-Project target is a validation failure. Every failure is atomic:
+no member or generation changes. No fast-forward-only rule applies; a
+successful compare-and-swap MAY move the Line to any admitted Revision in
+the same Project. Resource bytes need not be available for target validation.
+If the new target equals the current target and both expected values match,
+the operation still succeeds and increments `generation` exactly once.
 
-must declare that it believes the current target is Revision 17.
+`RenameLine` is a Core operation. It requires `line_id`, expected
+`generation`, and a requested new name. It succeeds only if the Line exists,
+the generation matches, and no other Line in the same Project has that exact
+name. Success changes only `name` and increments `generation` exactly once.
+A stale generation is a conflict; an unavailable Line or conflicting name
+is a failure. A request for the existing name is valid and increments
+`generation` once. Failure is atomic and leaves the Line unchanged.
 
-If another user already moved it:
+`SetDefaultLine` takes a Project ID, an optional expected current Default
+Line ID, and an optional requested new Default Line ID. An absent expected
+value means that no Default Line is currently designated; an absent
+requested value clears the designation. The operation succeeds only if the
+Project exists and the current optional value equals the supplied expected
+value. A supplied new Line ID MUST identify an existing Line in the
+specified Project. A stale expected value is a concurrency conflict; a
+missing Project, missing Line, or cross-Project target is a validation
+failure. The compare, target validation, and preference update MUST be
+atomic. Any failure leaves the preference unchanged.
 
-```text
-Revision 17 -> Revision 19
-```
+Changing or clearing the preference does not mutate a Line, increment a
+Line generation, alter Revision history, or create another history root.
+There is no separate Default-Line generation counter. A Platform or client
+may mirror the shared value, but local selection and Platform/account
+preferences MUST NOT overwrite Repository Home authority.
 
-the update MUST fail as divergent rather than silently replacing Revision 19.
-
-The caller must then reconcile:
-
-```text
-Revision 18
-     \
-      integration
-     /
-Revision 19
-```
-
-or create another Line.
-
-This prevents lost creative history.
+`DeleteLine` removes the mutable Line record. It MUST NOT delete any
+Revision, Project State, Component State, or Resource merely because the
+Line is removed. It requires `line_id` and `expected_generation`. The Line
+MUST exist and its current generation MUST equal the expected generation;
+the existence check and generation comparison MUST be part of the same
+atomic deletion decision. A stale generation is a concurrency conflict and
+MUST leave the Line intact and unchanged. A missing Line MUST be
+distinguishable from a stale-generation conflict. Success removes exactly
+the Line record and does not need to create a new generation. A Line that
+is the current Default Line MUST NOT be deleted; the caller must first
+explicitly change or clear the preference. The check that the Line is not
+the current Default Line, existence, expected generation, and removal MUST
+be part of the same atomic deletion decision. A Default Line is never
+implicitly cleared or reassigned. Retry requires the caller to obtain and
+reason from current state; Core MUST NOT silently retry using a newly
+observed generation. No tombstone, reflog, or Line mutation history is
+introduced. Automatic retention or pinning after deletion remains entirely
+separate under DEC-CORE-008.
 
 ---
 
@@ -1243,6 +1311,8 @@ Resource replicas:
 ```
 
 The Repository Home MUST contain complete historical metadata and current operational metadata sufficient to resolve Project storage.
+This operational metadata includes the optional Project-scoped Default Line
+preference defined in §§16–17.
 
 It MUST NOT contain credentials in historical metadata.
 
@@ -2039,7 +2109,13 @@ validate Component State references
 validate each Component State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
 validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
 validate Release targets
-validate Line targets
+validate each Line against its exact closed member set, assigned Line
+  Identifier profile, and approved generation profile; require unique Line
+  Identifiers and names within each Project; resolve its Project and target
+  Revision and require matching Project identity (Resource bytes are not
+  required)
+validate an optional Default Line preference resolves to an existing Line
+  in its Project
 validate provenance references
 validate replica records
 verify available Resource content
@@ -2102,7 +2178,15 @@ It is not creative Revision history.
 
 Repository operational metadata MUST use generation/version semantics to avoid silent last-write-wins data loss.
 
-If two clients modify the same operational record from the same previous generation, the second mutation MUST detect divergence where the changes cannot safely commute.
+If two clients modify the same operational record from the same previous
+generation, the second mutation MUST detect divergence where the changes
+cannot safely commute. For a Line move, the expected current target and
+expected generation are both compared atomically as specified in §17. For
+Line deletion, the existence check, expected-generation comparison, and
+Default Line reference check are atomic with record removal as specified
+in §17. `SetDefaultLine` compares the expected current optional Line ID
+with the repository value atomically before changing or clearing that
+value.
 
 Some operations may commute safely.
 
@@ -2466,7 +2550,8 @@ No implicit destructive resolution is allowed.
 
 OMVCS 0.1 does not permit rewriting already published Revision objects.
 
-Operations analogous to Git force-push MUST NOT destroy published historical objects.
+A mutable-reference update or removal MUST NOT destroy published historical
+objects.
 
 A Line MAY deliberately be redirected subject to permissions and policy, but the previously referenced Revision continues to exist.
 
@@ -2488,7 +2573,16 @@ destroy historical object
 
 These MUST NOT be treated as equivalent.
 
+`DeleteLine` removes exactly the mutable Line record after the atomic
+existence, expected-generation, and not-current-Default-Line checks in §17.
+The operation MUST NOT delete the referenced Revision or any other
+historical object. This rule does not decide automatic retention or pinning,
+which remains governed by DEC-CORE-008.
+
 Removing a Line does not immediately destroy its Revision history.
+Removing a Line record MUST NOT itself delete any Revision, Project State,
+Component State, or Resource. Automatic pin/retention behavior remains
+governed separately by DEC-CORE-008.
 
 Deleting a platform page does not delete creator-controlled storage.
 
@@ -2673,7 +2767,9 @@ PublishRevision
 
 CreateLine
 MoveLine
+RenameLine
 DeleteLine
+SetDefaultLine
 
 CreateRelease
 
@@ -2699,6 +2795,8 @@ RecoverRepository
 ```
 
 Names shown here are normative technical concepts, not necessarily UI labels.
+The Line operation contracts, including `SetDefaultLine`, are specified in
+§§16–17.
 
 ---
 

@@ -227,11 +227,19 @@ The Platform MUST NOT silently rewrite the Project to match its mirror.
 
 Instead it must mark the mirror as stale, divergent or invalid.
 
+For repository-owned operational metadata, including the shared Default Line
+preference, Repository Home is authoritative. A Platform MAY mirror that
+preference but MUST NOT replace it with a Platform/account setting or a
+client-local selected/current-Line preference. A disagreement MUST be
+resolved against Repository Home.
+
 ---
 
 # 10. Mirror generation
 
 Each Project Mirror SHOULD have a monotonically increasing synchronization generation.
+This `mirror_generation` is distinct from each Core Line record's
+`generation`; advancing the mirror generation does not mutate a Line.
 
 Example:
 
@@ -253,6 +261,11 @@ Project metadata may be synchronized:
 ```text
 Repository -> Platform
 ```
+
+The optional Default Line preference MAY be included in this repository-to-
+Platform mirror synchronization. A mirrored value remains repository-owned;
+Platform-local preferences MUST NOT write it back as an authoritative
+change.
 
 and, for Platform-owned collaboration metadata:
 
@@ -276,6 +289,7 @@ Examples:
 Revisions
 Project States
 Line targets
+Default Line preference
 Releases
 provenance
 Creative Components
@@ -562,15 +576,18 @@ new target
 generation
 ```
 
-It MUST reject stale blind updates when they could hide divergence.
+The Line `generation` is the Core Line record's concurrency/version token
+defined in Core §16. It is not `mirror_generation` from §10. The Platform MUST
+reject stale blind updates when they could hide divergence.
 
 ---
 
-# 28. Platform cannot force-move repository Lines
+# 28. Platform cannot bypass Core Line updates
 
 A Platform MAY offer a UI action that requests a Line move.
 
-The actual OMVCS operation must still satisfy Core authorization and guarded update rules.
+The actual OMVCS operation must still satisfy Core authorization and the
+expected-target and generation checks in Core §17.
 
 The Platform must not independently invent repository history.
 
@@ -2479,7 +2496,8 @@ continues to sound like Release 1.0 even if later work progresses.
 
 # 169. Current Project playback
 
-A Project page MAY also play the Reference Render of the current Default Line head.
+A Project page MAY also play the Reference Render of the Revision targeted by
+the current Default Line.
 
 The UI should distinguish this from an immutable named Release.
 
@@ -2966,7 +2984,8 @@ It MUST retain OMVCS identifier.
 
 # 208. GetLine/ListLines
 
-Returns current mirrored Line references and generations.
+Returns current mirrored Line references and their Core Line generations.
+The Project Mirror's synchronization generation remains a separate value.
 
 ---
 
@@ -3301,7 +3320,8 @@ Coding agents implementing the Platform MUST obey:
 
 > Do not erase historical attribution when a Platform account disappears.
 
-> Do not use blind last-write-wins for Line or Contribution head updates.
+> Do not use blind last-write-wins for Line target or Contribution reference
+> updates.
 
 > Do not make Platform availability part of Revision durability.
 

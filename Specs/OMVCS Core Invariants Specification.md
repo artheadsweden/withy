@@ -164,6 +164,42 @@ Operational, storage, Line, Release, Platform, credential, signature,
 validation-evidence, and unknown extension data MUST NOT enter the body or
 affect its identity.
 
+## INV-HIST-010 — Line identity and movement are operational
+
+A Line MUST use its stable assigned Line Identifier independently of its
+mutable name and target Revision. Line movement and rename MUST NOT modify
+Revision ancestry or historical object identity. A Line target MUST resolve
+to admitted Revision metadata in the same Project; Resource-byte availability
+is not required. Successful target movement MUST use the Core Line
+compare-and-swap contract and MUST NOT impose a fast-forward ancestry rule.
+Line `generation` MUST be an exact non-negative JSON integer in
+`0 ..= 9007199254740991`, with canonical number serialization under the Core
+JCS rules. Each successful extant-record mutation MUST increment it exactly
+once; failures MUST leave the record unchanged. An increment from the maximum
+MUST fail atomically without wrapping, resetting, or silent saturation.
+
+DeleteLine MUST compare the expected generation atomically with Line
+existence and removal. A stale-generation conflict MUST leave the Line
+unchanged and MUST be distinguishable from a missing Line. Removing a Line
+record MUST NOT itself delete the historical objects it referenced.
+
+## INV-HIST-011 — Default Line is shared operational metadata
+
+A Project MAY designate at most one existing Line in that Project as its
+Default Line. The optional designation MUST be persisted as repository-
+owned operational metadata in Repository Home; it MUST NOT be a Line member,
+historical object, or separate history root. Repository Home is authoritative
+for the designation, and a Platform mirror MUST NOT redefine it. A
+client-local selected/current Line is independent.
+
+`SetDefaultLine` MUST use an atomic expected-current-value comparison;
+failure MUST leave the preference unchanged. Setting or clearing the
+preference MUST NOT mutate a Line, increment Line generation, or alter
+Revision history. `CreateLine` MUST NOT implicitly set it. `DeleteLine` MUST
+not remove the currently designated Line; its Default Line check,
+existence/generation checks, and deletion MUST be part of one atomic
+decision, preventing a dangling designation under concurrent updates.
+
 ---
 
 # 2. Resource identity and storage

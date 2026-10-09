@@ -1,6 +1,6 @@
 # DG-0016 — Line object and update contract
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: M2 preflight
@@ -10,7 +10,8 @@ Date: 2026-10-09
 
 - `Specs/OMVCS Core Specification.md` §§4.1–4.2, 16–17, 34, 56–58, 74, 82–83.
 - `Specs/OMVCS Glossary.md`, Line and Default Line.
-- `Specs/OMVCS Core Invariants Specification.md`, INV-HIST-005, INV-GC-001, INV-UX-002.
+- `Specs/OMVCS Core Invariants Specification.md`, INV-HIST-005, INV-HIST-010,
+  INV-GC-001, INV-UX-002.
 - `Specs/OMVCS Interaction Specification.md` §§44–49, 173, 209, 264–267; unresolved DEC-INTERACTION-001 and DEC-INTERACTION-003.
 - `Specs/OMVCS Platform Protocol.md` §§26–28, 67–71.
 - Existing `DEC-CORE-008` in `docs/decision-register.md` and `docs/milestones.md` M2.
@@ -84,4 +85,19 @@ under DEC-CORE-008.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by [ADR-0016](../decisions/ADR-0016-line-object-and-update-contract.md)
+and the corresponding Core, Glossary, Core Invariants, Interaction, and
+Platform Protocol updates.
+
+The approved contract defines the closed five-member Line record, stable
+assigned UUIDv7 identity, Project-scoped exact name uniqueness, same-Project
+admitted Revision targets, generation/CAS behavior, CreateLine, MoveLine,
+RenameLine, and deletion's separation from historical-object removal.
+Generation's numeric domain is resolved separately by ADR-0020, and
+DeleteLine's expected-generation concurrency contract is resolved separately
+by ADR-0022. Default Line persistence and the `SetDefaultLine` operation are
+resolved separately by ADR-0021.
+
+DEC-CORE-008 remains separate and unresolved for automatic pin/retention
+after Line deletion. DEC-INTERACTION-001 and DEC-INTERACTION-003 remain open
+presentation decisions.

@@ -27,7 +27,14 @@ Status: COMPLETE. WORK-0001 through WORK-0008 are verified and integrated at `ab
 
 ## M2 — Local repository history
 
-Status: IN PROGRESS. WORK-0009 is the first unblocked package; other feature packages await the decisions and gap resolutions identified in the M2 preflight.
+Status: IN PROGRESS. WORK-0009 is verified and integrated at
+`3139bc5eeb4e29ce931e217b6e815a3a88b75772`. DG-0016, DG-0020, DG-0021,
+and DG-0022 are resolved by ADR-0016, ADR-0020, ADR-0021, and ADR-0022;
+WORK-0010 is PLANNED. DEC-CORE-008 remains separate for automatic deletion
+retention/pinning, and DEC-INTERACTION-001/003 remain presentation decisions,
+not blockers for the Core Line package.
+WORK-0011, WORK-0012, and WORK-0014 remain blocked by their M2 preflight
+gaps, and WORK-0013 depends on the applicable root contracts.
 
 - Lines;
 - Releases;

@@ -1113,6 +1113,9 @@ Switch to Acoustic
 ```
 
 will ordinarily Materialise the head Revision of that Line.
+This changes the client's selected/current Line context, not the shared
+Project Default Line. Changing the shared preference is a separate
+`SetDefaultLine` operation.
 
 Unpublished Working State safety rules still apply.
 
@@ -2392,7 +2395,8 @@ Open the other version
 Abandon my unpublished/local direction
 ```
 
-The UI should avoid technical `non-fast-forward` terminology by default.
+The UI should avoid Git-derived rejection terminology for guarded Line
+updates by default.
 
 ---
 
@@ -3086,15 +3090,20 @@ The UI must distinguish pointer movement from creating new history.
 
 ---
 
-# 173. Line head rollback
+# 173. Moving a Line to an earlier Revision
 
-If a user intentionally moves a Line to an earlier Revision, the UI MUST warn that later Versions will no longer be the Line head but remain in history.
+If a user intentionally moves a Line to an earlier Revision, the UI MUST
+make clear that later Versions are no longer the Line target but remain in
+history.
 
 ---
 
-# 174. No hidden force push
+# 174. No hidden destructive Line movement
 
-The interface MUST NOT provide an innocuous action that destroys or hides divergence equivalent to Git force-push without clear explanation.
+The interface MUST NOT present a Line move as deleting or rewriting
+historical Revisions. When a move changes which Revision is the Line target,
+the interface MUST make that pointer change clear. A Line move does not
+delete the prior target or impose an ancestry-based movement rule.
 
 ---
 
@@ -4499,10 +4508,13 @@ Ancestry must never be inferred from display time.
 The UI should identify:
 
 ```text
-Current direction: Main
+Selected/current direction: Main
 Current saved version: Main 14
 Current work: 3 unpublished changes
 ```
+
+The selected/current direction shown here is client/UI context and does not
+imply that Main is the shared Default Line.
 
 This is a very useful summary.
 
@@ -4943,7 +4955,7 @@ The main screen says:
 ```text
 My Song
 
-Main
+Selected Line: Main
 Version 14
 
 Current work:
@@ -5157,7 +5169,7 @@ Review Anna's version
 This is far more appropriate to music than:
 
 ```text
-non-fast-forward push rejected
+Line update rejected because its expected target or generation is stale
 ```
 
 ---

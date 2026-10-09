@@ -242,7 +242,14 @@ The Revision Graph MUST NOT be used to encode infrastructure events such as stor
 
 ## Line
 
-A **Line** is a named movable reference to the latest Revision in a continuing creative direction.
+A **Line** is mutable operational repository metadata that identifies one
+continuing creative direction and references exactly one admitted Revision.
+Its OMVCS 0.1 record contains exactly `line_id`, `project_id`, `name`,
+`target_revision`, and `generation`. The assigned UUIDv7 `line_id` is stable
+and independent of the mutable, Project-unique name and target.
+Its `generation` is a JSON-number concurrency token in the inclusive exact
+integer range `0 ..= 9007199254740991` (`2^53 - 1`); canonical JSON number
+serialization follows RFC 8785/JCS.
 
 Examples:
 
@@ -251,23 +258,39 @@ Examples:
 > Experimental remix  
 > Anna's direction
 
-Creating new work on a Line moves the Line reference forward to the new Revision.
+Creating new work associated with a Line may move its target to the new
+Revision under the Core Line update contract. A Line movement does not create
+or modify Revision history by itself.
 
 Moving a Line reference does not modify earlier Revisions.
 
-**Git analogy:** branch.
-
-The term **Line** describes creative lineage rather than implementation mechanics.
+The term **Line** describes a creative direction rather than implementation
+mechanics. Its update operations use the Core expected-target/generation
+checks, including expected-generation deletion. Git branch and ref behavior
+is not normative.
 
 ---
 
 ## Default Line
 
-The **Default Line** is the Project Line presented as the primary current development direction unless another Line is explicitly selected.
+The **Default Line** is an operational Project/repository preference
+designating at most one existing Line in a Project as the shared default
+development direction. It is represented conceptually as
+`ProjectId -> optional LineId` in Repository Home operational metadata.
+Repository Home is authoritative; a Platform MAY mirror the preference but
+MUST NOT redefine it. It is not a distinct Line type and does not add a
+member to the Line record.
 
-There MUST be at most one Default Line at any given time.
+The preference MAY be absent. A client-local selected/current Line is
+separate from the shared Default Line; changing local selection MUST NOT
+change the repository preference.
 
-Changing the Default Line is operational Project metadata and does not alter Revision history.
+`SetDefaultLine` changes the preference using an atomic expected-current-
+value compare-and-swap and MAY clear it. Changing or clearing the preference
+does not mutate a Line, increment a Line generation, or alter Revision
+history. `CreateLine` does not implicitly set it, and a currently designated
+Line cannot be deleted until the preference is explicitly changed or
+cleared.
 
 ---
 
@@ -694,7 +717,8 @@ Examples:
 - Storage Map;
 - Resource Replica status;
 - preferred Storage Endpoint;
-- synchronization state.
+- synchronization state;
+- Default Line preference.
 
 Operational Metadata MAY change without creating a Revision.
 
@@ -1246,7 +1270,7 @@ For developers and coding agents familiar with Git:
 | Commit | Revision | Strong conceptual similarity |
 | Tree | Project State | Partial |
 | Blob | Resource Object | Partial |
-| Branch | Line | Strong |
+| Branch | Line | Limited conceptual similarity; Line behavior is defined by OMVCS, not Git branch semantics |
 | Tag | Release | Strong |
 | Working tree | Working State | Partial |
 | Checkout | Materialisation | Partial |
