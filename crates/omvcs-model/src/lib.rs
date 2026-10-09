@@ -10,10 +10,12 @@ pub mod creative_component;
 pub mod hashing;
 pub mod project_state;
 pub mod resource;
+pub mod revision;
 
 pub use component_state::ComponentState;
 pub use creative_component::CreativeComponent;
 pub use project_state::ProjectState;
+pub use revision::Revision;
 
 use std::fmt;
 use std::str::FromStr;

@@ -1,6 +1,6 @@
 # WORK-0008 — Immutable Revision model
 
-Status: READY — not yet implemented
+Status: VERIFIED — independently accepted after leap-second remediation
 Owner agent: Core Engineer
 Milestone: M1
 Branch: `work/0008-revision-model`
@@ -76,3 +76,24 @@ The Verifier must check complete-state references, immutable parentage, timestam
 ## Completion criteria
 
 Formatting, focused tests, coverage-map update, independent verification, handover, and clean Git state.
+
+## Implementation status
+
+- Added an immutable admitted `Revision` and an unchecked `RevisionCandidate`
+  in `crates/omvcs-model/src/revision.rs`. Canonical bytes and the typed
+  `RevisionId` are exposed only after exact-schema and reference admission.
+- The model requires an exact unique Revision-schema authority, a valid
+  admitted Project State, resolvable admitted same-Project parents, direct
+  typed `ActorId`, the exact UTC nanosecond timestamp profile, and verbatim
+  message text.
+- Parent and provenance arrays are set-like and canonicalized with the
+  existing RFC 8785/schema-directed serializer. Provenance entry structure
+  and semantic validation remain delegated to the exact versioned schema.
+  Integration tests use only test-only fixture schema vocabulary.
+- Added focused Revision admission, canonical identity, ancestry, timestamp,
+  closed-body, and schema-authority tests in
+  `crates/omvcs-model/tests/revision.rs`.
+- DG-0015 remains OPEN and does not block this generic model. No Specs or
+  Design Gap artifacts were changed.
+- Independent verification is still required. The implementation must not
+  be integrated without the independent Verifier's acceptance.
