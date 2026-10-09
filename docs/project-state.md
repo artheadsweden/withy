@@ -52,8 +52,12 @@ separate for temporary checkpoints; it does not block WORK-0012 or WORK-0013.
 WORK-0012 is independently verified and integrated at
 `fd68d969da671546ec1e00f5362a75c0a52ed61f` on
 `spec/0003-canonical-collection-order`; its feature branch is pushed to
-`origin/work/0012-working-state-lifecycle`. WORK-0013 is dependency-unblocked
-and PLANNED, but its preflight and implementation remain unstarted; revalidate
-the package before beginning. AdapterWorkingStateRef is not itself a
-reachability root. WORK-0014 remains unstarted and blocked by its recorded M2
-gaps. M2 is IN PROGRESS.
+`origin/work/0012-working-state-lifecycle`. WORK-0013 is independently verified
+on `work/0013-repository-reachability` for the explicitly partial Line/Release
+root subset, but is not committed, integrated, or pushed. DG-0027 blocks
+Working State safety-reference root coverage. Contributions, configured
+archival pins, and pending publication transactions remain required by Core
+§62 but are excluded from this bounded package; it does not claim complete
+reachability or global unreachable status. AdapterWorkingStateRef is not
+itself a reachability root. WORK-0014 remains unstarted and blocked by DG-0019
+and its other recorded M2 gaps. M2 is IN PROGRESS.
