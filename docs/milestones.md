@@ -54,21 +54,21 @@ Line/Release root subset on `spec/0003-canonical-collection-order`; its
 feature branch is pushed to `origin/work/0013-repository-reachability`.
 DG-0027 is resolved by ADR-0030: the current persisted Working State's
 present Base Revision and present component-source Component States are
-safety-reference roots. The WORK-0013/0014 implementation extension remains
-pending. ADR-0031 resolves DG-0028: missing Working State safety-reference
-targets are `unresolved` without a declared-boundary lookup. WORK-0013 may
-implement the approved root set while preserving unresolved-target context.
-The WORK-0013/0014 extensions and independent verification remain required
-before M2 closeout. Contributions, configured archival pins, and
-pending publication transactions remain required by Core §62 but are
-excluded from M2. Reachability remains partial and cannot claim global
+safety-reference roots. ADR-0031 resolves DG-0028: missing Working State
+safety-reference targets are `unresolved` without a declared-boundary
+lookup. The WORK-0013/0014 implementation extensions are independently
+accepted with no findings and await integration on
+`work/0013-working-state-roots`. Contributions, configured archival pins,
+and pending publication transactions remain required by Core §62 but are
+outside this extension. Reachability remains partial and cannot claim global
 unreachable status.
 AdapterWorkingStateRef is not itself a reachability root. ADR-0027–0029
 resolve DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014 was independently
 accepted and integrated at `3f37fa1a981fa06408616b080edb6c56355bc1b0` for
 the partial Line/Release scope. The ADR-0030/0031 Working State-root
-extension and its WORK-0014 coverage remain pending. Contributions, configured archival
-pins, and pending publication transactions remain outside the M2 root set.
+extension has independently passed implementation verification and awaits
+integration. Contributions, configured archival pins, and pending
+publication transactions remain outside the M2 root set.
 DEC-CORE-005/008, DEC-INTERACTION-004, and DG-0015 remain separate. M2
 remains IN PROGRESS. No M3 work has started.
 

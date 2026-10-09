@@ -1,13 +1,16 @@
 # WORK-0014 — Repository validation
 
-Status: VERIFIED for the original partial Line/Release validation scope at `3f37fa1a981fa06408616b080edb6c56355bc1b0`; ADR-0030/0031 root-coverage extension planned
+Status: Original Line/Release validation scope VERIFIED at `3f37fa1a981fa06408616b080edb6c56355bc1b0`; ADR-0030/0031 extension independently ACCEPTED, pending integration
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0014-repository-validation`
+ADR-0030/0031 extension branch: `work/0013-working-state-roots`
 
-The status and implementation details through the original completion
-criteria below record the accepted Line/Release-only validation scope. The
-ADR-0030 extension status at the end of this file is not implemented.
+The original verification and implementation details through the original
+completion criteria below record the accepted Line/Release-only scope. The
+extension section at the end records the separately implemented and
+independently accepted Working State root extension; it remains pending
+integration.
 
 ## Objective
 
@@ -36,8 +39,10 @@ Resource state, and requested-scope/provider coverage.
   integrated prerequisites.
 - DG-0019, DEC-CORE-004, and DEC-CORE-009 are resolved by ADR-0027–0029 and
   the corresponding Spec updates.
-- The WORK-0013 Line/Release reachability API is deliberately partial; its
-  coverage MUST remain identified as partial.
+- The original WORK-0013 Line/Release reachability API was partial. The
+  extension exposes an explicitly partial `partial_repository_reachability`
+  result for Lines, Releases, and Working State safety references; other
+  applicable Core §62 root classes remain unsupported.
 - Resource retention/deletion decisions DEC-CORE-005 and DEC-CORE-008 are not
   selected or implemented here.
 - DG-0015 remains open and Contributions remain outside this package. DG-0027
@@ -85,8 +90,9 @@ Resource state, and requested-scope/provider coverage.
   metadata.
 - Available Resource bytes are verified only at the explicit requested
   depth; corrupt, unavailable, and not-checked are distinct outcomes.
-- Unsupported Core §62 providers produce honest partial/unavailable
-  coverage. No global unreachable result is exposed.
+- Unsupported Core §62 providers produce honest partial coverage, or
+  unavailable coverage when a required enumeration fails. No global
+  unreachable result is exposed.
 - Provider errors are never converted to empty success-shaped results.
 - No repair, mutation, automatic Resource fetch/materialisation, root
   semantics, or persistence format is invented.
@@ -105,7 +111,7 @@ Resource state, and requested-scope/provider coverage.
   contract.
 - Resolving Contribution semantics. The original implementation excluded
   Working State safety-reference roots; ADR-0030 defines them for the
-  pending extension.
+  extension below.
 
 ## Known Design Gaps
 
@@ -121,8 +127,9 @@ Resource state, and requested-scope/provider coverage.
 2. Expose exact-schema/canonical-body Identifier calculation before
    reference admission for metadata candidates; keep all existing
    admission checks intact.
-3. Use the explicitly partial WORK-0013 Line/Release reachability result and
-   surface unavailable root providers.
+3. The original implementation used the partial WORK-0013 Line/Release
+   result. The extension consumes partial repository reachability and reports
+   supported root classes separately from unsupported partial providers.
 4. Add focused conformance tests for identity/admission separation, scope,
    read-only effects, all status dimensions, boundary lookup, Resource
    depths, provider failures, and honest partial coverage.
@@ -145,22 +152,22 @@ Core §62 root providers and does not claim global unreachability.
 ## ADR-0030 extension status — Working State root coverage
 
 The verified integration recorded above covers the then-supported partial
-Line/Release reachability result. ADR-0030 now defines Working State
-safety-reference roots, and WORK-0014 must be extended after WORK-0013 adds
-those roots:
+Line/Release reachability result only. ADR-0030 now defines Working State
+safety-reference roots, and WORK-0014 is extended to report their coverage
+after WORK-0013 adds those roots:
 
 - report coverage for Line, Release, and Working State safety-reference
   roots;
-- continue to report Contributions, configured archival pins, and pending
-  publication transactions as unsupported;
+- report Contributions, configured archival pins, and pending publication
+  transactions as unsupported partial providers;
 - preserve explicitly partial Core §62 reachability and do not infer global
   unreachability.
 
 DG-0028 is resolved by ADR-0031. Missing Working State safety-root targets
 are `unresolved`; do not infer a referring Identifier or edge kind, issue a
-declared-boundary lookup, or report `declared_incomplete`. WORK-0014's
-extension remains pending implementation and independent verification. Its
-existing verified Line/Release validation remains accepted within that
+declared-boundary lookup, or report `declared_incomplete`. The extension
+below is implemented and independently accepted; integration remains pending.
+The original verified Line/Release validation remains accepted within its
 original scope.
 
 Required extension tests include:
@@ -172,3 +179,29 @@ Required extension tests include:
   and do not trigger declared-boundary lookups;
 - ensure validation remains read-only and never repairs, fetches, or mutates
   Working State or historical objects.
+
+### ADR-0030/0031 extension implementation and tests
+
+Independent Verifier ACCEPT; no findings. Focused validation 18 passed,
+focused reachability 30 passed, workspace 274 passed; rustfmt,
+warnings-denied Core Clippy, and `git diff --check` passed.
+
+- Validation coverage marks the enumerated Line/Release and Working State
+  safety-reference providers complete when the bounded reachability operation
+  succeeds. Contributions, configured archival pins, and pending publication
+  transactions remain explicitly partial. The overall result and Core §62
+  coverage remain partial and cannot claim global unreachability.
+- Missing Base/source targets produce typed Working State root findings and
+  `unresolved` history completeness. ADR-0031 is enforced: validation makes
+  no declared-boundary lookup and invents no historical referrer or edge kind.
+- Validation remains read-only. Focused tests cover provider coverage,
+  unsupported partial classes, unresolved Working State roots, no boundary
+  lookup, and provider failure reporting.
+- Final focused command:
+  `cargo test --locked -p omvcs-core --test repository_validation` —
+  18 passed, 0 failed.
+- Final workspace command:
+  `cargo test --workspace --locked -q` — 274 passed, 0 failed.
+- `cargo fmt --all -- --check`, warnings-denied Core Clippy, and
+  `git diff --check` passed. Independent Verifier ACCEPT; integration remains
+  pending.
