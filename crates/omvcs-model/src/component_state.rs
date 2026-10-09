@@ -66,7 +66,7 @@ pub trait ComponentStateSchemaValidator {
 ///     let _ = candidate.component_state_id();
 /// }
 /// ```
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ComponentStateCandidate {
     schema: String,
     component_id: CreativeComponentId,
@@ -128,6 +128,27 @@ impl ComponentStateCandidate {
     #[must_use]
     pub const fn metadata(&self) -> &BTreeMap<String, Value> {
         &self.metadata
+    }
+
+    /// Verifies and returns the body-derived Identifier without resolving any
+    /// historical references.
+    ///
+    /// This applies the existing exact schema and Resource Reference
+    /// admission checks, which are part of this body's canonical form. It
+    /// does not resolve or admit parent Component States.
+    ///
+    /// # Errors
+    ///
+    /// Returns the same error as body/schema admission when the exact schema,
+    /// body, Resource Reference, or canonical representation is invalid.
+    pub fn verify_body_identifier(
+        &self,
+        schemas: &[&dyn ComponentStateSchemaValidator],
+        resource_validators: &[&dyn ResourcePropertiesValidator],
+    ) -> Result<ComponentStateId, ComponentStateAdmissionError> {
+        self.clone()
+            .admit(schemas, resource_validators)
+            .map(|state| state.component_state_id())
     }
 
     /// Validates and admits this candidate as immutable historical state.

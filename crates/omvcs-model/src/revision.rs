@@ -120,6 +120,61 @@ impl RevisionCandidate {
         &self.schema
     }
 
+    /// Verifies the canonical body-derived Identifier without resolving the
+    /// Project State or parent Revision references.
+    ///
+    /// The exact schema, closed body, canonical timestamp, and
+    /// schema-owned provenance checks still apply. This method does not
+    /// establish historical admission.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unavailable/ambiguous schema, invalid body,
+    /// timestamp, provenance, or canonical representation.
+    pub fn verify_body_identifier(
+        &self,
+        schemas: &[&dyn RevisionSchemaValidator],
+    ) -> Result<RevisionId, RevisionAdmissionError> {
+        let mut matching_schemas = schemas
+            .iter()
+            .copied()
+            .filter(|schema| schema.schema() == self.schema);
+        let schema = matching_schemas
+            .next()
+            .ok_or(RevisionAdmissionError::UnavailableSchema)?;
+        if matching_schemas.next().is_some() {
+            return Err(RevisionAdmissionError::NonUniqueSchemaAuthority);
+        }
+        let provenance_entry_schema = schema.provenance_entry_schema();
+        if !matches!(provenance_entry_schema, MetadataSchema::Struct(_)) {
+            return Err(RevisionAdmissionError::InvalidProvenanceSchema);
+        }
+        validate_created_at(&self.created_at)?;
+
+        let mut parents = self.parents.clone();
+        parents.sort_by_key(ToString::to_string);
+        if parents.windows(2).any(|pair| pair[0] == pair[1]) {
+            return Err(RevisionAdmissionError::DuplicateParent);
+        }
+        let body = self.body_value(&parents);
+        let body_json =
+            serde_json::to_vec(&body).map_err(|_| CanonicalMetadataError::Canonicalization)?;
+        let canonical_body =
+            canonicalize_metadata_body(&body_json, &revision_body_schema(provenance_entry_schema))?;
+        let canonical_value: Value = serde_json::from_slice(&canonical_body)
+            .map_err(|_| CanonicalMetadataError::InvalidJson)?;
+        let provenance = canonical_value
+            .get("provenance")
+            .and_then(Value::as_array)
+            .ok_or(RevisionAdmissionError::InvalidProvenanceSchema)?
+            .clone();
+        schema
+            .validate_provenance(&provenance)
+            .map_err(RevisionAdmissionError::ProvenanceRejected)?;
+
+        Ok(hash_revision_metadata(&canonical_body))
+    }
+
     /// Validates and admits this candidate as immutable historical state.
     ///
     /// The exact schema authority must be uniquely available. The referenced

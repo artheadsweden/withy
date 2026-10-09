@@ -7,5 +7,6 @@
 pub mod line;
 pub mod reachability;
 pub mod release;
+pub mod repository_validation;
 pub mod revision_graph;
 pub mod working_state;

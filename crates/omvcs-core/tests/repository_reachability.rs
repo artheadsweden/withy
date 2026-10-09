@@ -8,7 +8,8 @@ use omvcs_core::line::{
 };
 use omvcs_core::reachability::{
     AdmittedAdapterStateResourceResolver, HistoricalId, PartialReachability, ReachabilityDefect,
-    ReachabilityError, partial_line_release_reachability,
+    ReachabilityError, ReachabilityRoot, UnresolvedRootReference,
+    partial_line_release_reachability,
 };
 use omvcs_core::release::{
     InMemoryReleaseRepository, ReleaseEnumerationBoundary, ReleaseOperationBoundary,
@@ -485,11 +486,18 @@ fn unresolved_revision_is_still_reached_and_independent_branches_continue() {
 #[test]
 fn unresolved_line_target_does_not_hide_an_independent_release_root() {
     let mut f = Fixture::new();
-    f.line(project(1), "main", f.child);
+    let line = f.line(project(1), "main", f.child);
     f.release(project(1), "retained", f.initial);
     f.revisions.remove(&f.child);
     let result = f.reach();
     assert_eq!(result.unresolved, vec![HistoricalId::Revision(f.child)]);
+    assert_eq!(
+        result.unresolved_root_references,
+        vec![UnresolvedRootReference {
+            root: ReachabilityRoot::Line(line.line_id()),
+            target: f.child,
+        }]
+    );
     assert!(result.revisions.contains(&f.child));
     assert!(result.revisions.contains(&f.initial));
     assert_eq!(result.resources.len(), 3);
@@ -799,6 +807,7 @@ fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unr
         adapter_states,
         resources,
         unresolved,
+        unresolved_root_references,
         defects,
     } = f.reach(); // exhaustive result shape: no global unreachable/completeness field
     assert_eq!(lines.len(), 1);
@@ -810,6 +819,10 @@ fn partial_result_does_not_invent_roots_or_label_unselected_history_globally_unr
     assert_eq!(adapter_states.len(), 1);
     assert_eq!(resources.len(), 3);
     assert_eq!(unresolved, Vec::<HistoricalId>::new());
+    assert_eq!(
+        unresolved_root_references,
+        Vec::<UnresolvedRootReference>::new()
+    );
     assert_eq!(defects, Vec::<ReachabilityDefect>::new());
     assert!(f.revisions.contains_key(&unselected));
 }

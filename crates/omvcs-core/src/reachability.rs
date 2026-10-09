@@ -48,6 +48,27 @@ pub enum HistoricalId {
     AdapterState(AdapterStateId),
 }
 
+/// Enumerated root whose directly referenced Revision could not be resolved.
+///
+/// This records the existing Line target or admitted Release-to-Revision
+/// association; it does not introduce a metadata edge kind.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ReachabilityRoot {
+    /// A retained Line and its current target Revision.
+    Line(LineId),
+    /// An admitted Release and its referenced Revision.
+    Release(ReleaseId),
+}
+
+/// A root's direct Revision target whose admitted metadata was unresolved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct UnresolvedRootReference {
+    /// Enumerated Line or admitted Release providing the root.
+    pub root: ReachabilityRoot,
+    /// The directly referenced Revision identifier.
+    pub target: RevisionId,
+}
+
 /// A defect is not an unresolved lookup and does not make an ID unreachable.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ReachabilityDefect {
@@ -95,6 +116,8 @@ pub struct PartialReachability {
     pub resources: Vec<ResourceId>,
     /// Referenced IDs whose admitted metadata could not be resolved.
     pub unresolved: Vec<HistoricalId>,
+    /// Direct Line/Release root targets whose Revision metadata is unresolved.
+    pub unresolved_root_references: Vec<UnresolvedRootReference>,
     /// Identity and graph defects, not unresolved references.
     pub defects: Vec<ReachabilityDefect>,
 }
@@ -144,11 +167,8 @@ pub fn partial_line_release_reachability(
     let releases = releases
         .admitted_releases()
         .map_err(ReachabilityError::Releases)?;
-    let roots = lines
-        .iter()
-        .map(crate::line::Line::target_revision)
-        .chain(releases.iter().map(omvcs_model::Release::revision_id))
-        .collect();
+    let root_references = collect_root_references(&lines, &releases);
+    let roots = root_references.iter().map(|(_, target)| *target).collect();
     let mut unresolved = BTreeSet::new();
     let mut defects = BTreeSet::new();
     let revision_graph = walk(
@@ -214,6 +234,14 @@ pub fn partial_line_release_reachability(
         &mut unresolved,
         &mut defects,
     );
+    let unresolved_root_references = root_references
+        .iter()
+        .filter(|(_, target)| unresolved.contains(&HistoricalId::Revision(*target)))
+        .map(|(root, target)| UnresolvedRootReference {
+            root: *root,
+            target: *target,
+        })
+        .collect();
     Ok(PartialReachability {
         lines: sorted(lines.iter().map(crate::line::Line::line_id)),
         releases: sorted(releases.iter().map(omvcs_model::Release::release_id)),
@@ -223,8 +251,30 @@ pub fn partial_line_release_reachability(
         adapter_states: reached_adapters.into_iter().collect(),
         resources: resources.into_iter().collect(),
         unresolved: unresolved.into_iter().collect(),
+        unresolved_root_references,
         defects: defects.into_iter().collect(),
     })
+}
+
+fn collect_root_references(
+    lines: &[crate::line::Line],
+    releases: &[omvcs_model::Release],
+) -> Vec<(ReachabilityRoot, RevisionId)> {
+    lines
+        .iter()
+        .map(|line| {
+            (
+                ReachabilityRoot::Line(line.line_id()),
+                line.target_revision(),
+            )
+        })
+        .chain(releases.iter().map(|release| {
+            (
+                ReachabilityRoot::Release(release.release_id()),
+                release.revision_id(),
+            )
+        }))
+        .collect()
 }
 
 fn collect_adapter_resources(
