@@ -61,5 +61,12 @@ safety-reference root coverage. Contributions, configured
 archival pins, and pending publication transactions remain required by Core
 §62 but are excluded from this bounded package; it does not claim complete
 reachability or global unreachable status. AdapterWorkingStateRef is not
-itself a reachability root. WORK-0014 remains unstarted and blocked by DG-0019
-and its other recorded M2 gaps. M2 is IN PROGRESS.
+itself a reachability root. Human-approved ADR-0027–ADR-0029 resolve
+DEC-CORE-004, DEC-CORE-009, and DG-0019. WORK-0014's validation contract is
+executable and the package is PLANNED, not started. Its first implementation
+MUST report partial/unavailable coverage for unresolved Core §62 root
+classes: DG-0027 still blocks Working State safety-reference roots, while
+Contributions, configured archival pins, and pending publication
+transactions remain unimplemented. WORK-0014 MUST NOT claim complete
+reachability or global unreachable status. DEC-CORE-005/008,
+DEC-INTERACTION-004, and DG-0015 remain separate. M2 is IN PROGRESS.

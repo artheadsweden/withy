@@ -189,4 +189,6 @@ authorizes deletion or depends on local Resource bytes.
 Implementation formatting, focused/workspace tests, strict Clippy,
 coverage-map reconciliation, independent verification, handover, and
 integration are complete for this partial Line/Release scope. This does not
-claim complete Core §62 reachability. WORK-0014 remains blocked and unstarted.
+claim complete Core §62 reachability. At this package's integration,
+WORK-0014 was blocked and unstarted; its contract is now PLANNED and
+implementation remains unstarted.

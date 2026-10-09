@@ -1,95 +1,133 @@
 # WORK-0014 — Repository validation
 
-Status: BLOCKED — DG-0019
+Status: PLANNED — validation contract approved; implementation not started
 Owner agent: Core Engineer
 Milestone: M2
 Branch: `work/0014-repository-validation`
 
 ## Objective
 
-Implement the approved read-only or explicitly side-effect-bounded repository
-validation operation, preserving the distinction between metadata integrity,
-history completeness, and Resource availability.
+Implement the approved strictly read-only repository-validation operation,
+preserving the distinction between metadata integrity, history completeness,
+Resource state, and requested-scope/provider coverage.
 
 ## Normative requirements
 
-- Core Specification §§21–22, 29, 47–56, 62–67, 76–77, and 82–83.
-- Glossary: OMVCS Repository, Repository Metadata, Historical Metadata,
-  Operational Metadata, Resource Availability, Corrupt Replica, Reachability,
-  and Repository Recovery.
-- Core Invariants: INV-HIST-003, INV-HIST-009, INV-RES-007, INV-WORK-002–004,
-  INV-INT-001–003, and INV-GC-001–003.
+- Core Specification §§4, 10, 13–14, 18, 21–22, 29–30, 47–56, 62–67,
+  76–77, and 82–83.
+- Glossary: OMVCS Repository, Content-derived Identifier, Repository
+  Metadata, Historical Metadata, Operational Metadata, Declared History
+  Boundary, History Completeness, Metadata Integrity, Validation Coverage,
+  Resource Verification Depth, Availability State, Corrupt Replica,
+  Reachability, and Repository Recovery.
+- Core Invariants: INV-HIST-003, INV-HIST-008–009, INV-RES-007,
+  INV-WORK-002–004, INV-INT-001–005, INV-REC-002 and INV-REC-006,
+  INV-GC-001–003.
+- ADR-0027, ADR-0028, and ADR-0029.
 
 ## Dependencies
 
-- WORK-0009 through WORK-0013 for admitted graph, history objects, roots, and
-  reachability.
-- DG-0019 must be resolved by an approved ADR and corresponding Spec updates
-  before implementation.
-- DEC-CORE-004 remains open for local metadata-history completeness.
-- DEC-CORE-009 remains open for shallow/incomplete history imports.
+- WORK-0006 through WORK-0013 provide historical object models, admission
+  rules, graph traversal, roots, and reachability; all are verified and
+  integrated prerequisites.
+- DG-0019, DEC-CORE-004, and DEC-CORE-009 are resolved by ADR-0027–0029 and
+  the corresponding Spec updates.
+- The WORK-0013 Line/Release reachability API is deliberately partial; its
+  coverage MUST remain identified as partial.
 - Resource retention/deletion decisions DEC-CORE-005 and DEC-CORE-008 are not
   selected or implemented here.
+- DG-0015 and DG-0027 remain open. Their root classes MUST be reported as
+  partial/unavailable; this package MUST NOT invent Contribution or Working
+  State safety-reference roots.
 
 ## Allowed scope
 
 - `crates/omvcs-core/`
+- Targeted `crates/omvcs-model/` changes only to separate exact-schema,
+  canonical-body Identifier calculation/verification from reference
+  resolution and historical admission for metadata candidates.
 - Focused repository validation models and tests.
 
 ## Deliverables
 
-- Invocation scope and permitted effects exactly matching the approved
-  `ValidateRepository` contract.
-- Machine-readable results distinguishing the states selected by the approved
-  contract without conflating invalid metadata, missing/incomplete metadata,
-  and unavailable or corrupt Resource data.
+- A strictly read-only `ValidateRepository` operation with explicit
+  Repository/Project scope and Resource-verification depth.
+- Machine-readable result dimensions for metadata integrity, history
+  completeness, Resource state, provider/root coverage, and typed findings.
+- Provider-neutral object/root enumeration, exact declared-boundary lookup,
+  and Resource-verification request boundaries, with explicit provider
+  failures.
+- Body-derived content Identifier verification independent of local
+  reference resolution, while preserving existing strict historical
+  admission requirements.
 - Reuse of the verified object-level admission and identity rules.
 
 ## Acceptance tests
 
-- After DG-0019, DEC-CORE-004, and DEC-CORE-009 are resolved or explicitly
-  bounded for the package, tests cover the approved invocation modes, effects,
-  result categories, and completeness behavior.
+- Tests cover both scopes and all verification depths; strict read-only
+  behavior; report state aggregation; typed findings; invocation errors
+  versus completed reports; and explicit partial/unavailable provider
+  coverage.
 - Canonical hashes, schemas, and required metadata references are checked
   according to their existing admission contracts.
+- Exact matching and non-matching declared-boundary tuples are tested.
+  Declared boundaries do not resolve or admit absent targets; a later
+  available target is validated normally.
+- Canonically identical metadata bodies retain the same valid
+  content-derived Identifier whether or not referenced targets resolve
+  locally; absent targets still prevent admission. Unknown/unavailable
+  schemas and invalid bodies do not produce valid Identifiers.
 - Missing Resource bytes alone do not invalidate otherwise valid historical
   metadata.
-- Available Resource bytes are verified only at the depth selected by the
-  approved validation contract; corrupt and unavailable data are distinct
-  outcomes where specified.
-- No implicit repair, mutation, Resource download, or history-completeness
-  policy is invented.
+- Available Resource bytes are verified only at the explicit requested
+  depth; corrupt, unavailable, and not-checked are distinct outcomes.
+- Unsupported Core §62 providers produce honest partial/unavailable
+  coverage. No global unreachable result is exposed.
+- Provider errors are never converted to empty success-shaped results.
+- No repair, mutation, automatic Resource fetch/materialisation, root
+  semantics, or persistence format is invented.
 - Validation does not treat a metadata-complete/resource-sparse repository as
   corrupt solely because Resource bytes are not locally materialised.
 
 ## Explicit non-goals
 
 - Repository repair or recovery transactions.
-- Selecting metadata-history completeness or shallow-import policy.
+- Implementing durable metadata-history completeness or boundary persistence
+  and wire encoding.
+- Changing historical object schemas, hash preimages, or existing
+  reference/admission requirements.
 - Resource garbage collection, retention, or Line deletion pinning.
 - Storage-provider-specific verification beyond the approved Core result
   contract.
+- Resolving Contribution semantics or the Working State safety-reference
+  root set.
 
 ## Known Design Gaps
 
-- DG-0019 blocks the end-to-end validation operation contract.
-- DEC-CORE-004 and DEC-CORE-009 affect completeness and incomplete-import
-  results and must be resolved or explicitly scoped before implementation.
+- DG-0015 and DG-0027 leave required root providers unavailable or partial;
+  they do not block an honestly partial report. DEC-CORE-005/008 and
+  DEC-INTERACTION-004 remain outside this package.
 
 ## Implementation plan
 
-1. Revalidate this package against DG-0019's approved decision and the
-   applicable completeness/import decisions.
-2. Implement the specified operation scope and result model using existing
-   admission and reachability primitives.
-3. Add tests for valid, invalid, incomplete, unavailable, and corrupt cases
-   according to the final normative contract.
+1. Implement the provider-neutral Core interfaces and report model from
+   ADR-0029 without defining persistence mechanics.
+2. Expose exact-schema/canonical-body Identifier calculation before
+   reference admission for metadata candidates; keep all existing
+   admission checks intact.
+3. Use the explicitly partial WORK-0013 Line/Release reachability result and
+   surface unavailable root providers.
+4. Add focused conformance tests for identity/admission separation, scope,
+   read-only effects, all status dimensions, boundary lookup, Resource
+   depths, provider failures, and honest partial coverage.
 
 ## Verification requirements
 
 The independent Verifier must inspect operation effects and all result
-categories, distinguish metadata validity from Resource availability, and
-attempt to expose any inferred repair or incompleteness policy.
+categories, distinguish metadata integrity from history completeness and
+Resource state, verify strict admission of missing-target objects, and
+attempt to expose inferred repair, root, persistence, or incompleteness
+policy.
 
 ## Completion criteria
 

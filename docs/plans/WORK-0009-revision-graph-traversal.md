@@ -22,8 +22,9 @@ resolvability, and Resource availability distinct.
 - WORK-0001 through WORK-0008 verified APIs, especially the admitted Revision
   model from WORK-0008.
 - No open Design Gap blocks traversal over a complete, resolvable graph.
-- DEC-CORE-009 remains open for shallow/incomplete history import policy. This
-  package does not choose or implement that policy.
+- DEC-CORE-009 was open during this package's planning; this package did not
+  choose or implement shallow/incomplete history import policy. It was later
+  resolved by human-approved ADR-0028.
 - DG-0015 remains open for M6 operation-specific provenance. It does not block
   generic Revision ancestry traversal.
 
@@ -96,10 +97,10 @@ resolvability, and Resource availability distinct.
 
 - DG-0015 is open for M6 operation-specific provenance and does not block this
   package.
-- DEC-CORE-009 is open for shallow/incomplete history imports and is explicitly
-  outside this package's complete-graph precondition.
-- DG-0016–DG-0019 block other M2 features but do not affect this bounded graph
-  traversal.
+- At package planning, DEC-CORE-009 and DG-0016–DG-0019 tracked separate M2
+  questions/features and did not affect this bounded graph traversal.
+- DEC-CORE-009 was later resolved by ADR-0028; DG-0019 was later resolved by
+  ADR-0029.
 
 ## Implementation plan
 
