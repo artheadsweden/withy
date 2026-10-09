@@ -29,12 +29,14 @@ Status: COMPLETE. WORK-0001 through WORK-0008 are verified and integrated at `ab
 
 Status: IN PROGRESS. WORK-0009 is verified and integrated at
 `3139bc5eeb4e29ce931e217b6e815a3a88b75772`. DG-0016, DG-0020, DG-0021,
-and DG-0022 are resolved by ADR-0016, ADR-0020, ADR-0021, and ADR-0022;
-WORK-0010 is PLANNED. DEC-CORE-008 remains separate for automatic deletion
+and DG-0022 are resolved by ADR-0016, ADR-0020, ADR-0021, and ADR-0022.
+WORK-0010 is independently verified and integrated at
+`ef1937dcef4079cd6bd863c584464691e1ac72e6`. DEC-CORE-008 remains separate for automatic deletion
 retention/pinning, and DEC-INTERACTION-001/003 remain presentation decisions,
 not blockers for the Core Line package.
 WORK-0011, WORK-0012, and WORK-0014 remain blocked by their M2 preflight
-gaps, and WORK-0013 depends on the applicable root contracts.
+gaps, and WORK-0013 remains blocked pending applicable root contracts.
+WORK-0011 through WORK-0014 are unstarted.
 
 - Lines;
 - Releases;

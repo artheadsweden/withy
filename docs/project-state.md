@@ -28,10 +28,13 @@ Top-level specification set: Draft 0.1
 Implementation status: M1 — Normative data model COMPLETE at integration
 commit `abd0807ed2152aa3e331c6ca058796eb70cf4d4a`. M2 preflight is complete;
 WORK-0009 is verified and integrated at `3139bc5eeb4e29ce931e217b6e815a3a88b75772`
-on `spec/0003-canonical-collection-order`. DG-0016, DG-0020, and DG-0022
-are resolved by ADR-0016, ADR-0020, and ADR-0022; DG-0021 is resolved by
-ADR-0021 and WORK-0010 is PLANNED. DEC-CORE-008 remains separate for
+on `spec/0003-canonical-collection-order`. DG-0016, DG-0020, DG-0021, and
+DG-0022 are resolved by ADR-0016, ADR-0020, ADR-0021, and ADR-0022.
+WORK-0010 is independently verified and integrated at
+`ef1937dcef4079cd6bd863c584464691e1ac72e6` on
+`spec/0003-canonical-collection-order`. DEC-CORE-008 remains separate for
 automatic Line-deletion retention/pinning; DEC-INTERACTION-001/003 remain
 presentation decisions and do not block the Core Line contract. WORK-0011,
-WORK-0012, and WORK-0014 remain blocked by their recorded M2 decisions/gaps.
-M2 is IN PROGRESS.
+WORK-0012, and WORK-0014 remain blocked by their recorded M2 decisions/gaps;
+WORK-0013 remains blocked pending its applicable root contracts. WORK-0011
+through WORK-0014 remain unstarted. M2 is IN PROGRESS.
