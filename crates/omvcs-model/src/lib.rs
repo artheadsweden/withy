@@ -9,12 +9,15 @@ pub mod component_state;
 pub mod creative_component;
 pub mod hashing;
 pub mod project_state;
+pub mod release;
 pub mod resource;
 pub mod revision;
+mod timestamp;
 
 pub use component_state::ComponentState;
 pub use creative_component::CreativeComponent;
 pub use project_state::ProjectState;
+pub use release::Release;
 pub use revision::Revision;
 
 use std::fmt;
@@ -208,6 +211,7 @@ content_identifier!(ComponentStateId, "component-state");
 content_identifier!(AdapterStateId, "adapter-state");
 content_identifier!(ProjectStateId, "project-state");
 content_identifier!(RevisionId, "revision");
+content_identifier!(ReleaseId, "release");
 
 #[cfg(test)]
 mod tests {
