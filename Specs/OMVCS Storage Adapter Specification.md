@@ -2065,13 +2065,17 @@ This is operational metadata.
 The destination Adapter MUST support receiving:
 
 ```text
-complete historical metadata
+available historical metadata
+local completeness and declared-boundary information
 operational metadata
 storage map
 operation log or compacted equivalent
 ```
 
-Migration MUST verify completeness before Core designates the destination authoritative.
+Migration MUST verify metadata integrity and preserve the source's local
+completeness/boundary state before Core designates the destination
+authoritative. It MUST NOT claim complete history when the source is
+incomplete or not assessed.
 
 ---
 

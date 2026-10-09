@@ -79,10 +79,10 @@ An OMVCS Project exists across three conceptual locations.
 
 Local Client <------> Creator-Controlled Repository
 ------------           -----------------------------
-working state           complete durable metadata
-metadata                resource history
-current resources       storage map
-optional cache          replica information
+working state           historical metadata with
+metadata                explicit local completeness
+current resources       resource history
+optional cache          storage map and replica information
 ```
 
 A Project may use many physical Storage Endpoints:
@@ -243,6 +243,15 @@ omvcs:revision:sha256:X
 ```
 
 as the same object merely because the digest happens to be identical.
+
+For a metadata object with a known, available exact schema, its
+content-derived Identifier is calculated and verified from its canonical
+historical body. Local resolution or admission of the objects named by its
+typed references is not required to calculate or verify that body hash.
+Reference availability and same-Project/admission checks determine whether
+the object may be admitted and used as valid history; they do not change its
+Identifier. An unknown/unavailable schema or an invalid body still prevents
+establishing a valid content-derived Identifier.
 
 ---
 
@@ -574,7 +583,15 @@ The required `resources` field is a set-like collection under section 5.1; eleme
 
 The required `metadata` field is a JSON object map under section 5.1 and MAY be empty; omission is invalid. Its exact versioned Component State schema owns its values and their semantics. Map insertion order has no semantic significance; duplicate member names are invalid and RFC 8785 ordering applies without additional entry sorting.
 
-The Component State candidate MUST validate against its exact, known and available `schema` version before admission as valid historical state. An unknown or unavailable schema MAY be preserved as uninterpreted candidate data, but MUST NOT be treated as valid history or used to produce a valid Component State Identifier.
+The Component State candidate MUST validate against its exact, known and
+available `schema` version before a valid content-derived Identifier can be
+established or the object admitted as valid historical state. An unknown or
+unavailable schema MAY be preserved as uninterpreted candidate data, but
+MUST NOT be treated as valid history or used to produce a valid Component
+State Identifier. Resolution/admission of referenced historical objects is
+required for historical admission, not for calculating or verifying the
+canonical body hash. A missing required target leaves the Component State
+unadmitted but does not change its body-derived Identifier.
 
 The canonical historical body and Component State hash preimage contain exactly `schema`, `component_id`, `resources`, `metadata`, and `parents` only when `parents` is present. Every present member participates in identity, including `schema`. Under the existing WORK-0002/WORK-0003 rules, the Component State Identifier is SHA-256 over the canonical serialized body bytes; no object-type/domain prefix is included in the digest input. Validation evidence, validator identity, callbacks, timestamps, presentation metadata, storage information, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage.
 
@@ -710,7 +727,7 @@ No additional top-level members are permitted. The exact versioned Project State
 
 `project_id` is the typed assigned Project Identifier of the Project whose state the object represents. Project State identity is Project-specific: `project_id` participates in canonical identity and is not derived from Component membership, Adapter State, Resource content, storage, Platform identity, or location.
 
-`components` is a REQUIRED JSON object map from canonical typed Creative Component Identifier text to typed Component State Identifier. The map MAY be empty; omission is invalid. Object member ordering and duplicate-member rejection follow section 5.1 and ADR-0005; no set-like array sorting applies to the map. Every referenced Component State MUST be valid and admitted, and its required `component_id` MUST equal the map key. A mismatch prevents Project State historical admission. The Component State metadata object MUST be resolvable and valid, but its underlying Resource bytes need not be locally materialised. This consistency rule does not define clone, copy, import, fork, move, ownership, or cross-Project identity-preservation semantics.
+`components` is a REQUIRED JSON object map from canonical typed Creative Component Identifier text to typed Component State Identifier. The map MAY be empty; omission is invalid. Object member ordering and duplicate-member rejection follow section 5.1 and ADR-0005; no set-like array sorting applies to the map. For Project State admission, every referenced Component State MUST be valid and admitted, and its required `component_id` MUST equal the map key. A mismatch prevents Project State historical admission. The Component State metadata object MUST be resolvable and valid for admission, but its underlying Resource bytes need not be locally materialised. This consistency rule does not define clone, copy, import, fork, move, ownership, or cross-Project identity-preservation semantics.
 
 Normative OMVCS 0.1 body example:
 
@@ -745,7 +762,18 @@ It describes the complete state.
 
 The Project State membership map is the association between the Project and participating Creative Components. The generic Creative Component object has no `project_id` back-reference.
 
-A Project State candidate MUST NOT be admitted as valid history unless the exact Project State schema validates the body; `project_id`, every component-map key/value, and `adapter_state_id` are correctly typed; each referenced Component State is resolvable, valid/admitted, and has a matching `component_id`; the referenced Adapter State is resolvable and valid/admitted under section 12; `project_metadata` validates under the exact Project State schema; and no unknown top-level member is present. Failed validation MUST NOT produce a valid Project State Identifier. Missing Resource bytes alone do not invalidate otherwise valid Resource References or metadata-complete history.
+A Project State candidate MUST NOT be admitted as valid history unless the
+exact Project State schema validates the body; `project_id`, every
+component-map key/value, and `adapter_state_id` are correctly typed; each
+referenced Component State is resolvable, valid/admitted, and has a matching
+`component_id`; the referenced Adapter State is resolvable and valid/admitted
+under section 12; `project_metadata` validates under the exact Project State
+schema; and no unknown top-level member is present. The canonical body
+schema/structure and hash may be validated independently of whether those
+referenced objects are locally present. Missing required targets prevent
+admission but do not change the body-derived Project State Identifier.
+Missing Resource bytes alone do not invalidate otherwise valid Resource
+References or metadata-complete history.
 
 ---
 
@@ -760,7 +788,7 @@ The closed OMVCS 0.1 Revision historical body is a JSON object containing exactl
 | Member | Requirement | Meaning |
 |---|---|---|
 | `schema` | REQUIRED | Exact versioned Revision schema identifier under section 76. |
-| `project_state_id` | REQUIRED | Typed identifier of exactly one resolvable, valid/admitted Project State. |
+| `project_state_id` | REQUIRED | Typed identifier of the required Project State; local resolution and admission are required for Revision admission, not for calculating the Revision body Identifier. |
 | `parents` | REQUIRED | Set-like array of typed direct parent Revision Identifiers; MAY be empty. |
 | `author_id` | REQUIRED | Direct typed ActorId of the author. |
 | `created_at` | REQUIRED | Canonical UTC timestamp under section 15. |
@@ -769,9 +797,21 @@ The closed OMVCS 0.1 Revision historical body is a JSON object containing exactl
 
 No other top-level members are permitted in OMVCS 0.1. In particular, the body has no direct `project_id`: the Revision's Project identity is obtained from its required admitted Project State. Every parent Revision MUST resolve through its own admitted Project State to the same assigned Project Identifier. A parent from another Project prevents admission. This does not define cross-Project move, copy, fork, or identity-preservation semantics.
 
-The exact available versioned Revision schema identified by `schema` MUST validate the candidate before historical admission. An unknown or unavailable schema candidate MAY be preserved outside valid history where supported, but MUST NOT produce a valid Revision or Revision Identifier.
+The exact available versioned Revision schema identified by `schema` MUST
+validate the candidate's own body before a valid content-derived Identifier
+can be established or the candidate admitted. An unknown or unavailable
+schema candidate MAY be preserved outside valid history where supported,
+but MUST NOT produce a valid Revision Identifier.
 
-`parents` is REQUIRED. An empty array represents an initial Revision; a normal derived Revision generally has one parent; an integration Revision MAY have multiple parents. Parent order has no semantic significance in generic Core 0.1, there is no generic first-parent concept, and duplicate parent identifiers are invalid. Each parent MUST resolve to a valid/admitted Revision before admission. Parent ancestry and provenance are separate: provenance MUST NOT replace the parent graph, and parent order MUST NOT encode Line, branch, ref, or Release semantics.
+`parents` is REQUIRED. An empty array represents an initial Revision; a normal derived Revision generally has one parent; an integration Revision MAY have multiple parents. Parent order has no semantic significance in generic Core 0.1, there is no generic first-parent concept, and duplicate parent identifiers are invalid. Each parent MUST resolve to a valid/admitted Revision before the referring Revision is admitted. Parent ancestry and provenance are separate: provenance MUST NOT replace the parent graph, and parent order MUST NOT encode Line, branch, ref, or Release semantics.
+
+Where an import intentionally omits a required parent, the unchanged
+Revision body and matching declared history boundary MAY be preserved
+outside admitted history where supported. The boundary classifies the
+omission but does not resolve the parent or waive the admission requirement.
+The Revision body-derived Identifier remains valid if its own canonical
+body/schema checks pass, but the Revision MUST NOT be admitted as valid
+history until its required parents resolve and pass the ordinary checks.
 
 `author_id` is directly encoded as an ActorId; it is not wrapped in an `author` object. The ActorId MUST be valid under section 59. Historical admission MUST NOT require current profile, Platform account, profile service, signing key, or credential availability.
 
@@ -967,7 +1007,7 @@ separate under DEC-CORE-008.
 # 18. Release
 
 A Release is immutable, Project-scoped historical repository metadata,
-content-addressed by its complete admitted body, and distinct from a mutable
+content-addressed by its complete closed body, and distinct from a mutable
 Line. Every admitted Release is a reachability root for its target Revision.
 A Release identifies one Revision for as long as that Release exists.
 OMVCS 0.1 defines `CreateRelease`; it defines no Release update or
@@ -984,15 +1024,16 @@ substitute for any member.
 | `schema` | REQUIRED | Exact versioned Release schema identifier; OMVCS 0.1 uses `omvcs.release/0.1`. |
 | `project_id` | REQUIRED | Typed assigned Project Identifier owning the Release and defining its name namespace. |
 | `name` | REQUIRED | Non-empty human-readable Release name, unique within `project_id`. |
-| `revision_id` | REQUIRED | Typed Revision Identifier resolving to valid/admitted metadata in the same Project. |
+| `revision_id` | REQUIRED | Typed Revision Identifier; it MUST resolve to valid/admitted metadata in the same Project before Release admission. |
 | `created_at` | REQUIRED | Canonical UTC nanosecond timestamp under §15. |
 | `creator_id` | REQUIRED | Direct typed ActorId under §59. |
 | `description` | REQUIRED | JSON string; MAY be empty. |
 
 The exact versioned Release schema identified by `schema` MUST be known,
-available, and validate the body before admission. An unknown or unavailable
-schema candidate MAY be preserved externally where supported, but MUST NOT
-be admitted as a valid OMVCS Release or produce a valid Release Identifier.
+available, and validate the body's own members before its content-derived
+Identifier can be established or the Release admitted. An unknown or
+unavailable schema candidate MAY be preserved externally where supported,
+but MUST NOT produce a valid Release Identifier.
 No arbitrary top-level extension members are defined in OMVCS 0.1; future
 extensions require an approved schema/version change.
 
@@ -1003,6 +1044,11 @@ referenced by that Revision MUST resolve as valid/admitted, and its
 `project_id` MUST equal the Release's `project_id`. A cross-Project target
 is invalid. Resource bytes need not be available or locally materialised
 for Release admission.
+
+Local resolution of the target Revision is required for Release admission,
+not for calculating or verifying the Release body's Identifier. If the
+target is absent, a validated closed Release body retains its
+body-derived ReleaseId but is not an admitted Release or reachability root.
 
 Release-name equality is exact string/code-point equality. Core MUST NOT
 case-fold, use locale-sensitive comparison, normalize for a filesystem,
@@ -1224,6 +1270,12 @@ Materialising a Revision consists conceptually of:
 
 Failure at steps 6–11 MUST NOT silently report successful materialisation.
 
+Required historical metadata that is absent MUST NOT be treated as resolved
+or admitted solely because a matching declared history boundary exists.
+Materialisation MUST fail rather than claim success when the target state or
+other required metadata cannot be resolved; validation may separately report
+whether the omission is declared or unresolved.
+
 Before replacing an existing Working State, Core MUST compare its current
 derived status with the recorded source/base state. If status is `changed`
 or `unknown`, replacement MUST be refused unless this invocation supplies
@@ -1276,7 +1328,7 @@ Current Revision requires 11 GB.
 A valid local Working State MAY therefore contain:
 
 ```text
-complete metadata history
+complete or explicitly incomplete local metadata history
 +
 11 GB current resources
 +
@@ -1289,6 +1341,11 @@ Selective materialisation does not change the Base Revision. The component
 source map describes each represented Component's immutable source when one
 exists; local components without an admitted historical source have no
 source `ComponentStateId`.
+
+Resource sparsity and metadata-history completeness are independent. Local
+metadata omissions MUST be classified as declared or unresolved under
+sections 55–56; missing historical metadata is not implied by the absence of
+Resource bytes.
 
 ---
 
@@ -1416,7 +1473,7 @@ Create Project State
         |
 Create Revision
         |
-Persist complete historical metadata
+Persist validated metadata required by the new Revision
         |
 Atomically update Line
         |
@@ -1498,7 +1555,11 @@ Creating an immutable object whose identifier already exists MUST verify that th
 
 Every actively published Project MUST designate at least one creator-controlled location as its **Repository Home**.
 
-The Repository Home stores the complete durable OMVCS metadata necessary to reconstruct Project history.
+The Repository Home stores the available durable OMVCS metadata and its
+operational completeness information. It MAY contain complete or
+intentionally incomplete local historical metadata. An intentional omission
+of a required historical reference MUST have a matching declared history
+boundary under section 55; an absent target without one is unresolved.
 
 It is not necessarily the same place that stores every Resource Object.
 
@@ -1514,7 +1575,10 @@ Resource replicas:
     collaborator's server
 ```
 
-The Repository Home MUST contain complete historical metadata and current operational metadata sufficient to resolve Project storage.
+The Repository Home MUST retain the historical metadata it stores without
+rewriting immutable objects, together with current operational metadata
+sufficient to resolve Project storage and any applicable local completeness
+and declared-boundary records.
 This operational metadata includes the optional Project-scoped Default Line
 preference defined in §§16–17.
 
@@ -1530,7 +1594,7 @@ Migration consists conceptually of:
 
 ```text
 1. Create destination repository
-2. Copy complete metadata
+2. Copy available metadata and applicable completeness/boundary records
 3. Verify metadata integrity
 4. Copy or retain storage map
 5. Verify resource resolvability
@@ -1540,6 +1604,9 @@ Migration consists conceptually of:
 ```
 
 Revision identifiers and Project Identifier remain unchanged.
+Migration MUST NOT silently turn an incomplete source into a complete claim.
+Any newly intentional omission MUST be declared; undeclared missing targets
+remain unresolved.
 
 ---
 
@@ -2287,10 +2354,15 @@ Object Identifier
 Every referenced parent must either:
 
 - be available;
-- be explicitly shallow/unavailable according to supported import rules;
+- be absent under an exact declared history boundary according to the
+  supported import rules;
 - or cause validation failure.
 
-The reference implementation SHOULD default to complete ancestry.
+An absent declared parent is not resolved or admitted by the declaration.
+The referring Revision MUST NOT be admitted while a required parent remains
+unresolved. Validation reports the declared incompleteness separately from
+metadata corruption. The reference implementation SHOULD default to complete
+ancestry.
 
 ---
 
@@ -2301,16 +2373,16 @@ A full Project validation MAY include:
 ```text
 validate canonical object hashes
 validate each Revision against its exact available schema and closed 0.1 member set before historical admission or identity calculation
-resolve the referenced Project State and require its valid/admitted status
-resolve each parent Revision and require valid/admitted status and matching Project identity
+resolve the referenced Project State and require its valid/admitted status for Revision admission
+resolve each parent Revision and require valid/admitted status and matching Project identity for Revision admission
 validate canonical `created_at`, typed `author_id`, `message`, and schema-owned `provenance`
 validate Project State references
-validate each Project State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
-resolve and validate every Component State referenced by Project State, including equality between each map key and the referenced state's `component_id`
-resolve the referenced Adapter State and require its valid/admitted status under section 12
+validate each Project State against its exact available schema and closed 0.1 member set before identity calculation or historical admission
+resolve and validate every Component State referenced by Project State, including equality between each map key and the referenced state's `component_id`, for Project State admission
+resolve the referenced Adapter State and require its valid/admitted status under section 12 for Project State admission
 validate `project_metadata` under the exact Project State schema, including nested collection classifications
 validate Component State references
-validate each Component State against its exact available schema and closed 0.1 member set before historical admission or identity calculation
+validate each Component State against its exact available schema and closed 0.1 member set before identity calculation or historical admission
 validate Resource Reference structure and applicable schema/Adapter property admission, plus applicable operational reconstruction manifests
 validate each Release against its exact available `omvcs.release/0.1`
   schema and closed seven-member body before historical admission or identity
@@ -2333,9 +2405,42 @@ validate replica records
 verify available Resource content
 ```
 
-Metadata validation MUST NOT require downloading every historical Resource unless deep Resource verification is requested.
+Repository validation MUST NOT automatically download historical Resources
+at any verification depth.
 
-The full Project validation above is optional as a repository-wide operation. However, an implementation MUST perform the Revision schema, member, parent, Project State reference-resolution, and admission checks listed above whenever it admits a Revision as valid historical state or calculates its valid Revision Identifier. It MUST also perform the specified Project State checks whenever it admits a Project State as valid historical state or calculates its valid Project State Identifier.
+The full Project validation above is optional as a repository-wide
+operation. `ValidateRepository` is specified in section 83. A validation
+result MUST distinguish metadata integrity, history completeness, Resource
+state, and requested-scope/provider coverage. A `complete` history result
+requires sufficient coverage, resolution of all required references in the
+requested scope, and no applicable declared history boundary.
+
+When a required target is absent, validation MUST query local operational
+metadata for a declaration matching the exact referring object, normative
+edge kind, and target Identifier. A match is a `declared_incomplete`
+finding; no match is an `unresolved` finding. Provider failure MUST be
+reported as incomplete coverage, not treated as no declaration. A boundary
+does not resolve, validate, fabricate, rewrite, or admit the missing target.
+The applicable historical-object admission requirements remain in force.
+
+A content-derived Identifier is calculated or verified from the exact
+available schema and canonical body; reference resolution is not required
+for that body hash. An implementation MUST perform the Revision schema/member
+checks whenever it calculates or verifies a Revision Identifier, and MUST
+additionally resolve/admit its Project State and
+parents before admitting the Revision as valid history. It MUST perform the
+Project State schema/body checks for its Identifier and additionally
+resolve/admit referenced Component and Adapter State objects before
+admitting the Project State. The same distinction applies to Component
+State and Release Identifiers: a valid body-derived Identifier does not
+itself establish historical admission or resolve absent references.
+
+Resource verification depth MUST be explicit. `metadata_only` does not
+inspect Resource bytes. `verify_available_resources` verifies bytes already
+available through the supplied verification boundary and reports its
+method/strength. `deep_resources` requires full-content verification of
+bytes obtainable without automatic fetching or materialisation. Resource
+unavailability is not corruption.
 
 ---
 
@@ -2572,12 +2677,14 @@ Core defines two export classes.
 Contains:
 
 ```text
-complete historical metadata
+available historical metadata
 operational metadata sufficient for location resolution
+local completeness and declared-boundary information
 Project identity
 ```
 
-but MAY omit Resource bytes.
+but MAY omit Resource bytes. An export MUST NOT claim complete history if
+the exported scope is incomplete or not assessed.
 
 ---
 
@@ -2594,6 +2701,10 @@ verification information
 
 and SHOULD be capable of fully offline reconstruction within the limitations of external software dependencies.
 
+An export whose source lacks required historical metadata MUST NOT be
+represented as a complete archival export. It MAY be emitted as a metadata
+export that preserves the source's completeness and boundary information.
+
 ---
 
 # 67. Repository import
@@ -2604,6 +2715,16 @@ Import MUST verify:
 - Revision ancestry;
 - Project identity;
 - Resource identity where bytes are present.
+
+An import MAY intentionally omit required historical targets only when the
+corresponding omissions are represented by exact local declared history
+boundaries under section 55. Otherwise absent targets are unresolved.
+Import MUST preserve the original historical object bytes and MUST NOT
+treat a boundary declaration as resolving or admitting its missing target.
+Implementations MAY preserve imported objects with unresolved required
+references outside admitted history; they MUST NOT report them as valid
+admitted objects until the ordinary admission requirements are met. The
+boundary persistence and transport representation is not specified here.
 
 Ordinary import preserves Project identity.
 
@@ -2642,16 +2763,21 @@ Resource storage
 ```
 
 No creative history changes.
+Recovery is limited to locally available history. If the Repository Home is
+declared incomplete, the missing targets remain missing and the recovered
+Project MUST NOT be represented as complete.
 
 ---
 
-## Repository Home lost but local complete metadata survives
+## Repository Home lost but local metadata survives
 
 A new Repository Home MAY be established.
 
 Resource locations are preserved or re-established.
 
-No creative history changes.
+No creative history changes. Any incompleteness in the surviving local
+metadata remains explicit; recovery does not establish missing targets or
+turn incomplete history into a complete claim.
 
 ---
 
@@ -3055,6 +3181,128 @@ Result
 
 Coding agents MUST NOT implement operations whose failure semantics are left implicit.
 
+## `ValidateRepository`
+
+`ValidateRepository` is a diagnostic operation and MUST be strictly
+read-only. It MUST NOT repair metadata, update availability or verification
+records, fetch or materialise Resources, change Lines, Releases, or Working
+State, pin or archive objects, or delete data.
+
+### Preconditions and effects
+
+The repository context MUST be open/readable and the requested scope and
+Resource verification depth MUST be valid. Any ordinary repository access
+authorization continues to apply; no mutation authorization is introduced.
+The operation has no historical, operational, or Working State effects.
+
+An invocation failure caused by an invalid request or inability to establish
+the requested repository context returns an invocation error. Provider or
+enumeration failures after report construction begins are reported inside an
+explicit incomplete report as specified below.
+
+Validation is safe to invoke again because it is read-only. Each retry is a
+new invocation that re-reads repository/provider state; reports are not
+guaranteed to remain identical if that state changes. Core MUST NOT hide
+provider failure with automatic retry or an empty success-shaped result.
+With unchanged inputs and underlying state, repeated invocations are
+observationally equivalent and require no operation identifier for
+deduplication.
+
+### Inputs
+
+- `scope`: either the whole local Repository or one identified Project.
+  Another narrower scope MAY be used only when a normative specification
+  already defines it.
+- `resource_verification_depth`: exactly one of `metadata_only`,
+  `verify_available_resources`, or `deep_resources`. There is no implicit
+  fetch or materialisation at any depth.
+
+The result MUST echo both inputs. Validation MUST NOT imply checks outside
+the requested scope.
+
+### Completed report
+
+A completed invocation returns a machine-readable report, not a pass/fail
+Boolean. The report MUST contain:
+
+- `metadata_integrity`: `valid`, `invalid`, or `indeterminate`;
+- `history_completeness`: `complete`, `declared_incomplete`, `unresolved`,
+  or `not_assessed`;
+- Resource state for each assessed Resource: `available`,
+  `unavailable_or_not_locally_materialised`, `corrupt`, or `not_checked`;
+  checked Resources also report verification method and strength;
+- requested-scope coverage by object enumeration and each required root
+  provider, with `complete`, `partial`, or `unavailable` status and
+  unavailable capabilities; and
+- typed findings, including metadata integrity failure,
+  schema/admission failure, identity/Project/reference mismatch, cycle,
+  unresolved metadata, declared history boundary, Resource unavailable or
+  corrupt, incomplete coverage, and provider/enumeration failure.
+
+`valid` means all required metadata checks within sufficient requested-scope
+coverage passed and their required targets were resolved. `invalid` means
+an actually checked metadata integrity, schema, identity,
+or graph invariant failed. Missing targets, declared omissions, unavailable
+schemas/providers, unrequested Resource checks, and incomplete coverage
+alone MUST NOT be reported as `invalid`. When absence prevents an admission
+check, the referring object remains unadmitted and metadata integrity is
+`indeterminate`, not `invalid` solely due to that absence. `indeterminate`
+means required metadata or provider coverage prevents a conclusive
+integrity determination. A declaration does not validate an absent target.
+An unresolved or declared-missing reference MUST be reported with its own
+finding and MUST NOT be misreported as a body-hash or schema failure solely
+because the required target is absent.
+
+History completeness is `complete` only when coverage is sufficient for the
+requested scope, all required references in that scope resolve, and no
+applicable declared boundary exists. A known undeclared missing reference
+yields `unresolved`; otherwise a known declared omission yields
+`declared_incomplete`; when neither is known but the available providers do
+not permit a meaningful determination, the result is `not_assessed`.
+Partial coverage MUST NOT be reported as complete and MUST NOT imply global
+unreachability.
+
+Resource verification is independent of metadata integrity and history
+completeness:
+
+- `metadata_only` does not inspect Resource bytes;
+- `verify_available_resources` verifies bytes already available through
+  the supplied boundary, reporting its method and strength;
+- `deep_resources` performs full-content hash verification for bytes
+  obtainable through the supplied boundary without automatic fetch or
+  materialisation.
+
+Unavailable Resource bytes are not corrupt. Resources not checked at the
+requested depth or because the required capability is unavailable are
+`not_checked`, with the reason reflected in findings/coverage.
+
+### Provider boundary and failures
+
+Core MUST use provider-neutral boundaries to enumerate scoped objects and
+required roots, query a declared history boundary by the exact tuple
+`(referring object Identifier, normative edge kind, target Identifier)`,
+and request Resource verification. A boundary query returns a matching
+declaration, no matching declaration, or an explicit provider failure.
+Provider failure MUST NOT be converted into an empty result or “no
+declaration”.
+
+A provider/enumeration failure after report construction begins is a typed
+finding with partial or unavailable coverage; the report remains an
+explicit incomplete result. An invalid invocation or failure before a
+report can be constructed returns an invocation error, not a completed
+report. A report with negative findings means validation ran; it does not
+mean the Repository passed.
+
+The report MUST identify coverage for every required root/provider class in
+section 62. A provider that is unsupported or whose semantics remain
+unresolved is partial or unavailable. The WORK-0013 Line/Release traversal
+MAY be used only with its explicitly partial scope; this operation MUST NOT
+claim complete Core §62 reachability or global unreachable status from it.
+
+`ValidateRepository` MUST NOT clean up obsolete declared-boundary records
+when a target later becomes available. It validates the actual target and
+its references normally.
+
 For the Working State operation set, the following additional contracts
 apply:
 
@@ -3296,6 +3544,10 @@ and materialises required Resource Objects.
 
 The Project continues with exactly the same identities.
 
+This example assumes the Repository Home contains complete metadata. If its
+local history is incomplete, only the available history can be reconstructed
+and its declared or unresolved omissions remain explicit.
+
 This is required behaviour, not an emergency workaround.
 
 ---
@@ -3370,11 +3622,14 @@ They belong inside this Core Specification and should be resolved before Core 0.
 2. Remaining Reference Render policy and association rules, excluding a
    Release body member or `CreateRelease` precondition as specified in §18.
 3. Exact minimum durability policy for published Revisions.
-4. Whether complete metadata history is mandatory locally or may itself be sparse.
 5. Exact retention period before unreachable Resources become eligible for garbage collection.
 6. Whether signing becomes mandatory for published Revisions in 0.1.
 7. Whether Line deletion requires an automatic archival/pin period.
-8. Exact treatment of shallow/incomplete history imports.
+
+Former items 4 and 8 are resolved by ADR-0027 and ADR-0028 respectively.
+`ValidateRepository` is resolved by ADR-0029. These six remaining items are
+the unresolved Core decisions; their existing item numbers are retained for
+the Decision Register.
 Those are now a finite list of **Core decisions**, not invitations to create ten more documents.
 
 ---

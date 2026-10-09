@@ -1,6 +1,6 @@
 # DG-0019 — Repository validation operation contract
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: M2 preflight
@@ -97,4 +97,27 @@ than this gap.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved
+[ADR-0029](../decisions/ADR-0029-validate-repository-operation-contract.md),
+with the distinct local-completeness and shallow-import decisions recorded
+in [ADR-0027](../decisions/ADR-0027-local-metadata-history-completeness.md)
+and
+[ADR-0028](../decisions/ADR-0028-declared-shallow-history-boundaries.md).
+The Core contract defines a strictly read-only operation, explicit
+Repository/Project scope and Resource-verification depth, machine-readable
+integrity/completeness/Resource/coverage dimensions, typed findings, and a
+distinction between a completed report and inability to invoke validation.
+Provider errors are reported explicitly with partial/unavailable coverage.
+
+Cross-Spec requirements to store complete history in every local Repository
+and to handle shallow parents without a matching declaration are reconciled
+in Core §§14, 29–30, 55–56, and 66–67. Existing admission rules remain
+unchanged: a declaration does not admit an object whose required target is
+absent. Such data may be preserved outside admitted history where
+supported.
+
+WORK-0014 is PLANNED, not started. It may implement partial coverage using
+the current Line/Release reachability boundary, but MUST report unsupported
+Core §62 roots and MUST NOT claim complete history or global unreachable
+status. DEC-CORE-005, DEC-CORE-008, DG-0015, DG-0027, and
+DEC-INTERACTION-004 remain separate and unresolved.

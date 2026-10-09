@@ -694,15 +694,15 @@ Removal of the final replica MAY make historical content unavailable, but does n
 
 **Availability State** describes whether a Resource Object or Project State can currently be retrieved.
 
-Possible states will be formally specified later, but may include concepts such as:
-
-- Available;
-- Partially Available;
-- Temporarily Unavailable;
-- Missing;
-- Corrupt.
+For Resource Objects, the operational states are `available`, `degraded`,
+`temporarily_unavailable`, `missing`, `corrupt`, and `unknown`, as defined
+in Core §51.
 
 Availability is operational, not historical.
+Resource availability is separate from validation's `not_checked` state:
+validation does not imply availability when Resource bytes were not
+examined. An unavailable or non-materialised Resource is not thereby
+corrupt.
 
 ---
 
@@ -740,6 +740,23 @@ A repository MUST be recoverable without relying on a single hosted Open Music s
 
 It includes historical and operational subsets.
 
+The complete set is conceptual: a local Repository MAY hold only a subset
+of historical metadata. Its local **History Completeness** is operational
+state and MUST NOT be inferred from the absence of observed errors when
+scope or provider coverage is incomplete.
+
+---
+
+## Content-derived Identifier
+
+A **Content-derived Identifier** for a metadata object is calculated from
+the object's canonical historical body under its exact available schema.
+Local resolution or admission of referenced objects is not required to
+calculate or verify that body-derived Identifier. This does not establish
+that the object is admitted as valid history; required references and
+same-Project checks remain admission requirements. An unknown/unavailable
+schema or invalid body prevents establishing a valid Identifier.
+
 ---
 
 ## Historical Metadata
@@ -772,6 +789,72 @@ Examples:
 - Default Line preference.
 
 Operational Metadata MAY change without creating a Revision.
+
+---
+
+## Declared History Boundary
+
+A **Declared History Boundary** is local operational metadata stating that
+one required historical reference is intentionally omitted. It identifies
+the referring object Identifier, the normative edge kind, the omitted
+target Identifier, and the `intentional_omission` classification. A
+human-readable reason MAY also be recorded.
+
+A boundary classifies an omission; it does not resolve, validate,
+fabricate, rewrite, or admit the target, alter historical identity or
+provenance, or permanently exclude a target that later becomes available.
+
+---
+
+## History Completeness
+
+**History Completeness** describes whether required historical metadata is
+locally resolved within an explicitly requested validation scope and
+adequately covered by the available providers. Its machine-readable states
+are:
+
+- `complete`;
+- `declared_incomplete`;
+- `unresolved`; and
+- `not_assessed`.
+
+These states do not describe Resource-byte availability or, by themselves,
+historical-object integrity.
+
+---
+
+## Metadata Integrity
+
+**Metadata Integrity** is the result of checking available historical
+metadata against its identity, schema, admission, reference, and graph
+requirements. Its machine-readable states are `valid`, `invalid`, and
+`indeterminate`. Missing required metadata or insufficient provider
+coverage is not, by itself, proof of corruption.
+
+---
+
+## Validation Coverage
+
+**Validation Coverage** identifies the requested scope and which object
+enumeration and required root providers were assessed. Each provider
+reports `complete`, `partial`, or `unavailable` coverage and any
+unavailable capability. Partial coverage MUST NOT support a claim of
+complete history or global unreachability.
+
+---
+
+## Resource Verification Depth
+
+**Resource Verification Depth** is the explicitly requested extent of
+Resource checking by `ValidateRepository`:
+
+- `metadata_only`;
+- `verify_available_resources`; or
+- `deep_resources`.
+
+It does not authorize automatic fetching or materialisation. The
+verification method and strength are reported separately from metadata
+integrity and history completeness.
 
 ---
 
@@ -1243,7 +1326,9 @@ Examples:
 - local computer lost;
 - one storage provider lost.
 
-Recovery requirements will be specified explicitly and are fundamental to OMVCS.
+Recovery MUST preserve and report the completeness of locally available
+history. It does not establish or fabricate absent historical targets, and
+an incomplete local history MUST NOT be represented as completely recovered.
 
 ---
 

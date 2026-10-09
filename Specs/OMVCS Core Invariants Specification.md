@@ -75,6 +75,11 @@ Delta storage MAY be used internally for efficiency, but the semantics of a Revi
 
 In OMVCS 0.1, every Project State MUST be a closed object containing exactly the required `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata` members. The exact available versioned Project State schema MUST validate the object before historical admission. `components` MUST be a map from canonical Creative Component Identifiers to typed Component State Identifiers; every referenced admitted Component State MUST identify the same Component as its map key. Each referenced Component State metadata object and the referenced valid/admitted Adapter State metadata object MUST be resolvable, but their underlying Resource bytes need not be locally materialised. The generic Creative Component object MUST NOT carry a `project_id` back-reference.
 
+Completeness of a Revision's immutable Project State is distinct from
+completeness of metadata held by a local Repository. A local Repository MAY
+lack historical metadata, but an absent required target does not satisfy or
+waive this invariant's admission requirements.
+
 ---
 
 ## INV-HIST-004 — Parent relationships are immutable
@@ -125,11 +130,11 @@ Display-name, email, username, Platform-account, and signing-key changes, includ
 
 The OMVCS 0.1 Project State historical body MUST contain exactly the required members `schema`, `project_id`, `components`, `adapter_state_id`, and `project_metadata`. No other top-level members are permitted. The exact versioned Project State schema MUST be known and available and MUST validate the body before historical admission or identity calculation. Unknown or unavailable schema candidates MAY be preserved as unchecked data, but MUST NOT produce a valid Project State or Project State Identifier.
 
-`project_id` MUST be the typed assigned identifier of the Project represented and MUST participate in identity. `components` MUST be a required JSON object map from canonical Creative Component Identifier text to typed Component State Identifiers; it MAY be empty. Each referenced Component State MUST be admitted and its `component_id` MUST equal the map key. The referenced Component State and canonical Adapter State metadata objects MUST be resolvable and valid/admitted; the underlying Resource bytes need not be locally materialised. `adapter_state_id` MUST be a typed Adapter State Identifier.
+`project_id` MUST be the typed assigned identifier of the Project represented and MUST participate in identity. `components` MUST be a required JSON object map from canonical Creative Component Identifier text to typed Component State Identifiers; it MAY be empty. For Project State admission, each referenced Component State MUST be admitted and its `component_id` MUST equal the map key. The referenced Component State and canonical Adapter State metadata objects MUST be resolvable and valid/admitted for Project State admission; the underlying Resource bytes need not be locally materialised. `adapter_state_id` MUST be a typed Adapter State Identifier.
 
 `project_metadata` MUST be a required JSON object map and MAY be empty. The exact versioned Project State schema owns its permitted keys, requiredness, value shapes, meanings, nested schemas, and nested collection classifications. Unclassified nested arrays, invalid shapes, or disallowed keys prevent admission. It MUST NOT serve as an unrestricted container for presentation/UI, local path, storage/Replica, credential, Platform indexing/account, validation-evidence, timestamp, or other operational data.
 
-The Project State Identifier MUST be SHA-256 over the canonical historical body containing all and only those five members; no type/domain prefix is included in the digest input. Every member participates in identity. Validation evidence, operational data, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage. Map insertion order MUST NOT affect identity; maps use RFC 8785 member ordering solely and duplicate member names MUST be rejected.
+The Project State Identifier MUST be SHA-256 over the canonical historical body containing all and only those five members; no type/domain prefix is included in the digest input. Every member participates in identity. Its body-derived Identifier can be calculated and verified without local resolution of referenced Component or Adapter State objects; such resolution remains mandatory for historical admission. Missing targets do not alter the Identifier. Validation evidence, operational data, transport wrappers, signatures, credentials, Platform metadata, and unknown extension fields MUST NOT enter the preimage. Map insertion order MUST NOT affect identity; maps use RFC 8785 member ordering solely and duplicate member names MUST be rejected.
 
 ---
 
@@ -141,11 +146,14 @@ members `schema`, `project_state_id`, `parents`, `author_id`, `created_at`,
 available versioned Revision schema MUST validate the body before historical
 admission or identity calculation.
 
-`project_state_id` MUST identify one valid/admitted Project State. A Revision
-has no direct `project_id`; its Project identity is supplied by that state.
-Every parent Revision MUST resolve as valid/admitted and its Project State
-MUST identify the same Project. A parent from another Project MUST prevent
-admission.
+`project_state_id` MUST be the typed identifier of the required Project
+State. A Revision has no direct `project_id`; its Project identity is
+supplied by that state when resolved. For Revision admission, the Project
+State and every parent Revision MUST resolve as valid/admitted, and each
+parent's Project State MUST identify the same Project. A parent from another
+Project MUST prevent admission. A declared history boundary classifies an
+absent parent for local completeness reporting but does not resolve it or
+admit the referring Revision.
 
 `parents` and `provenance` MUST be required set-like arrays and MAY be empty.
 Duplicate elements are invalid and element ordering is non-semantic.
@@ -160,6 +168,10 @@ and MAY be empty.
 The Revision Identifier MUST be SHA-256 over the canonical historical body
 containing all and only the seven required members, without a type/domain
 prefix in the digest input. Each member participates in identity.
+Its body-derived Identifier can be calculated and verified without local
+resolution of the Project State or parent Revisions; those references
+remain mandatory for Revision admission. Missing targets do not alter the
+Identifier.
 Operational, storage, Line, Release, Platform, credential, signature,
 validation-evidence, and unknown extension data MUST NOT enter the body or
 affect its identity.
@@ -214,6 +226,11 @@ MUST NOT be required for admission. All body members, including the target
 and name, are immutable after admission. Release names MUST be unique within
 their Project by exact string/code-point equality. Every admitted Release is
 a reachability root for its target Revision.
+
+The ReleaseId is derived from the exact closed body and remains verifiable
+without local resolution of its Project or target Revision. Resolution and
+same-Project checks remain requirements for Release admission; an absent
+target does not change the ReleaseId.
 
 OMVCS 0.1 defines creation/admission only; it defines no Release update or
 deletion operation. Reference Render is neither a Release body member nor a
@@ -309,6 +326,8 @@ from:
 > resource is currently retrievable.
 
 Unavailability MUST NOT be represented by deleting or rewriting history.
+Missing local historical metadata is a separate completeness condition and
+must not be conflated with unavailable or corrupt Resource bytes.
 
 ---
 
@@ -411,6 +430,8 @@ implicitly; a change requires an explicit successful rematerialisation.
 An OMVCS client MUST be capable in principle of knowing Project history without storing every historical Resource Object locally.
 
 Resource-sparse local operation is a core architectural requirement.
+Local historical metadata MAY also be incomplete. Its completeness MUST be
+reported separately; Resource sparsity does not imply metadata sparsity.
 
 ---
 
@@ -419,6 +440,9 @@ Resource-sparse local operation is a core architectural requirement.
 The fact that a Resource Object is currently absent from local storage MUST NOT imply that it does not belong to Project history.
 
 Local storage is a materialised working/cache environment, not the authoritative definition of history.
+Likewise, the absence of a required historical metadata target alone does
+not prove corruption: a matching declared history boundary identifies
+intentional omission, while an absent target without one is unresolved.
 
 ---
 
@@ -727,11 +751,29 @@ A failed or incomplete operation MUST NOT leave the system reporting a successfu
 
 Exact transaction semantics will be specified later.
 
+For `ValidateRepository`, a completed report with findings MUST be
+distinguished from failure to perform the requested validation. Incomplete
+coverage MUST NOT be reported as a clean or complete validation.
+
 ---
 
 ## INV-INT-004 — Retryable operations should be idempotent where practical
 
 Operations involving storage transfer, synchronization and publication SHOULD be designed so that repeating an interrupted operation does not duplicate or corrupt logical state.
+
+---
+
+## INV-INT-005 — Repository validation is read-only and coverage-honest
+
+`ValidateRepository` MUST NOT repair or mutate historical or operational
+state, automatically fetch or materialise Resources, or change Lines,
+Releases, Working State, pinning, archival, or deletion state. Its result
+MUST distinguish metadata integrity, local history completeness, Resource
+availability/verification, and requested-scope/provider coverage.
+
+A partial or unavailable provider result MUST NOT be represented as
+complete history or global reachability. A validation finding is not, by
+itself, deletion authority.
 
 ---
 
@@ -757,17 +799,30 @@ Exporting and importing a conforming Project MUST preserve:
 
 Transfer MUST NOT create a logically new Project unless the user explicitly requests a fork/new identity.
 
+Transfer of an intentionally incomplete local history MUST preserve its
+historical object bytes and any declared-boundary information needed to
+classify the omissions. Operational declarations do not alter historical
+identity or provenance.
+
 ---
 
 ## INV-REC-003 — Platform loss must be recoverable
 
-If the central Open Music Platform disappears while creator-controlled repository/storage data remains available, the Project MUST be recoverable by another conforming OMVCS implementation.
+If the central Open Music Platform disappears while creator-controlled
+repository/storage data remains available, the locally available history
+MUST be recoverable by another conforming OMVCS implementation. Any declared
+or unresolved local metadata omissions remain explicit; recovery MUST NOT
+claim that absent historical objects were reconstructed.
 
 ---
 
 ## INV-REC-004 — Local machine loss must not inherently destroy published history
 
-A correctly synchronized published Project MUST be recoverable after loss of the local working machine, assuming required durable storage remains available.
+A correctly synchronized published Project MUST be recoverable after loss
+of the local working machine, assuming required durable storage remains
+available. If its synchronized Repository Home is intentionally incomplete,
+recovery preserves and reports that completeness state and does not claim
+the absent history was recovered.
 
 ---
 
@@ -776,6 +831,22 @@ A correctly synchronized published Project MUST be recoverable after loss of the
 If required Resource Objects become unavailable due to provider loss, OMVCS MUST report the resulting availability problem accurately.
 
 It MUST NOT claim successful reconstruction when required Resource Objects cannot be retrieved.
+
+---
+
+## INV-REC-006 — Local history completeness is explicit
+
+A local Repository MAY contain incomplete historical metadata. An
+intentional omission of a required historical reference MUST be represented
+by a machine-readable local operational declaration identifying the
+referring object, normative edge kind, omitted target Identifier, and
+intentional-omission classification. An absent target without a matching
+declaration is unresolved.
+
+A declaration MUST NOT resolve, validate, fabricate, rewrite, admit, or
+permanently exclude its target, and MUST NOT alter historical identity,
+provenance, Platform truth, or deletion authority. If the target later
+resolves, it MUST be validated normally.
 
 ---
 
@@ -858,6 +929,10 @@ Retention and recovery rules MUST permit interrupted operations and reasonable r
 Garbage collection MUST use OMVCS identity and graph semantics.
 
 It MUST NOT decide that a Resource Object is unused merely because a matching working file is absent.
+
+An incomplete or partial validation/reachability result MUST NOT establish
+that an object is unreachable or authorize its deletion. All applicable
+Core §62 root classes must be covered before a complete reachability claim.
 
 ---
 
