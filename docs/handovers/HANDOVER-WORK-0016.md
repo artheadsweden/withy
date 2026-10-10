@@ -4,7 +4,7 @@ From agent: OMVCS Lead
 To agent: Integration/closeout owner
 Date: 2026-10-10
 Branch: `work/0016-replica-storage-map`
-HEAD: `327dfa7` (implementation commit; documentation closeout pending)
+HEAD: `53f18ea` (documentation closeout; preceded by implementation commit `327dfa7`)
 
 ## Completed
 
@@ -91,10 +91,10 @@ until WORK-0017's result contract and DEC-STORAGE-004/005 are approved.
 
 ## Git state
 
-Working tree: DIRTY while this handover was prepared. The status inventory
-contained only WORK-0016 production implementation, tests, and directly
-related Spec/ADR/gap/plan/coverage/milestone/project-state/handover
-documentation; no unrelated files were identified. The implementation has
-been committed; documentation closeout is the remaining local commit.
+Working tree: CLEAN after the implementation and documentation closeout
+commits. Before committing, the status inventory contained only WORK-0016
+production implementation, tests, and directly related
+Spec/ADR/gap/plan/coverage/milestone/project-state/handover documentation;
+no unrelated files were identified.
 Remote publishing: ENABLED for `origin` per `docs/project-state.md`.
 Remote push performed: NO
