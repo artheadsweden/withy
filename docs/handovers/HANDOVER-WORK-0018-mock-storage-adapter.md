@@ -1,14 +1,13 @@
 # Handover WORK-0018 — Mock Storage Adapter
 
 From agent: OMVCS Storage Engineer
-To agent: Core Engineer reviewer, then independent Verifier
+To: Project record and next M3 package owner
 Date: 2026-10-10
 Branch: `work/0018-mock-storage-adapter`
 HEAD (validated implementation): `ec7551a9dcdc447ad42b84ca9a8cd8935d596c42`
 Integration baseline: `565edf6836fc3971fa60ca7bd2e86339dc8d1c91`
-Delivery HEAD: the documentation commit containing this handover; resolve
-with `git log -1 --format=%H` on the branch. No code changes follow the
-validated implementation commit.
+Feature delivery HEAD: `1fb09052cdad4336c637fd59470e78a5e84315c6`.
+Integration merge: `43edf520bd4f7ef8f3f1fbe73efbab71763fa576`.
 
 ## Completed
 
@@ -103,8 +102,11 @@ checksum 1, model Replica 11, model verification 9, Core Storage Map 22:
 **67 passed**. Combined focused run: **94 passed, 0 failed**.
 
 Full workspace: **370 passed, 0 failed**, across **42 suites including
-doctests**. `tests/conformance/` contains only `.gitkeep`; there is no separate
-shared executable suite to run. No shared fixtures were added.
+doctests**. Post-merge reruns passed: 27 focused mock tests; 343 tests across
+the Storage/model/Core packages; 370 locked workspace tests. The Verifier's
+independent prerequisite subset was 67 tests. `tests/conformance/` contains
+only `.gitkeep`; there is no separate shared executable suite to run. No
+shared fixtures were added.
 
 ## Commands run
 
@@ -153,8 +155,10 @@ Final diff inspection confirmed bounded scope.
 
 ## Known limitations
 
-- Core Engineer review: **PENDING / not performed**.
-- Independent Verifier acceptance: **PENDING / not performed**.
+- Core Engineer review: **ACCEPT, no findings**; independently ran the 27
+  focused mock tests.
+- Independent Verifier: **ACCEPT, no conformance findings**; independently
+  ran the 27 mock tests and 67 prerequisite Storage/model/Core tests.
 - No persistence, network/filesystem/cloud, Home layout/keys, retries,
   eventual-consistency/time delays, slow-storage guarantees, races,
   transactions, physical migration orchestration, Replica deletion,
@@ -165,21 +169,21 @@ Final diff inspection confirmed bounded scope.
   independent shared fixture was needed. Mock controls do not leak into
   generic production interfaces.
 
-## Remaining work
+## Completion and integration
 
-1. Core Engineer review of this branch's bounded API/integration usage.
-2. Independent Verifier acceptance against original Specs/invariants and
-   adversarial failure cases; resolve findings on this branch if authorized.
-3. Integration/publishing only under a separate instruction after acceptance.
-
-WORK-0018 is IMPLEMENTED / LOCAL VALIDATION PASS, not VERIFIED/integrated.
-M3 remains IN PROGRESS. WORK-0019–0021 remain unstarted.
+WORK-0018 is VERIFIED / INTEGRATED at
+`43edf520bd4f7ef8f3f1fbe73efbab71763fa576`. The feature branch was pushed
+unchanged; no re-verification was needed because the no-fast-forward merge
+introduced no conflicts or production edits. WORK-0019 is next to inspect;
+WORK-0019–0021 remain unstarted. M3 remains IN PROGRESS.
 
 ## Git state
 
-Working tree: CLEAN at delivery after the accompanying documentation commit
-and final status/diff check.
+Feature branch: `work/0018-mock-storage-adapter`, clean and synced with origin
+at `1fb09052cdad4336c637fd59470e78a5e84315c6`.
+Integration branch: `spec/0003-canonical-collection-order`, merged and clean;
+the final local/remote tip is recorded by the closeout documentation commit.
 Remote publishing: ENABLED in project state.
-Remote push performed: NO.
-Integration performed: NO.
+Feature branch push: YES.
+Integration merge: no-fast-forward; no code conflict or adjustment.
 Branch base remains the authorized integration baseline above.

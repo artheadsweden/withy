@@ -1,7 +1,8 @@
 # WORK-0018 — Mock Storage Adapter
 
-Status: IMPLEMENTED — local validation PASS; Core Engineer review and
-independent Verifier acceptance PENDING. Not integrated or pushed.
+Status: VERIFIED / INTEGRATED at
+`43edf520bd4f7ef8f3f1fbe73efbab71763fa576`. Core Engineer and independent
+Verifier ACCEPT; no findings.
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0018-mock-storage-adapter`
@@ -106,15 +107,19 @@ DG-0029/0032 remain RESOLVED; DG-0034 remains OPEN/out of scope.
 DEC-STORAGE-013 and DEC-STORAGE-011 remain OPEN. WORK-0019–0021 unstarted.
 
 Local validation: 27 mock tests (21 byte-contract + 6 verification/Core
-scenarios), 67 unchanged prerequisite tests, and 370 workspace tests across
-42 suites including doctests passed with no failures. Formatting,
-warnings-denied Clippy for mock/storage/model/Core and all targets, and
-diff checks passed. `tests/conformance/` contains only its placeholder;
-there is no additional shared executable suite. No required review is
-claimed: submit this branch to Core Engineer, then independent Verifier.
+scenarios), 343 tests across the Storage/model/Core packages, and 370
+workspace tests across 42 suites including doctests passed with no failures.
+Core Engineer and independent Verifier ACCEPT with no findings. Both
+independently ran the 27 mock tests; the Verifier also ran 67 prerequisite
+Storage/model/Core tests. Post-merge formatting, warnings-denied Clippy for
+mock/storage/model/Core and all targets, and diff checks passed.
+`tests/conformance/` contains only its placeholder; there is no additional
+shared executable suite.
 
 Validated implementation commit:
 `ec7551a9dcdc447ad42b84ca9a8cd8935d596c42`.
+Integration merge:
+`43edf520bd4f7ef8f3f1fbe73efbab71763fa576`.
 Handover: [HANDOVER-WORK-0018](../handovers/HANDOVER-WORK-0018-mock-storage-adapter.md).
 
 ## Verification requirements
