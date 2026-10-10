@@ -5,8 +5,9 @@ authoritative persisted-map reconstruction accepted by Storage Engineer and
 independent Verifier. ProviderLocator schema-identifier lexical validation
 remains excluded under DG-0034. Promotion semantics are defined by
 ADR-0037/0038; the verification-result integration was not part of the
-accepted implementation and may be completed with WORK-0017 or as a bounded
-follow-up.
+accepted WORK-0016 baseline. The promotion integration is now implemented
+within WORK-0017 on `work/0017-resource-chunk-verification`; it remains
+pending WORK-0017's required independent reviews and is not integrated.
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0016-replica-storage-map`

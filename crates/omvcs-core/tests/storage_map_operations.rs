@@ -12,8 +12,11 @@ use omvcs_core::storage_map::{
     apply_storage_map_mutation,
 };
 use omvcs_model::hashing::{hash_resource_bytes, hash_revision_metadata};
-use omvcs_model::replica::{ProviderLocator, Replica, ReplicaAvailability};
+use omvcs_model::replica::{
+    ProviderLocator, Replica, ReplicaAvailability, ReplicaCandidate, ReplicaRepresentation,
+};
 use omvcs_model::resource::ResourceObject;
+use omvcs_model::verification::verify_candidate_resource_reader;
 use omvcs_model::{ProjectId, ReplicaId, ResourceId, StorageEndpointId};
 use serde_json::json;
 
@@ -686,7 +689,7 @@ fn unsupported_and_provider_failures_leave_generation_and_map_unchanged() {
 }
 
 #[test]
-fn availability_is_not_corruption_or_verification_and_addition_is_not_exposed() {
+fn availability_is_not_corruption_or_verification() {
     let record = replica(REPLICA_A, ENDPOINT_A, "object");
     assert_eq!(record.availability(), ReplicaAvailability::Available);
     assert!(
@@ -698,8 +701,8 @@ fn availability_is_not_corruption_or_verification_and_addition_is_not_exposed() 
     assert!(serde_json::from_str::<ReplicaAvailability>(r#""corrupt""#).is_err());
     assert!(serde_json::from_str::<ReplicaAvailability>(r#""temporarily_unavailable""#).is_ok());
 
-    // All mutation variants name an already existing Replica; there is no
-    // unverified-candidate addition or verified-promotion variant.
+    // Existing records may have retrieval metadata updated independently of
+    // any verification or integrity evidence.
     let mut mutation = StorageMapMutation::new();
     mutation
         .update_replica(record.id(), None, Some(ReplicaAvailability::Unknown))
@@ -912,4 +915,138 @@ fn historical_identity_is_independent_of_location_availability_preference_and_ge
         hash_revision_metadata(b"fixed canonical revision body"),
         revision_hash_before
     );
+}
+
+fn verified_candidate(
+    resource_bytes: &[u8],
+    endpoint: &str,
+    locator_key: &str,
+) -> (
+    ReplicaCandidate,
+    omvcs_model::verification::PromotionEligibility,
+) {
+    let resource_id = hash_resource_bytes(resource_bytes);
+    let candidate = ReplicaCandidate::new(
+        resource_id,
+        endpoint.parse().expect("EndpointId"),
+        ReplicaRepresentation::CompleteObject,
+        locator(locator_key),
+    )
+    .expect("valid complete-object candidate");
+    let mut bytes = std::io::Cursor::new(resource_bytes);
+    let verification =
+        verify_candidate_resource_reader(&candidate, &mut bytes).expect("valid Resource length");
+    let eligibility = verification
+        .promotion_eligibility(&candidate)
+        .expect("verified destination Resource identity");
+    (candidate, eligibility)
+}
+
+#[test]
+fn destination_resource_assurance_gates_replica_registration_through_map_cas() {
+    let repository = TestRepository::new();
+    repository
+        .initialize_empty(project_a())
+        .expect("initialize empty map");
+    let (candidate, eligibility) =
+        verified_candidate(b"destination content", ENDPOINT_B, "destination-copy");
+    let resource_id = candidate.resource_id();
+    let mut mutation = StorageMapMutation::new();
+    let replica_id = mutation
+        .add_replica(candidate, &eligibility, ReplicaAvailability::Available)
+        .expect("applicable Resource assurance permits candidate staging");
+    assert!(matches!(
+        apply_storage_map_mutation(
+            &repository,
+            project_a(),
+            StorageMapGeneration::ZERO,
+            &mutation
+        ),
+        StorageMapMutationOutcome::Applied { generation } if generation.get() == 1
+    ));
+    let persisted = loaded(&repository, project_a());
+    assert_eq!(persisted.generation().get(), 1);
+    let registered = persisted_replica(&persisted, replica_id).expect("candidate registered");
+    assert_eq!(registered.resource_id(), resource_id);
+    assert_eq!(registered.availability(), ReplicaAvailability::Available);
+}
+
+#[test]
+fn source_assurance_and_failed_map_mutations_never_register_a_destination() {
+    let repository = TestRepository::new();
+    repository
+        .initialize_empty(project_a())
+        .expect("initialize empty map");
+
+    let (source, source_eligibility) =
+        verified_candidate(b"same immutable content", ENDPOINT_A, "source");
+    let target = ReplicaCandidate::new(
+        source.resource_id(),
+        ENDPOINT_B.parse().expect("EndpointId"),
+        ReplicaRepresentation::CompleteObject,
+        locator("destination"),
+    )
+    .expect("destination candidate");
+    let mut invalid = StorageMapMutation::new();
+    assert_eq!(
+        invalid.add_replica(target, &source_eligibility, ReplicaAvailability::Available),
+        Err(omvcs_core::storage_map::StorageMapMutationBuildError::InvalidPromotionAssurance)
+    );
+    assert_eq!(loaded(&repository, project_a()).replicas(), []);
+
+    let (first, first_eligibility) =
+        verified_candidate(b"first registered content", ENDPOINT_B, "first-copy");
+    let mut first_mutation = StorageMapMutation::new();
+    first_mutation
+        .add_replica(first, &first_eligibility, ReplicaAvailability::Available)
+        .expect("verified candidate");
+    assert!(matches!(
+        apply_storage_map_mutation(
+            &repository,
+            project_a(),
+            StorageMapGeneration::ZERO,
+            &first_mutation
+        ),
+        StorageMapMutationOutcome::Applied { .. }
+    ));
+    let before = loaded(&repository, project_a());
+
+    let (second, second_eligibility) =
+        verified_candidate(b"second registered content", ENDPOINT_B, "second-copy");
+    let mut stale_mutation = StorageMapMutation::new();
+    stale_mutation
+        .add_replica(second, &second_eligibility, ReplicaAvailability::Available)
+        .expect("verified candidate");
+    assert!(matches!(
+        apply_storage_map_mutation(
+            &repository,
+            project_a(),
+            StorageMapGeneration::ZERO,
+            &stale_mutation
+        ),
+        StorageMapMutationOutcome::Conflict {
+            observed_generation: Some(generation)
+        } if generation.get() == 1
+    ));
+    assert_eq!(loaded(&repository, project_a()), before);
+
+    let (third, third_eligibility) =
+        verified_candidate(b"third registered content", ENDPOINT_B, "third-copy");
+    let mut invalid_batch = StorageMapMutation::new();
+    invalid_batch
+        .add_replica(third, &third_eligibility, ReplicaAvailability::Available)
+        .expect("verified candidate");
+    invalid_batch
+        .update_replica(REPLICA_C.parse().expect("ReplicaId"), None, None)
+        .expect("stage invalid missing-record update");
+    assert!(matches!(
+        apply_storage_map_mutation(
+            &repository,
+            project_a(),
+            StorageMapGeneration::try_from(1).expect("generation"),
+            &invalid_batch
+        ),
+        StorageMapMutationOutcome::Invalid { .. }
+    ));
+    assert_eq!(loaded(&repository, project_a()), before);
 }

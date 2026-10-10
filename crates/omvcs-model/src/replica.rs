@@ -8,6 +8,7 @@ use std::fmt;
 
 use crate::canonical::UniqueJsonValue;
 use crate::resource::ResourceByteLength;
+use crate::verification::PromotionEligibility;
 use crate::{ChunkId, ReplicaId, ResourceId, StorageEndpointId};
 use serde::de::{Error as _, MapAccess, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -183,6 +184,8 @@ pub enum ChunkManifestError {
     TotalLengthMismatch,
     /// The sum exceeds the exact Resource byte-length domain.
     LengthOutOfRange,
+    /// The ordered Chunk lengths do not obey the OMVCS 0.1 fixed-size policy.
+    InvalidChunkingPolicy,
 }
 
 impl fmt::Display for ChunkManifestError {
@@ -196,6 +199,9 @@ impl fmt::Display for ChunkManifestError {
             Self::LengthOutOfRange => {
                 formatter.write_str("Chunk Manifest length exceeds the exact integer domain")
             }
+            Self::InvalidChunkingPolicy => formatter.write_str(
+                "Chunk Manifest does not obey the OMVCS 0.1 fixed-size sequential policy",
+            ),
         }
     }
 }
@@ -206,13 +212,16 @@ impl ChunkManifest {
     /// Creates and validates an ordered Chunk Manifest.
     ///
     /// Offsets must be contiguous in sequence order and the sum of the
-    /// element lengths must equal `total_length`.
+    /// element lengths must equal `total_length`. Chunk lengths also conform
+    /// to the exact OMVCS 0.1 fixed-size sequential policy.
     ///
     /// # Errors
     ///
     /// Returns [`ChunkManifestError`] if offsets are not contiguous, the
     /// total length differs from the sum, or the sum exceeds the exact
-    /// Resource byte-length domain.
+    /// Resource byte-length domain, or
+    /// [`ChunkManifestError::InvalidChunkingPolicy`] when the ordered lengths
+    /// do not conform to the OMVCS 0.1 policy.
     pub fn new(
         resource_id: ResourceId,
         total_length: ResourceByteLength,
@@ -232,6 +241,22 @@ impl ChunkManifest {
         }
         if next_offset != total_length.get() {
             return Err(ChunkManifestError::TotalLengthMismatch);
+        }
+        if chunks.is_empty() {
+            return Err(ChunkManifestError::InvalidChunkingPolicy);
+        }
+        if total_length.get() == 0 {
+            if chunks.len() != 1 || chunks[0].length.get() != 0 {
+                return Err(ChunkManifestError::InvalidChunkingPolicy);
+            }
+        } else if chunks.iter().enumerate().any(|(index, entry)| {
+            if index + 1 < chunks.len() {
+                entry.length.get() != 8_388_608
+            } else {
+                entry.length.get() == 0 || entry.length.get() > 8_388_608
+            }
+        }) {
+            return Err(ChunkManifestError::InvalidChunkingPolicy);
         }
         Ok(Self {
             resource_id,
@@ -447,8 +472,8 @@ pub enum ReplicaAvailability {
 /// A `Replica` represents an already-registered record reconstituted from
 /// authoritative operational persistence. Decoding or constructing this
 /// value alone does not register it or establish its persistence authority.
-/// This module exposes no conversion from a [`ReplicaCandidate`] to a
-/// registered record; verified promotion is outside this work package.
+/// New candidates can become registered records only through [`Self`]'s
+/// promotion gate with destination-applicable `resource_identity` assurance.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Replica {
     id: ReplicaId,
@@ -490,6 +515,8 @@ pub struct ReplicaCandidate {
 pub enum ReplicaError {
     /// A chunked manifest describes a different Resource than the Replica.
     ManifestResourceMismatch,
+    /// The destination Resource assurance does not apply to this candidate.
+    PromotionAssuranceMismatch,
 }
 
 impl fmt::Display for ReplicaError {
@@ -497,6 +524,9 @@ impl fmt::Display for ReplicaError {
         match self {
             Self::ManifestResourceMismatch => {
                 formatter.write_str("Chunk Manifest ResourceId differs from Replica ResourceId")
+            }
+            Self::PromotionAssuranceMismatch => {
+                formatter.write_str("Resource assurance does not apply to this Replica candidate")
             }
         }
     }
@@ -550,6 +580,32 @@ impl ReplicaCandidate {
     #[must_use]
     pub const fn locator(&self) -> &ProviderLocator {
         &self.locator
+    }
+
+    /// Promotes this candidate only with destination-applicable Resource
+    /// identity assurance. The caller supplies observed retrieval state;
+    /// verification itself does not define availability policy.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ReplicaError::PromotionAssuranceMismatch`] unless the opaque
+    /// eligibility result applies to this exact candidate.
+    pub fn promote(
+        self,
+        eligibility: &PromotionEligibility,
+        availability: ReplicaAvailability,
+    ) -> Result<Replica, ReplicaError> {
+        if !eligibility.applies_to(&self) {
+            return Err(ReplicaError::PromotionAssuranceMismatch);
+        }
+        Ok(Replica {
+            id: ReplicaId::new(),
+            resource_id: self.resource_id,
+            endpoint_id: self.endpoint_id,
+            representation: self.representation,
+            locator: self.locator,
+            availability,
+        })
     }
 }
 
