@@ -1,10 +1,10 @@
 # Handover WORK-0017 — Resource and Chunk verification model
 
 From agent: OMVCS Core Engineer
-To agent: Independent Verifier / integration reviewer
+To agent: Integration owner
 Date: 2026-10-10
 Branch: `work/0017-resource-chunk-verification`
-HEAD at implementation handoff: `7b2ffb8222b87c14080cc8db51966d695c583a5f`
+HEAD: `4e2e13313625c1e7409d4138100cc324a3bd60f1`
 
 ## Completed
 
@@ -127,25 +127,27 @@ suites, including doctests.
   entire work package.
 - The Verifier initially REJECTED one high-severity case: malformed Chunk
   manifests could pass the general manifest constructor. The policy
-  enforcement and constructor/deserialization tests were added. The
-  Verifier ACCEPTED that specific remediation in follow-up. Full final
-  WORK-0017 Verifier acceptance is still pending and MUST NOT be presumed.
+  enforcement and constructor/deserialization tests were added and the
+  specific remediation was accepted. The final independent review of the
+  complete package returned ACCEPT with no findings.
 - No provider implementation, replication/migration orchestration, automatic
   repair, garbage collection, deletion, retention, shared namespace,
   encryption, grants, publication/M4, Platform, or DAW behavior is included.
 
 ## Remaining work
 
-1. Obtain a final independent Verifier review/ACCEPT for the complete final
-   branch state; address findings if any.
-2. Do not integrate until required verification is accepted.
-3. WORK-0018–WORK-0021 have not been started by this implementation.
+1. WORK-0017 has the required Storage Engineer and independent Verifier
+   acceptance. Follow the established closeout process before integration.
+2. WORK-0018–WORK-0021 have not been started by this implementation.
 
 ## Git state
 
 Implementation commit: `7b2ffb8222b87c14080cc8db51966d695c583a5f`.
-Working tree was clean at the implementation commit. The handover file is a
-separate documentation follow-up commit; check the branch HEAD and worktree
-when resuming.
+Implementation/handover HEAD reviewed: `4e2e13313625c1e7409d4138100cc324a3bd60f1`.
+The Verifier independently accepted the complete package at this HEAD with
+no findings. A subsequent documentation-only commit reconciles the status
+and handover with that ACCEPT; it does not change implementation or tests.
+Remote push performed: NO. Remote publishing is enabled in project state;
+do not push or integrate unless the authorized closeout task requests it.
 Remote push performed: NO. Remote publishing is enabled in project state,
 but this work was not pushed or integrated.

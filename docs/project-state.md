@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, ADR-0035 resolves DG-0033; WORK-0016 bounded Replica/locator/Storage Map/generation/CAS is VERIFIED / INTEGRATED at ee8d77ddfc9859ee8c7bcae13018332632f6efa4; ADR-0036 resolves DEC-CORE-001 + DEC-STORAGE-002, ADR-0037 resolves DEC-STORAGE-004, and ADR-0038 resolves DEC-STORAGE-005; WORK-0017 implementation is present on `work/0017-resource-chunk-verification`, local validation complete and Storage Engineer/Verifier reviews pending; not integrated or pushed; DG-0034 remains open and blocks syntax-specific ProviderLocator schema-identifier validation only)
+Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, ADR-0035 resolves DG-0033; WORK-0016 bounded Replica/locator/Storage Map/generation/CAS is VERIFIED / INTEGRATED at ee8d77ddfc9859ee8c7bcae13018332632f6efa4; ADR-0036 resolves DEC-CORE-001 + DEC-STORAGE-002, ADR-0037 resolves DEC-STORAGE-004, and ADR-0038 resolves DEC-STORAGE-005; WORK-0017 is independently VERIFIED at `4e2e13313625c1e7409d4138100cc324a3bd60f1` on `work/0017-resource-chunk-verification`, but is not integrated or pushed; DG-0034 remains open and blocks syntax-specific ProviderLocator schema-identifier validation only)
 
 ## Specification state
 
@@ -99,8 +99,9 @@ Verifier review and is integrated at
 `origin/work/0016-replica-storage-map`. ADR-0036 resolves DEC-CORE-001 and
 DEC-STORAGE-002 with the fixed-size sequential 8,388,608-byte OMVCS 0.1
 Chunking policy; ADR-0037 resolves DEC-STORAGE-004; ADR-0038 resolves
-DEC-STORAGE-005. WORK-0017 implementation is present on its package branch
-and awaits Storage Engineer and independent Verifier review. It implements
+DEC-STORAGE-005. WORK-0017 is independently VERIFIED on
+`work/0017-resource-chunk-verification` at
+`4e2e13313625c1e7409d4138100cc324a3bd60f1`, but not integrated. It implements
 the verification-result API and promotion eligibility integration with
 WORK-0016 without reopening integrated identity or CAS semantics. A newly
 registered Resource Replica requires
@@ -116,5 +117,5 @@ physical-object/deduplication guarantees, and shared-namespace GC are
 excluded from WORK-0016. DEC-CORE-001, DEC-STORAGE-002, DEC-STORAGE-004, and DEC-STORAGE-005 are
 RESOLVED by ADR-0036/0037/0038. DEC-STORAGE-011 remains OPEN and shared
 namespace claims remain excluded; deletion, GC, and retention remain
-excluded. WORK-0017 is IMPLEMENTED / PENDING INDEPENDENT REVIEW;
+excluded. WORK-0017 is VERIFIED on its feature branch, not integrated;
 WORK-0018–WORK-0021 remain unstarted.

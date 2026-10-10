@@ -1,8 +1,7 @@
 # WORK-0017 — Resource and Chunk verification model
 
-Status: IMPLEMENTED — focused tests and local validation pass; Storage Engineer
-ACCEPT; Verifier's manifest-policy finding is fixed and accepted in follow-up.
-Full-package final Verifier acceptance remains pending.
+Status: VERIFIED — implementation and validation complete; Storage Engineer
+review and independent Verifier ACCEPT. Not integrated.
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0017-resource-chunk-verification`
@@ -160,9 +159,9 @@ Resource hashing, verified/failed/indeterminate Chunk checks, reconstruction
 ordering/completeness and source/destination binding, checksum algorithm and
 scope equivalence, evidence independence from history, promotion gating, and
 CAS conflict/invalid-request atomicity. See `docs/spec-coverage.md` for exact
-test names and execution status. Storage Engineer review accepted the Adapter boundary. The Verifier identified
-and rejected an initial version for allowing nonconforming manifests; manifest
-construction and deserialization now enforce the approved policy, with
-explicit rejection tests. The Verifier accepted this specific remediation;
-overall final package acceptance remains pending. Implementation is not
-integrated or pushed.
+test names and execution status. Storage Engineer review accepted the Adapter
+boundary. The Verifier identified and rejected an initial version for
+allowing nonconforming manifests; manifest construction and deserialization
+now enforce the approved policy, with explicit rejection tests. The Verifier
+accepted that remediation and independently ACCEPTED the complete package
+with no findings. Implementation is not integrated or pushed.
