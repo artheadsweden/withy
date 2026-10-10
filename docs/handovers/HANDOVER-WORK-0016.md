@@ -4,7 +4,7 @@ From agent: OMVCS Lead
 To agent: Integration/closeout owner
 Date: 2026-10-10
 Branch: `work/0016-replica-storage-map`
-HEAD: `53f18ea` (documentation closeout; preceded by implementation commit `327dfa7`)
+HEAD: `9870e0ae2c6e34b6282d654bd2e97e7e89f0b0e8` (feature branch; integrated at `ee8d77ddfc9859ee8c7bcae13018332632f6efa4`)
 
 ## Completed
 
@@ -48,11 +48,12 @@ deletion/GC/retention remain excluded.
 
 - Focused `omvcs-core` Storage Map tests: 20 passed.
 - Focused `omvcs-model` Replica tests: 11 passed.
-- `cargo test --workspace --locked`: passed.
-- `cargo fmt --all -- --check`: passed.
-- Warnings-denied Clippy for touched crates/all targets: passed.
-- `git diff --check`: passed before the latest documentation reconciliation;
-  rerun at closeout.
+- Post-merge `cargo test --locked -p omvcs-core -p omvcs-model`: passed.
+- Post-merge `cargo test --workspace --locked`: passed.
+- Post-merge `cargo fmt --all -- --check`: passed.
+- Post-merge warnings-denied Clippy for `omvcs-core` and `omvcs-model`,
+  all targets: passed.
+- Post-merge `git diff --check`: passed before status reconciliation.
 - Storage Engineer review: ACCEPT.
 - Independent Verifier review: ACCEPT.
 
@@ -84,17 +85,19 @@ are outside this work package.
 
 ## Remaining work
 
-Run final closeout validation, inspect the complete diff for provenance and
-scope, commit coherently, and integrate only through the authorized branch
-workflow. Keep WORK-0017–0021 unstarted. Do not implement verified promotion
-until WORK-0017's result contract and DEC-STORAGE-004/005 are approved.
+WORK-0016 is VERIFIED / INTEGRATED at the bounded approved scope. Keep
+WORK-0017–0021 unstarted. Before implementing WORK-0017 verification and
+verified promotion, resolve DEC-CORE-001 and DEC-STORAGE-002 jointly for
+chunking, DEC-STORAGE-004 for the verification-strength taxonomy, and
+DEC-STORAGE-005 for post-upload full-hash-versus-verified-reconstruction
+assurance. WORK-0017 must also receive its normal implementation
+authorization. DEC-STORAGE-011 remains OPEN; shared namespace claims,
+deletion, GC, and retention remain excluded. DG-0034 still blocks only
+syntax-specific ProviderLocator schema-identifier validation.
 
 ## Git state
 
-Working tree: CLEAN after the implementation and documentation closeout
-commits. Before committing, the status inventory contained only WORK-0016
-production implementation, tests, and directly related
-Spec/ADR/gap/plan/coverage/milestone/project-state/handover documentation;
-no unrelated files were identified.
+Working tree: CLEAN after integration and post-merge validation; documentation
+reconciliation was committed on the integration branch.
 Remote publishing: ENABLED for `origin` per `docs/project-state.md`.
-Remote push performed: NO
+Feature-branch and integration-branch pushes performed: YES.

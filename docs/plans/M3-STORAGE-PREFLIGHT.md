@@ -200,13 +200,17 @@ task. Other packages retain their own gates and authorization process.
 
 - M3 is IN PROGRESS. WORK-0015 is VERIFIED/integrated; its restricted
   provider-neutral Resource/Chunk byte-I/O scope is complete.
-- WORK-0016 is READY and authorized for its Replica/representation/locator
-  model, Storage Map structure, generation type, and guarded/CAS mutation
-  under ADR-0032/0033/0034. Verified promotion remains gated by the approved
-  WORK-0017 result and DEC-STORAGE-004/005. DEC-STORAGE-011 remains open but
-  does not block the explicitly excluded shared-namespace claims.
+- WORK-0016's bounded Replica/representation/locator model, Storage Map
+  structure, generation type, guarded/CAS mutation, and authoritative
+  persisted-map reconstruction are VERIFIED / INTEGRATED at
+  `ee8d77ddfc9859ee8c7bcae13018332632f6efa4`. DG-0034 remains open and blocks
+  syntax-specific ProviderLocator schema-identifier validation only. Verified
+  promotion remains gated by the approved WORK-0017 result and
+  DEC-STORAGE-004/005. DEC-STORAGE-011 remains open but does not block the
+  explicitly excluded shared-namespace claims.
 - WORK-0017 is not ready for verification implementation until its listed
   chunking and verification decisions are resolved. It may use the reviewed
   WORK-0016 model/locator contract without waiting for WORK-0016 closeout.
-- This task changed documentation/specifications only; no production
-  implementation beyond the already integrated WORK-0015 scope has started.
+- At initial M3 preflight, no production implementation beyond WORK-0015 had
+  started. WORK-0016 was subsequently completed and integrated at its bounded
+  approved scope.

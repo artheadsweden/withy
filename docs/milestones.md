@@ -93,8 +93,10 @@ is independently verified and integrated at
 ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, and ADR-0035
 resolves DG-0033's authoritative persistence boundary. WORK-0016 Replica,
 locator, Storage Map, generation/CAS, and authoritative persisted-map
-reconstruction are independently verified at the bounded scope on
-`work/0016-replica-storage-map`; they are not integrated. DG-0034 remains
+reconstruction are independently verified at the bounded scope and
+integrated at `ee8d77ddfc9859ee8c7bcae13018332632f6efa4` on
+`spec/0003-canonical-collection-order`; its feature branch is pushed to
+`origin/work/0016-replica-storage-map`. DG-0034 remains
 open and blocks syntax-specific ProviderLocator schema-identifier validation
 only. Verified promotion remains gated by WORK-0017's approved verification
 result and DEC-STORAGE-004/005. WORK-0017–WORK-0021 remain unstarted.

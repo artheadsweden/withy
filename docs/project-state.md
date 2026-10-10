@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, and ADR-0035 resolves DG-0033; bounded WORK-0016 Replica/locator/Storage Map/generation/CAS and authoritative persisted-map reconstruction are independently verified on work/0016-replica-storage-map but not integrated; DG-0034 remains open for ProviderLocator schema-identifier grammar and blocks syntax-specific validation only; verified promotion remains gated by WORK-0017 and DEC-STORAGE-004/005)
+Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, and ADR-0035 resolves DG-0033; bounded WORK-0016 Replica/locator/Storage Map/generation/CAS and authoritative persisted-map reconstruction are VERIFIED / INTEGRATED at merge commit ee8d77ddfc9859ee8c7bcae13018332632f6efa4; DG-0034 remains open for ProviderLocator schema-identifier grammar and blocks syntax-specific validation only; verified promotion remains gated by WORK-0017 and DEC-STORAGE-004/005)
 
 ## Specification state
 
@@ -92,9 +92,11 @@ and independent Verifier review; it is integrated at
 `aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. Human-approved ADR-0034 resolves
 DG-0032; ADR-0035 resolves DG-0033's persistence reconstruction authority.
 WORK-0016's bounded Replica/locator/Storage Map/generation/CAS scope and
-authoritative map reconstruction have passed Storage Engineer and
-independent Verifier review on `work/0016-replica-storage-map`; they are not
-integrated. DG-0034 remains open and excludes syntax-specific
+authoritative map reconstruction passed Storage Engineer and independent
+Verifier review and is integrated at
+`ee8d77ddfc9859ee8c7bcae13018332632f6efa4` on
+`spec/0003-canonical-collection-order`. Its feature branch is pushed to
+`origin/work/0016-replica-storage-map`. DG-0034 remains open and excludes syntax-specific
 ProviderLocator schema-identifier validation. `StorageMapGeneration` is one
 exact unsigned JSON integer in `0 ..= 9007199254740991`, initialized to
 zero for the empty map. DEC-STORAGE-004/005 continue to gate verification
