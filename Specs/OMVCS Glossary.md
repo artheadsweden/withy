@@ -666,6 +666,15 @@ status, marker schema, Project identity, and storage-layout version. It
 does not prove history completeness, Resource verification, publication,
 or Platform registration.
 
+## Incomplete Initialization
+
+For filesystem Repository Home bootstrap under Storage Adapter §§124–126,
+**incomplete initialization** is the explicit non-usable state in which
+bootstrap artifacts exist but the valid marker and complete required
+initial operational state are not all durable and mutually consistent.
+It is distinct from an uninitialized root, an initialized Home, and ordinary
+missing metadata. It does not define non-filesystem Home discovery.
+
 ---
 
 ## Replica Identifier (ReplicaId)

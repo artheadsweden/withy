@@ -640,6 +640,25 @@ The old valid replica SHOULD NOT be removed before the new replica has been veri
 
 ---
 
+## INV-STOR-006 — Filesystem Home bootstrap is logically atomic
+
+A filesystem Repository Home MUST NOT be reported as initialized until its
+valid supported marker and all required initial operational state,
+including the empty Storage Map at `StorageMapGeneration` 0, are durable
+and mutually consistent. Bootstrap MUST provide an all-or-nothing logical
+outcome even when it uses multiple physical writes.
+
+After interruption or failure, explicit-root discovery MUST distinguish an
+uninitialized root, a complete initialized Home, and
+`incomplete_initialization`. Partial bootstrap artifacts MUST NOT be
+treated as a usable Home or ordinary absence. A valid initialized Home for
+the same Project/layout MUST be recognized idempotently on retry; bootstrap
+MUST NOT increment generation 0 or automatically repair inconsistent
+state. This invariant applies only to filesystem Homes under ADR-0041 and
+does not define non-filesystem Home discovery.
+
+---
+
 # 7. Platform independence
 
 ## INV-PLAT-001 — The Open Music Platform is not the repository

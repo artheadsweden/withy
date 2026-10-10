@@ -1886,6 +1886,12 @@ Repository Home bootstrap/operational-metadata initialization MUST establish
 this empty map and generation. If a Storage Map record is absent outside
 that initialization boundary, Core MUST treat the map as absent or
 incomplete operational metadata, not as an existing generation-zero map.
+For a filesystem Repository Home, this initialization is part of the
+logical atomic bootstrap operation in Storage Adapter §124: generation `0`
+is established exactly once as initial state, not by a Storage Map mutation,
+and bootstrap writes MUST NOT advance it to `1`. Until the complete marker
+and required initial operational state are durable and mutually consistent,
+the root is not an initialized Home.
 
 Core exposes an operation equivalent to:
 

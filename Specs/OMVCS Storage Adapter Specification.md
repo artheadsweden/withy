@@ -1090,6 +1090,13 @@ transactional provider write
 
 The exact method is provider-specific.
 
+Filesystem Repository Home bootstrap is governed by §§124–126 as one
+logical atomic initialization operation. Individual metadata writes MAY be
+staged separately, but the Home MUST NOT be exposed as initialized until
+its marker and complete required initial operational state are durable and
+mutually consistent. This bootstrap rule does not generalize to
+non-filesystem Homes.
+
 ---
 
 # 47. No assumed POSIX semantics
@@ -1168,6 +1175,15 @@ reconstructed together as one guarded state. A persisted map with an old
 generation, a new generation with an old map, or a partial multi-entry
 mutation MUST NOT be exposed as a successful state. Repository Home
 initialization MUST establish the empty Storage Map at generation `0`.
+
+For a filesystem Repository Home, the empty map and generation `0` become
+authoritative only at the logical bootstrap commit point defined in §124.
+They MUST be established together with the valid marker and other required
+initial operational state. Bootstrap initialization is not a Storage Map
+mutation and MUST NOT advance generation to `1`. Discovery and retry MUST
+classify interrupted or inconsistent initialization as specified in
+§§124–125; ordinary map reconstruction and later mutations retain their
+existing contracts.
 
 The persisted Storage Map at a Repository Home is authoritative for its
 prior successful Replica registrations. Repository Home MUST persist only
@@ -1385,6 +1401,16 @@ Filesystem writes MUST satisfy the atomic immutable creation requirements
 in §21. Temporary objects MUST remain inside the controlled root and MUST
 NOT be exposed at a canonical key before complete write, required
 durability handling, and verification.
+
+Filesystem Repository Home bootstrap staging and commit machinery MUST
+also remain beneath the explicitly configured repository root. It MUST
+follow the containment and no-follow requirements above, MUST NOT follow
+symlink/reparse components outside the root, and MUST NOT resolve through
+caller-controlled arbitrary paths. Private staging paths are not
+interoperable layout and MUST NOT be exposed as authoritative repository
+metadata before bootstrap commit. If the platform cannot provide the
+required containment and logical publication guarantees, Home capability
+MUST be reported as unsupported.
 
 It SHOULD also use:
 
@@ -2310,9 +2336,39 @@ Tombstone use is implementation-specific.
 # 124. Repository Home bootstrap
 
 A filesystem-backed Repository Home MUST use the explicit
-caller-selected filesystem repository root. The root MUST be new or empty
-for bootstrap; a populated directory without a valid marker MUST NOT be
-silently reinterpreted as a repository.
+caller-selected filesystem repository root. An initial bootstrap MUST
+require a new or empty root; a populated directory without a valid marker
+MUST NOT be silently reinterpreted as a repository. A retry after
+interrupted bootstrap MAY encounter only validated artifacts of that
+bootstrap and MUST follow the safe-retry rules below; this does not
+authorize adoption of unrelated populated directories.
+
+Bootstrap is one logical atomic initialization operation. A Home is
+successfully initialized only when the valid marker defined in §126 and
+all required initial operational state under §10 are durable according to
+the declared filesystem/storage durability semantics and mutually
+consistent. The initial set includes the empty Storage Map at Core
+`StorageMapGeneration` `0`. Bootstrap MUST return success only after the
+same root can be rediscovered as that initialized Home. The marker's
+Project identity, schema, and layout MUST be supported and consistent with
+the identities and schemas of required initial operational records.
+
+The externally meaningful bootstrap states are:
+
+```text
+uninitialized
+initialized
+incomplete_initialization
+```
+
+`uninitialized` means no valid OMVCS Home has been established at the
+selected root. `initialized` means the supported valid marker and complete
+required initial operational state are present, durable, and mutually
+consistent. `incomplete_initialization` means bootstrap artifacts exist
+but the complete required initialization set is absent, invalid, or
+inconsistent. It is not a usable Repository Home and MUST be reported
+explicitly, not as `not_repository`, initialized Home, or ordinary missing
+metadata.
 
 The marker MUST be stored at:
 
@@ -2321,17 +2377,51 @@ The marker MUST be stored at:
 ```
 
 The `.omvcs` directory is reserved for OMVCS repository metadata at that
-root. Bootstrap MUST create the marker atomically and MUST NOT replace an
-existing marker. It MUST initialize the empty Storage Map and Core
-`StorageMapGeneration` `0` as part of the repository operational-metadata
-initialization boundary. The marker and generation are distinct records;
-the marker MUST NOT be treated as a generation value or proof that the Home
-is complete. Absence of a persisted Storage Map record after initialization
-is not equivalent to generation `0`.
+root. Bootstrap MUST NOT replace an existing incompatible marker. It MUST
+establish the marker, empty Storage Map, Core `StorageMapGeneration` `0`,
+and other required initial operational state as one logical atomic
+operation. The marker and generation are distinct records; the marker
+alone MUST NOT be treated as proof that the Home is initialized. Absence
+of a persisted Storage Map record after successful initialization is not
+equivalent to generation `0`.
+
+The logical commit point is the durable transition at which the valid
+marker and complete required initial operational state become authoritative
+together. An implementation MAY prepare these records through a private
+staging/bootstrap area under the selected root, persist them according to
+the declared durability semantics, and then publish the logical commit
+point using supported atomic/publish primitives. Physical multi-file
+atomicity is not required if the protocol provides the same all-or-nothing
+logical outcome. Exact staging names, structure, and the physical commit
+mechanism are implementation details and MUST NOT become normative layout
+unless required for interoperability. The marker itself is not the commit
+point while required operational state is absent.
+
+If failure or interruption occurs before logical commit, bootstrap MUST
+report failure and the root MUST NOT be treated as initialized. Staging
+artifacts remain non-authoritative; automatic cleanup is not required.
+After logical commit, discovery or retry MUST recognize the initialized
+Home even if the caller did not receive the original success response.
+
+Retry at the same root MUST be idempotent for the same Project and
+supported layout. A fully valid initialized Home MUST return a typed
+`already_initialized` or equivalent idempotent-success outcome and MUST
+NOT rewrite generation-zero metadata unnecessarily. If no authoritative
+initialized state exists, retry MAY resume or restart only when any
+existing marker matches the requested Project and supported schema/layout,
+and validated state establishes that completing initialization is safe.
+Incomplete artifacts MUST NOT be trusted merely because they exist.
+Conflicting/inconsistent marker or operational state MUST fail explicitly
+as `incomplete_initialization` or an equivalent typed inconsistency; no
+automatic repair is defined. A Home initialized for a different Project
+MUST fail with identity mismatch and MUST NOT be overwritten.
 
 Bootstrap MUST fail explicitly if it cannot establish the safe root,
-create the marker without replacement, or initialize the required
-operational state. No creative history is changed merely by bootstrap.
+establish the logical commit point, or meet the required durability and
+containment guarantees. If the platform cannot provide the required
+publish/durability primitives, filesystem Home capability MUST be
+reported as unsupported rather than weakening this contract. No creative
+history is changed merely by bootstrap.
 
 ---
 
@@ -2341,10 +2431,30 @@ A filesystem Repository Home discovery operation MUST use only the
 explicitly supplied candidate root. It MUST NOT walk parent directories
 looking for `.omvcs/repository.json`.
 
-If the marker is absent, discovery MUST report `not_repository` or the
-exactly equivalent typed result. If present, it MUST validate the marker
-schema and layout versions and the Project identity before interpreting
-the root as a Repository Home.
+Discovery MUST classify the selected root deterministically:
+
+- no marker and no evidence of bootstrap artifacts: `not_repository` or
+  equivalent `uninitialized`;
+- complete valid supported marker and complete consistent required
+  initial operational state: initialized Repository Home;
+- malformed marker with no bootstrap-state inconsistency: invalid
+  repository metadata;
+- valid but unsupported marker schema/layout: explicit unsupported
+  version;
+- valid marker with a different requested Project identity: identity
+  mismatch;
+- partial bootstrap artifacts, a valid marker with missing/invalid
+  required initial operational state, or initial operational state without
+  a valid marker: explicit `incomplete_initialization`.
+
+`incomplete_initialization` MUST NOT be reported as `not_repository`,
+initialized Home, or ordinary missing metadata. Where a more specific
+invalid-marker, unsupported-version, or identity-mismatch cause applies,
+discovery MUST NOT convert it to success. Discovery MUST NOT infer a Home
+from operational files alone. If the complete initialized state is valid,
+abandoned non-authoritative staging artifacts that do not conflict with
+that state MUST NOT downgrade discovery from initialized; automatic
+cleanup remains unnecessary.
 
 Discovery MUST NOT infer Project identity from the folder name or path.
 
@@ -2380,7 +2490,9 @@ The marker establishes intentional repository-root status, marker schema,
 Project identity, and storage-layout version only. It is not proof of
 history completeness, Resource verification, Platform registration,
 publication state, or an operation log. Repository completeness and
-operational records MUST be validated independently.
+operational records MUST be validated independently. A valid marker with
+missing, invalid, or inconsistent required initial operational state is
+`incomplete_initialization`, not an initialized Home.
 
 The marker MUST NOT contain a separate RepositoryId, Repository format
 version, namespace identifier, generation, credentials, or other fields.
@@ -4566,8 +4678,8 @@ is frozen:
 11. Whether Endpoint namespace identity is mandatory.
 12. Exact retention policy for abandoned multipart uploads and unreferenced complete objects.
 13. Whether local filesystem and S3-compatible Adapters become official reference conformance implementations.
-14. RESOLVED by ADR-0041: filesystem Repository Home marker and explicit
-   root discovery/bootstrap format.
+14. RESOLVED by ADR-0041/0042: filesystem Repository Home marker,
+   explicit-root discovery, logically atomic bootstrap, and retry format.
 
 These are finite decisions within the Storage Adapter Specification, not
 additional top-level specifications.

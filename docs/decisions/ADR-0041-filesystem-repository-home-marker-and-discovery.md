@@ -96,4 +96,5 @@ migration is introduced.
 
 DEC-STORAGE-011 and DEC-STORAGE-013 remain OPEN. The marker carries no
 namespace identifier, and the filesystem Adapter is not designated an
-official reference implementation.
+official reference implementation. Bootstrap atomicity, interruption
+classification, and retry semantics are supplemented by ADR-0042.

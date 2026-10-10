@@ -43,7 +43,7 @@ Specs.
 ## Can unaffected work continue?
 
 Yes. WORK-0019 filesystem Home work and Resource/Chunk byte storage may
-proceed, subject to DG-0035 for bootstrap failure atomicity. No
+proceed under ADR-0042. DG-0036 remains explicitly outside WORK-0019. No
 non-filesystem adapter may claim complete Repository Home conformance
 based on an inferred marker mapping or discovery mechanism.
 

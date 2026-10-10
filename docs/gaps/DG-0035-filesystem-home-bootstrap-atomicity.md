@@ -1,6 +1,6 @@
 # DG-0035 — Filesystem Repository Home bootstrap atomicity
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: WORK-0019 pre-implementation audit
@@ -70,4 +70,13 @@ bootstrap may be retried.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved ADR-0042. Filesystem Repository Home bootstrap
+is one logical atomic initialization operation. The marker and complete
+required initial operational state, including the empty Storage Map at
+generation `0`, become authoritative together at a durable logical commit
+point. Discovery classifies roots as uninitialized, initialized, or
+`incomplete_initialization` and preserves the explicit invalid-marker,
+unsupported-version, and Project-mismatch outcomes. Same-Project retry is
+idempotent; safe resume/restart is allowed only from validated bootstrap
+state, and automatic repair is not defined. See ADR-0042 and Storage
+Adapter §§46, 51, 64, 124–126; Core §34; INV-STOR-006.
