@@ -86,8 +86,11 @@ started.
 
 ## M3 — Storage abstraction
 
-Status: NEXT; no work package or implementation has started. Define bounded
-work packages before beginning production implementation.
+Status: PLANNED — bounded preflight complete; WORK-0015 through WORK-0021
+are defined in `docs/plans/`. No implementation has started. WORK-0015 is
+executable within its explicitly restricted byte-I/O scope; later packages
+have the decision and Design Gap gates documented in their plans. Each
+package still requires its own implementation authorization.
 
 - generic storage contract;
 - mock storage;

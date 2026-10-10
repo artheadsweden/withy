@@ -7,12 +7,22 @@ The Verifier owns completeness of this map. Implementers update entries for thei
 Do not mark a requirement `done` merely because code exists. `done` means implementation and required verification are complete.
 
 The original WORK-0013/0014 coverage records describe their verified
-Line/Release-only integration scope. ADR-0030/0031 extension implementation
-and focused tests are present in the current worktree; workspace acceptance
-and independent verification remain pending.
+Line/Release-only integration scope. The ADR-0030/0031 extension is
+independently verified and integrated at
+`3eb1c3e01fa01904f8925f9bcdf3171059594c50`.
+
+M3 preflight coverage below is PLANNED only; it records intended requirements
+and acceptance-test obligations, not implemented or verified behavior.
 
 | Requirement | Work item | Implementation | Tests | Status |
 |---|---|---|---|---|
+| Provider-neutral Resource/Chunk byte I/O, capability declaration, and explicit provider failures without storage location entering historical identity (Core §§6–8, 29–31; Storage §§1–38, 85–86, 176–185; INV-RES-001–007, INV-STOR-001–003, INV-INT-001–003) | WORK-0015 | `crates/omvcs-storage/` (planned) | Exact-byte put/get; absent versus failure; capability and identity substitution cases | planned |
+| Operational Replica identity and mutable Storage Map, separate from immutable historical objects (Core §§29–36, 47–51; Storage §§30–38, 49–51, 73–75; INV-STOR-001–005, INV-INT-001–003) | WORK-0016 | `crates/omvcs-model/`, `crates/omvcs-core/` (planned) | Blocked pending DG-0029 and DEC-STORAGE-007/011; stale generation and identity-preservation tests | planned — blocked |
+| Resource/Chunk integrity verification, reconstruction evidence, availability versus corruption (Core §§8–8.2, 47–55; Storage §§30–36, 73–76, 183; INV-RES-001–007, INV-INT-001–003) | WORK-0017 | `crates/omvcs-core/`, `crates/omvcs-storage/` (planned) | Blocked pending DEC-CORE-001/DEC-STORAGE-002 joint decision and DEC-STORAGE-004/005; wrong-byte, reordering, and unavailable tests | planned — blocked |
+| Deterministic in-memory Storage Adapter and provider failure injection | WORK-0018 | `crates/omvcs-storage-mock/` (planned) | Contract suite and explicit absent, unavailable, corrupt, and partial failure cases | planned |
+| Local filesystem Storage Adapter with approved key layout and discovery marker | WORK-0019 | `crates/omvcs-storage-local/` (planned) | Base opaque-key byte provider may proceed; logical layout/Home discovery awaits DEC-STORAGE-001/003/014; chunk-specific behavior awaits shared chunk policy. Atomicity, path, symlink, and recovery-boundary tests | planned |
+| Source-preserving cross-Endpoint Resource replication and verify-before-register | WORK-0020 | `crates/omvcs-core/`, `crates/omvcs-storage/` (planned) | Blocked pending Replica/verification contracts; failure injection proves source retention and no false registration | planned — blocked |
+| Core-owned migration that copies, verifies, registers destination, and retains source | WORK-0021 | `crates/omvcs-core/`, `crates/omvcs-storage/` (planned) | Blocked pending WORK-0020 and Replica/verification decisions; phase failures preserve source and history identity | planned — blocked |
 | Assigned Project, Creative Component, Storage Endpoint, and Contribution IDs are generated as UUIDv7 in canonical lowercase form; Project and Component identity is independent of filenames, paths, storage endpoints, Platform URLs, and credentials (Core §§4, 9; INV-PROJ-001–003) | WORK-0001 | `crates/omvcs-model/` | generated UUIDv7/canonical text and strict UUID parsing; test fixture changes filename/path/storage/Platform/credential values while assigned IDs remain stable | verified |
 | ActorId is assigned UUIDv7 in lowercase canonical form and independent of display name, email, username, Platform account, and signing keys, including key rotation (Glossary Actor Identifier; Core §§4.1, 59; INV-HIST-007; ADR-0002) | WORK-0001 | `crates/omvcs-model/` | canonical UUIDv7 parsing/formatting; test fixture changes profile, account, and signing-key values (including rotation) while ActorId remains stable | verified |
 | Revision authorship uses ActorId and preserves authorship in immutable Revision history (Core §§14, 59; INV-HIST-007; ADR-0002) | WORK-0008 | `crates/omvcs-model/src/revision.rs` | `tests/revision.rs`: direct ActorId field and identity-change case; stable ActorId/profile/account/key format is additionally covered by WORK-0001 | verified |
