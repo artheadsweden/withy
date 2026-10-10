@@ -55,7 +55,8 @@ shared conformance fixtures and controlled provider failures.
 ## Explicit non-goals
 
 - Filesystem, network, cloud, or persistence behavior.
-- Choosing verification/chunking semantics.
+- Choosing verification/chunking semantics; the mock implements the
+  contracts approved by ADR-0036/0037/0038.
 - Official reference-conformance claims.
 - GC, cleanup, retention, M4 transactions, or Platform policy.
 

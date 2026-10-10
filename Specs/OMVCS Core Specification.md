@@ -446,14 +446,35 @@ stored as:
 
 or
 
-32 × 2 MiB chunks
-
-or
-
 one complete object
 ```
 
 is still the same Resource Object.
+
+OMVCS 0.1 defines one normative reference Chunking policy: fixed-size
+sequential Chunking with a target size of exactly
+`8 * 1024 * 1024 = 8,388,608` bytes. Process the complete Resource byte
+stream from byte zero. Emit consecutive Chunks in byte-stream order, with no
+overlap or gaps. Every non-final Chunk MUST contain exactly 8,388,608 bytes;
+the final Chunk contains all remaining bytes and MAY be smaller. A Resource
+of at most 8,388,608 bytes produces one Chunk under this policy. The existing
+Resource rules accept a zero-byte Resource and do not prohibit a zero-length
+Chunk; therefore, the chunked reference representation of an empty Resource
+contains one final zero-length Chunk. A complete-object representation is
+independent of Chunking and remains valid for an empty Resource.
+
+Given identical Resource bytes and this OMVCS 0.1 policy, conforming
+implementations MUST produce the same ordered Chunk sequence. No
+content-defined, provider-dependent, adaptive, or negotiated alternative
+OMVCS Chunking policy is defined in 0.1. A future protocol version MAY add
+other deterministic policies only if they are explicitly identified and
+versioned; an existing representation retains the policy under which it
+was created.
+
+An Endpoint's physical layout preference MUST NOT automatically cause an
+existing OMVCS representation to be rechunked. A provider MAY segment or
+encode data internally below the OMVCS representation boundary, but that
+segmentation MUST NOT be presented as different OMVCS Chunk identities.
 
 ## 8.1 Chunk identity
 
@@ -501,21 +522,17 @@ A Chunk Manifest is storage/reconstruction information.
 
 Historical objects MUST NOT depend upon a particular chunking representation.
 
-Chunk Manifest information is operational physical-reconstruction data. It MUST NOT appear in a historical Resource Reference or affect historical object identity. Different Replicas or Endpoints MAY use different physical chunk layouts for the same Resource without changing its Resource Identifier or creative history.
+Chunk Manifest information is operational physical-reconstruction data. It
+MUST NOT appear in a historical Resource Reference or affect historical
+object identity. An OMVCS 0.1 chunked representation MUST use the normative
+policy in §8. A complete-object representation remains independent of that
+policy. Provider-internal segmentation below the representation boundary is
+not an OMVCS Chunk layout.
 
-A Storage Adapter MAY store the same Resource differently while preserving Resource identity.
-
-OMVCS 0.1 SHOULD initially support simple deterministic fixed-size chunking for the reference implementation.
-
-Recommended default:
-
-```text
-8 MiB chunks
-```
-
-This is deliberately simple.
-
-More sophisticated content-defined chunking MAY later be introduced without changing Resource identity.
+A Storage Adapter MAY use provider-internal physical segmentation while
+preserving the OMVCS representation and Resource identity. It MUST NOT
+automatically replace an existing OMVCS Chunk Manifest merely because a
+different Endpoint prefers another layout.
 
 ---
 
@@ -1705,9 +1722,8 @@ Replica, not an update to the old one.
 An incomplete or unverified candidate representation MUST NOT be registered
 as a Resource Replica in the Storage Map. Replica Addition MUST NOT mark a
 Resource Replica verified before the applicable Content Verification
-requirements succeed. This section does not define verification-strength
-labels, evidence, or upload assurance; those remain subject to the
-applicable Storage Adapter decisions and contracts.
+requirements succeed. A new Resource Replica may be registered only with
+`resource_identity` assurance under Core §55 and Storage Adapter §§32–34.
 
 Reconstructing a Storage Map from an authoritative Repository Home does not
 perform a new Replica Addition and MUST NOT re-verify Resource bytes solely
@@ -2396,6 +2412,11 @@ valid Replicas and is reported separately from integrity/verification
 findings. Existence or successful location of a Replica does not imply that
 it is verified.
 
+Unavailable or missing bytes MUST NOT be reported as corruption. A Replica
+is corrupt only when bytes actually checked against the required immutable
+identity fail. Corruption of one Replica MUST NOT invalidate another
+Replica or the Resource Object.
+
 ---
 
 # 52. Reproducibility
@@ -2495,6 +2516,13 @@ SHA256(reconstructed bytes)
 Resource Identifier
 ```
 
+The `resource_identity` strength means the complete Resource byte sequence
+has been cryptographically verified against its ResourceId. This may be
+established by hashing a complete-object representation or by the
+deterministic verified-reconstruction path in the Storage Adapter
+Specification. A new Resource Replica MUST NOT be registered without
+`resource_identity` assurance.
+
 ## Chunk
 
 ```text
@@ -2502,6 +2530,27 @@ SHA256(chunk bytes)
     ==
 Chunk Identifier
 ```
+
+The `chunk_identity` strength proves only the exact Chunk whose bytes were
+checked. It does not by itself prove that a complete Resource can be
+reconstructed, that all required Chunks are present, that their order is
+correct, or that the complete ResourceId matches.
+
+Verification strength states what proposition has been proved; verification
+method/evidence states how it was proved. A provider-supplied checksum may be
+used only when its semantics prove the exact OMVCS SHA-256 identity over the
+exact same byte sequence: one Chunk for `chunk_identity`, or the complete
+Resource for `resource_identity`. Generic provider success, existence,
+matching length, ETag, provider version, CRC, multipart ETag, or a checksum
+without proven algorithm and byte scope is not OMVCS content verification.
+
+Verification results distinguish `verified`, `failed`, and `indeterminate`.
+`failed` means bytes actually checked did not match the required identity.
+Missing or unavailable bytes are indeterminate/unavailable, not corruption.
+Verification evidence is operational metadata and MUST NOT enter Resource
+hash preimages, Component State, Project State, Revision identity, or
+creative provenance. Evidence MUST NOT contain credentials or transient
+signed URLs.
 
 ## Metadata object
 
@@ -3820,11 +3869,13 @@ Will map the generic DAW contract onto Ardour.
 
 # 89. Matters that remain unresolved inside Core 0.1
 
-There are a few areas where we should deliberately avoid pretending we have made a decision when we have not.
+There are a few areas where we should deliberately avoid pretending we have
+made a decision when we have not.
 
 They belong inside this Core Specification and should be resolved before Core 0.1 is frozen:
 
-1. Whether fixed 8 MiB chunking remains the reference storage representation or we adopt deterministic content-defined chunking.
+1. RESOLVED by ADR-0036: OMVCS 0.1 uses fixed-size sequential Chunking
+   with an exact target of 8,388,608 bytes.
 2. Remaining Reference Render policy and association rules, excluding a
    Release body member or `CreateRelease` precondition as specified in §18.
 3. Exact minimum durability policy for published Revisions.
@@ -3833,10 +3884,11 @@ They belong inside this Core Specification and should be resolved before Core 0.
 7. Whether Line deletion requires an automatic archival/pin period.
 
 Former items 4 and 8 are resolved by ADR-0027 and ADR-0028 respectively.
-`ValidateRepository` is resolved by ADR-0029. These six remaining items are
+`ValidateRepository` is resolved by ADR-0029. These five remaining items are
 the unresolved Core decisions; their existing item numbers are retained for
 the Decision Register.
-Those are now a finite list of **Core decisions**, not invitations to create ten more documents.
+The unresolved entries are a finite list of **Core decisions**, not
+invitations to create ten more documents.
 
 ---
 

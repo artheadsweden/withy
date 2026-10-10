@@ -30,8 +30,10 @@ Repository Home conformance.
 - Existing M1 Resource/Chunk identifiers and current Storage Adapter
   operation contract.
 - No human decision is required for the restricted byte-I/O seam.
-- Do not choose Chunking policy; DEC-CORE-001 and DEC-STORAGE-002 remain
-  coupled and open.
+- Do not choose Chunking policy; at WORK-0015 implementation time
+  DEC-CORE-001 and DEC-STORAGE-002 were coupled and open. They are
+  subsequently resolved by ADR-0036; WORK-0015 does not implement the
+  chunker.
 - No persistent Replica or Storage Map model; DG-0029 was deferred to
   WORK-0016 and has since been resolved by ADR-0032. Storage Map generation
   and guarded mutation mechanics are defined separately by ADR-0034 and
@@ -84,7 +86,9 @@ Repository Home conformance.
 - At WORK-0015 closeout, DG-0029 blocked persistent Replica/Storage Map
   semantics, not this byte-I/O contract. ADR-0032 later resolved DG-0029;
   DG-0032 now gates guarded map mutations.
-- DEC-CORE-001 and DEC-STORAGE-002 remain open; no chunking policy is chosen.
+- At WORK-0015 closeout, DEC-CORE-001 and DEC-STORAGE-002 were open and no
+  chunking policy was chosen in that package. ADR-0036 subsequently resolves
+  both decisions.
 
 ## Implementation plan
 

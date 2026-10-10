@@ -649,6 +649,11 @@ Exact storage-provider internals may differ.
 
 Core-visible state MUST never mark a replica `verified` before verification requirements are satisfied.
 
+New registration requires `resource_identity` assurance under §§32–34.
+`chunk_identity` for some or all constituent Chunks alone is insufficient
+unless the complete deterministic reconstruction requirements in §33 also
+establish `resource_identity`.
+
 These registration requirements apply when admitting a new candidate. A
 Repository Home's reconstruction of its authoritative persisted Storage
 Map is not a new registration and does not require re-verifying Resource
@@ -670,29 +675,51 @@ This may operate by:
 - downloading and hashing bytes;
 - hashing locally immediately after upload;
 - using a provider checksum proven equivalent;
-- reconstructing chunks and verifying final Resource hash.
+- reconstructing Chunks and establishing Resource-level assurance under §33.
 
 The verification method MUST be reported.
+
+The result MUST distinguish outcome, verification strength, and
+verification method/evidence. Missing or inaccessible bytes MUST NOT be
+reported as an identity mismatch.
 
 ---
 
 # 32. Verification strength
 
-Verification SHOULD expose a strength/classification.
-
-Conceptually:
+Verification strength states what identity proposition was proved.
+Verification method/evidence states how it was proved. OMVCS 0.1 defines
+these strengths:
 
 ```text
-full_content
-trusted_provider_checksum
-chunk_verified_plus_manifest
-metadata_only
-unknown
+chunk_identity
+resource_identity
 ```
+
+`chunk_identity` means the exact bytes of one Chunk were obtained and
+cryptographically verified against that ChunkId. It proves only that Chunk.
+It does not prove complete Resource reconstruction, completeness, order, or
+ResourceId.
+
+`resource_identity` means the complete Resource byte sequence was
+cryptographically verified against its ResourceId. It may be established by
+complete-object hashing or the deterministic verified-reconstruction path
+in §33.
+
+Outcomes are `verified`, `failed`, or `indeterminate`. `failed` means bytes
+actually checked against the required identity did not match. Missing or
+unavailable bytes produce an indeterminate/unavailable outcome and are not
+corruption. An OMVCS verification result identifies its subject, outcome,
+the requested/established strength, and method/evidence. Any timing or
+source detail is operational. Evidence MUST NOT include credentials or
+transient signed URLs. Methods include direct byte-read hashing,
+deterministic Chunk reconstruction, and `provider_equivalent_checksum`;
+these are methods, not strengths.
 
 OMVCS publication policy may require a particular verification strength.
 
-A weak verification MUST NOT be silently represented as strong verification.
+`chunk_identity` MUST NOT be silently represented as
+`resource_identity`.
 
 ---
 
@@ -708,6 +735,35 @@ Resource Identifier
 
 This MUST be supported at least when deep verification is explicitly requested.
 
+This is `resource_identity` verification. It may be established by either:
+
+1. obtaining or reconstructing the destination's complete Resource bytes
+   and hashing them against ResourceId; or
+2. for a chunked representation, establishing deterministic verified
+   reconstruction without physically rereading the same bytes into a
+   monolithic buffer solely to hash them again, when all of the following
+   hold:
+   - the Chunk Manifest and reconstruction description are deterministic
+     and complete;
+   - its ordered Chunk sequence is the one defined for the intended Resource
+     representation by the applicable OMVCS Chunking policy;
+   - every required destination Chunk has independently verified
+     `chunk_identity` evidence for its exact ChunkId;
+   - lengths and ordering reconstruct exactly the complete intended byte
+     sequence;
+   - an existing `resource_identity` result or equivalent approved proof
+     binds that exact complete ordered manifest and its reconstruction to
+     the expected ResourceId, and the destination's verified ChunkIds and
+     order establish that it has the same complete bytes; and
+   - no required Chunk or evidence is missing, stale, or indeterminate.
+
+Provider-equivalent checksum evidence may satisfy a strength only if it
+proves the exact OMVCS SHA-256 identity over the exact same byte sequence:
+one Chunk for `chunk_identity`, or the complete Resource for
+`resource_identity`. Generic provider success, existence, length, ETag,
+provider version, CRC, multipart ETag, or a checksum without proven
+algorithm and byte scope MUST NOT be treated as verification.
+
 ---
 
 # 34. Chunk verification
@@ -720,7 +776,13 @@ each Chunk hash
 
 MUST verify individually.
 
-The reconstructed full Resource SHOULD also be verifiable against its Resource Identifier.
+Each successful Chunk check yields at most `chunk_identity` for that exact
+Chunk. Missing or unavailable Chunk bytes yield an indeterminate/unavailable
+result; bytes that were checked and fail the ChunkId are failed/corrupt.
+Complete Resource assurance still requires `resource_identity` under §33.
+Every OMVCS 0.1 reference chunked representation MUST use the deterministic
+fixed-size sequential policy defined by Core §8. Provider-internal
+segmentation is not an OMVCS Chunk representation.
 
 ---
 
@@ -744,6 +806,8 @@ accessibility
 ```
 
 `StatResource` MUST NOT itself imply cryptographic verification.
+Provider checksums and version identifiers returned by `StatResource` are
+not verification evidence unless separately proven equivalent under §§32–33.
 
 The operational byte-length result measures the Resource and is not a historical Resource Reference field or alternate encoding. If the Resource is represented by a historical Resource Reference, its `byte_length` MUST satisfy Core Specification §7.
 
@@ -764,6 +828,10 @@ verified
 ```
 
 Core MUST treat those states separately.
+
+Only bytes actually checked and found not to match the required immutable
+identity establish corruption. Corruption is per Replica: it does not change
+ResourceId, invalidate another Replica, or corrupt the Resource Object.
 
 ---
 
@@ -1425,6 +1493,8 @@ object whose bytes are the complete Resource. For `chunked`, it MUST permit
 the Adapter to retrieve every Chunk identified by the Replica's manifest.
 Provider-specific Chunk locations are reconstruction details of that
 Resource Replica; an individual Chunk copy is not a Resource Replica.
+The locator's availability or provider-object existence does not prove
+content verification or registration eligibility.
 
 ---
 
@@ -1964,6 +2034,10 @@ last successful probe
 ```
 
 These fields are operational.
+Verification evidence MUST be scoped to the exact immutable Resource or
+Chunk bytes and strength it proves. Evidence for a source Replica does not
+automatically establish assurance for a copied destination representation.
+It MUST NOT include credentials or transient signed URLs.
 
 ---
 
@@ -1974,6 +2048,10 @@ Because Resource Objects are immutable, a verified Replica does not become creat
 However, its **verification freshness** may age.
 
 Core MAY request periodic re-verification.
+Age does not change immutable identity. Evidence may be reused only while it
+remains applicable to the exact immutable bytes/Chunk identity and
+representation; stale or non-applicable evidence cannot establish
+registration assurance.
 
 ---
 
@@ -1989,6 +2067,9 @@ verify before deleting another replica
 ```
 
 The Adapter performs requested verification.
+Such policy MUST use the normative strengths in §32 and MUST NOT redefine
+provider operation success, object existence, or matching length as content
+verification.
 
 ---
 
@@ -1999,6 +2080,10 @@ Before removing a source Replica during migration, Core SHOULD ensure:
 ```text
 destination replica verified
 ```
+
+For a new destination registration, "verified" here requires
+`resource_identity` assurance under §§32–33. Source verification or provider
+copy-success alone does not establish destination assurance.
 
 and:
 
@@ -2530,21 +2615,18 @@ objects/resource/sha256/96/d2/...
 
 ---
 
-# 160. Chunk layout independence
+# 160. Chunk representation and Endpoint layout
 
-Different Endpoints MAY physically chunk the same Resource differently.
+An OMVCS 0.1 Chunk Manifest uses the fixed-size sequential policy in Core
+§§8–8.2. A different Endpoint preference MUST NOT automatically rechunk an
+existing OMVCS representation. An explicit operation may create a distinct
+supported representation only under an applicable, explicitly identified
+policy; OMVCS 0.1 defines no negotiated alternative Chunking policy.
 
-Creative identity remains the Resource Identifier.
-
-A migration MAY therefore:
-
-```text
-read source representation
-reconstruct Resource bytes
-re-chunk for destination
-```
-
-without creating creative history.
+Provider-internal segmentation below the OMVCS representation boundary is
+permitted, but MUST NOT be exposed as different OMVCS Chunk identities.
+Complete-object representation remains independent of Chunking. ResourceId
+and creative history remain unchanged by storage representation.
 
 ---
 
@@ -2571,6 +2653,10 @@ ownership semantics. DEC-STORAGE-011 remains open.
 # 162. Chunk manifest storage
 
 Chunk Manifests are operational physical-reconstruction information and MAY live in Repository metadata or Storage Endpoint representation. They MUST NOT be included in a historical Resource Reference or affect historical object identity. Their `chunks` collection is an ordered sequence in reconstruction order, as defined in the Core Specification and Glossary; this ordering requirement is for reconstruction and does not make the Chunk Manifest part of historical identity.
+
+An OMVCS 0.1 chunked representation MUST conform to the fixed-size
+sequential policy in Core §8. Its representation retains that policy;
+provider-internal segmentation does not alter its OMVCS Chunk Manifest.
 
 Regardless, a Replica using chunked representation MUST expose enough information to reconstruct the complete Resource.
 
@@ -2936,13 +3022,15 @@ verification mode
 Output:
 
 ```text
-verified
-failed
-indeterminate
-verification method
+outcome: verified | failed | indeterminate
+strength: chunk_identity | resource_identity, when established
+method/evidence
 ```
 
 It MUST NOT return `verified` if verification was not actually completed to requested strength.
+`failed` means checked bytes did not match the expected identity.
+Unavailable or missing bytes MUST produce an indeterminate/unavailable
+result, not corruption.
 
 ---
 
@@ -3047,6 +3135,8 @@ Destination verification still applies.
 Returns current operational accessibility without full download.
 
 It MUST not claim content integrity.
+It MUST distinguish unavailability from a failed identity check; availability
+probe results alone do not establish either verification strength.
 
 ---
 
@@ -3198,7 +3288,7 @@ Test:
 ```text
 Resource ABC on Endpoint A
 copy to Endpoint B
-verify B
+obtain destination-applicable `resource_identity` assurance for B
 register B
 remove A
 ```
@@ -3211,6 +3301,10 @@ Revision IDs unchanged
 Project State unchanged
 Storage Map changed only
 ```
+
+Destination assurance may use direct complete Resource verification or the
+deterministic verified-reconstruction path in §33. Source verification,
+provider copy-success, existence, and length alone are insufficient.
 
 ---
 
@@ -3231,6 +3325,10 @@ destination not registered valid
 source retained
 creative history unchanged
 ```
+
+An unavailable destination is indeterminate/unavailable, not corrupt. A
+destination is corrupt only if bytes actually checked against the required
+identity fail.
 
 ---
 
@@ -3697,6 +3795,9 @@ omvcs-storage-layout/1
 ```
 
 This allows Adapter software to evolve while preserving stored object layout.
+Storage-layout version is not a negotiated OMVCS Chunking policy. An OMVCS
+0.1 chunked representation continues to use the Core §8 policy regardless
+of the provider's internal layout version.
 
 ---
 
@@ -3705,6 +3806,8 @@ This allows Adapter software to evolve while preserving stored object layout.
 If storage layout changes, migration MUST preserve Resource and historical object identities.
 
 Layout migration is infrastructure change only.
+It MUST NOT automatically rechunk an existing OMVCS representation solely
+because the Endpoint layout or preference changed.
 
 ---
 
@@ -3713,6 +3816,8 @@ Layout migration is infrastructure change only.
 An Adapter MAY temporarily read multiple layout versions.
 
 It MUST clearly distinguish them.
+This does not authorize multiple OMVCS 0.1 Chunking policies; provider
+layout versions may describe provider-internal representation only.
 
 ---
 
@@ -3727,6 +3832,8 @@ Repository Home information where applicable
 ```
 
 This marker is operational metadata.
+It does not select or negotiate an OMVCS Chunking policy; OMVCS 0.1
+chunked representations use the single policy defined in Core §8.
 
 ---
 
@@ -4144,21 +4251,24 @@ Nothing above the storage layer needs to know the implementation difference.
 
 ---
 
-# 263. Example: re-chunking
+# 263. Example: preserving a Chunk representation across Endpoints
 
 Endpoint A stores Resource `ABC` as:
 
 ```text
-8 MiB chunks
+the OMVCS 0.1 fixed-size sequential Chunk representation
 ```
 
 Endpoint B prefers:
 
 ```text
-4 MiB chunks
+provider-internal 4 MiB segments
 ```
 
-Migration reconstructs `ABC`, stores destination representation, and verifies:
+The Adapter may store those provider-internal segments while preserving the
+same OMVCS Chunk boundaries and identities. The Endpoint preference alone
+does not cause OMVCS rechunking. After transfer, destination verification
+establishes:
 
 ```text
 SHA256(full bytes) = ABC
@@ -4166,7 +4276,8 @@ SHA256(full bytes) = ABC
 
 The Resource remains the same Resource Object.
 
-Chunk identities/layout may differ operationally.
+If a future protocol version supports another OMVCS Chunking policy, it must
+identify/version that policy explicitly; this example does not define one.
 
 ---
 
@@ -4317,10 +4428,14 @@ have an accepted ADR; the remaining questions should be settled before 0.1
 is frozen:
 
 1. Exact canonical logical-key layout for Resources, Chunks and metadata.
-2. Whether fixed 8 MiB chunking is mandated for the reference implementation or only recommended.
+2. RESOLVED by ADR-0036: OMVCS 0.1 mandates fixed-size sequential chunking
+   with an exact 8,388,608-byte target.
 3. Exact minimum capability set required for Repository Home conformance.
-4. Exact verification-strength taxonomy.
-5. Whether full Resource hash verification is mandatory after every upload or may rely on previously verified deterministic chunk reconstruction.
+4. RESOLVED by ADR-0037: verification strength is `chunk_identity` or
+   `resource_identity`, separate from method/evidence.
+5. RESOLVED by ADR-0038: destination assurance may be established by direct
+   full Resource verification or by the specified deterministic verified
+   Chunk-reconstruction path.
 6. Exact layout and compaction semantics for the Repository Operation Log.
 7. RESOLVED by ADR-0033: provider locator data uses the generic typed
    `{schema, value}` envelope defined in §73.
@@ -4332,7 +4447,8 @@ is frozen:
 13. Whether local filesystem and S3-compatible Adapters become official reference conformance implementations.
 14. Exact storage-layout version marker and repository discovery format.
 
-These are finite decisions within the Storage Adapter Specification, not additional top-level specifications.
+These are finite decisions within the Storage Adapter Specification, not
+additional top-level specifications.
 
 ---
 

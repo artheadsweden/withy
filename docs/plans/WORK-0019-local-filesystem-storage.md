@@ -30,8 +30,8 @@ logical-key and discovery/layout rules.
   conformance.
 - DEC-STORAGE-014: layout marker and repository discovery. Without it, do
   not implement Home discovery/bootstrap or layout migration.
-- Chunking-dependent storage behavior waits for joint DEC-CORE-001 /
-  DEC-STORAGE-002 resolution.
+- Chunking-dependent behavior follows the approved OMVCS 0.1 policy in
+  ADR-0036; it does not choose alternate chunk boundaries.
 - DEC-STORAGE-013 is required only for official reference-conformance
   designation; implementation may not claim that designation while open.
 
@@ -67,7 +67,8 @@ logical-key and discovery/layout rules.
 ## Explicit non-goals
 
 - S3-compatible or other remote providers.
-- Choosing logical keys, Repository Home minimum, layout marker, or chunking.
+- Choosing logical keys, Repository Home minimum, or layout marker.
+- Defining alternate chunking behavior; OMVCS 0.1 uses ADR-0036.
 - Official reference-conformance designation before DEC-STORAGE-013.
 - GC, delete, orphan cleanup, retention, encrypted storage, or public grants.
 - M4 publication/recovery transaction semantics.
@@ -77,9 +78,9 @@ logical-key and discovery/layout rules.
 - Storage Map mutation integration must implement ADR-0034's complete-map
   conditional atomicity; a filesystem path/provider token is not the Core
   generation.
-- DEC-STORAGE-001/003/014 and joint chunking decision gate their
-  corresponding layout/Home/chunked features, not the restricted opaque-key
-  filesystem backend.
+- DEC-STORAGE-001/003/014 gate their corresponding layout/Home features,
+  not the restricted opaque-key filesystem backend. Chunked behavior follows
+  ADR-0036.
 
 ## Implementation plan
 

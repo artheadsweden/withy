@@ -3,7 +3,10 @@
 Status: VERIFIED — bounded Replica/representation/locator model, guarded/CAS map updates, and
 authoritative persisted-map reconstruction accepted by Storage Engineer and
 independent Verifier. ProviderLocator schema-identifier lexical validation
-remains excluded under DG-0034; verified promotion remains gated.
+remains excluded under DG-0034. Promotion semantics are defined by
+ADR-0037/0038; the verification-result integration was not part of the
+accepted implementation and may be completed with WORK-0017 or as a bounded
+follow-up.
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0016-replica-storage-map`
@@ -24,9 +27,9 @@ historical references.
   State, Corrupt Replica, Replica Addition, and Replica Removal.
 - Core Invariants: INV-RES-005–007, INV-STOR-001–005, INV-INT-001–003,
   INV-GC-001–003.
-- Approved decisions: ADR-0032, ADR-0033, ADR-0034, and ADR-0035. Open gates:
-  DEC-STORAGE-004/005 for verification promotion; DEC-STORAGE-011 is
-  explicitly excluded.
+- Approved decisions: ADR-0032, ADR-0033, ADR-0034, and ADR-0035. ADR-0037
+  and ADR-0038 now define the verification gate for a follow-up promotion
+  integration. DEC-STORAGE-011 remains open and is explicitly excluded.
 
 ## Dependencies
 
@@ -51,14 +54,15 @@ historical references.
 - DEC-STORAGE-011 gates stable namespace identity and shared-object
   semantics only. This package explicitly excludes stable namespace,
   cross-Project shared-object/deduplication, and shared-namespace GC claims.
-- DEC-STORAGE-004/005 remain open. WORK-0016 MUST NOT invent verification
-  evidence, strength labels, or upload assurance. It MUST NOT register an
-  incomplete or unverified candidate as a Resource Replica. Any verified
-  promotion/registration integration requires the approved verification
-  result contract from WORK-0017. WORK-0017 may consume independently
-  reviewed WORK-0016 model/locator and generation/CAS subdeliverables;
-  verified-promotion integration is not a prerequisite for implementing
-  those subdeliverables.
+- During the implementation window, DEC-STORAGE-004/005 were open.
+  WORK-0016 therefore did not invent verification evidence, strength labels,
+  or upload assurance. These decisions were subsequently resolved by
+  ADR-0037/0038.
+- The integrated WORK-0016 code does not include verified-promotion
+  integration. Under ADR-0037/0038, promotion requires destination-applicable
+  `resource_identity` assurance. Its registration integration may be
+  implemented as a small WORK-0016 follow-up or as the integration portion
+  of WORK-0017, without reopening Replica identity, Storage Map, or CAS.
 
 ## Allowed scope
 
@@ -135,7 +139,8 @@ historical references.
 - Verified promotion/registration without the approved WORK-0017 result.
 - Stable namespace identity and shared-object guarantees before
   DEC-STORAGE-011 resolution.
-- Verification-strength taxonomy or upload assurance.
+- Implementing verification result/evidence types or promotion eligibility;
+  these are assigned to WORK-0017 under ADR-0037/0038.
 - Physical deletion, GC, orphan cleanup, retention, or automatic repair.
 - Replication/migration orchestration, Repository Home conformance, M4
   transactions, Platform policy, or DAW behavior.
@@ -148,8 +153,9 @@ historical references.
 - DG-0034 blocks additional lexical ProviderLocator schema-identifier
   validation until its grammar is approved; no version syntax is inferred
   from examples.
-- DEC-STORAGE-004/005 block verification-dependent promotion, not the
-  operational record model.
+- ADR-0037/0038 resolve DEC-STORAGE-004/005. The previously excluded
+  promotion integration is now semantically unblocked once WORK-0017's
+  verification-result API is implemented.
 - DEC-STORAGE-011 remains open but does not block the explicitly isolated
   Endpoint/Replica scope.
 - DEC-CORE-005, DEC-CORE-008, and DEC-STORAGE-010/012 block deletion and
@@ -160,8 +166,9 @@ historical references.
 1. Implement the approved Core-owned Replica identity, representation,
    Storage Map structure, `StorageMapGeneration`, guarded mutation contract,
    and ProviderLocator envelope.
-2. Keep verified-promotion/registration behind the approved WORK-0017
-   result; incomplete/unverified candidates are not registered Replicas.
+2. Keep verified-promotion/registration in the WORK-0017 integration
+   deliverable or a bounded WORK-0016 follow-up; incomplete, failed, or
+   indeterminate candidates are not registered Replicas.
 3. Treat decoded Replica records as data only. Reconstruct records for the
    Storage Map only from the authoritative persistence boundary, validating
    structure and map-generation consistency without re-verifying bytes.
@@ -193,7 +200,9 @@ ProviderLocator schema-identifier grammar is inferred or claimed.
 The Replica/representation/locator model and guarded Storage Map CAS
 mechanics are complete at the bounded scope accepted by Storage Engineer
 and independent Verifier. Lexical ProviderLocator schema-identifier
-validation remains outside this acceptance under DG-0034. No verified
-promotion is included before the approved WORK-0017 result. Relevant
+validation remains outside this acceptance under DG-0034. The approved
+promotion contract is now defined by ADR-0037/0038; implementation requires
+the WORK-0017 result API and must preserve the integrated WORK-0016 identity
+and CAS behavior. Relevant
 workspace tests, rustfmt, warnings-denied Clippy, coverage update, handover,
 and clean diff checks must pass.

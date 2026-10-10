@@ -1,6 +1,6 @@
 # WORK-0021 — Storage migration
 
-Status: PLANNED — blocked on Replica and verification contracts
+Status: PLANNED — pending WORK-0017 and WORK-0020 implementations
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0021-storage-migration`
@@ -27,8 +27,11 @@ orchestration are explicitly excluded.
 - WORK-0015 through WORK-0017 and WORK-0020.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
   approved interfaces; guarded Storage Map updates follow ADR-0034.
-- DEC-STORAGE-004/005 and joint chunking decision resolved for migration's
-  verification and reconstruction behavior.
+- ADR-0036/0037/0038 define the chunking, verification, and destination
+  assurance rules for migration.
+- Migration MUST NOT automatically rechunk an existing OMVCS 0.1
+  representation solely to match an Endpoint preference; provider-internal
+  segmentation remains below the OMVCS representation boundary.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 do not block this retained-source
   subset because no deletion or cleanup occurs.
 

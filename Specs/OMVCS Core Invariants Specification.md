@@ -300,6 +300,13 @@ one Resource MAY exist at the same Storage Endpoint.
 
 All valid Resource Replicas of the same Resource Object MUST verify to the same Resource Identifier.
 
+A newly registered Resource Replica MUST have `resource_identity`
+verification assurance for its complete representation. Individual
+`chunk_identity` results alone do not establish Resource-level assurance.
+For a chunked representation, deterministic verified reconstruction may
+establish `resource_identity` only under the approved complete-manifest,
+ordering, exact Chunk verification, and identity-binding requirements.
+
 The existence of additional replicas MUST NOT alter creative history.
 Each independently addressable physical representation has its own assigned
 stable ReplicaId. Operational changes to the same representation do not
@@ -624,6 +631,11 @@ Historical objects MUST NOT need to know which replica will be used.
 
 When moving the only known valid replica of a Resource Object, OMVCS MUST NOT treat the destination as valid until content verification succeeds.
 
+A destination Resource Replica is eligible for registration only after
+destination-applicable `resource_identity` assurance succeeds under the
+approved direct-verification or deterministic verified-reconstruction path.
+Source verification or provider copy-success alone is insufficient.
+
 The old valid replica SHOULD NOT be removed before the new replica has been verified.
 
 ---
@@ -756,9 +768,21 @@ Component State parentage is optional. Derived states SHOULD record parent Compo
 
 ## INV-INT-001 — Retrieved immutable content must be verifiable
 
-A client MUST be able to verify that retrieved immutable content matches its expected identifier.
+A client MUST be able to verify that retrieved immutable content matches its
+expected identifier. Resource verification covers the complete Resource
+byte sequence; Chunk verification covers only the exact Chunk bytes.
+OMVCS 0.1 Chunked representations use the deterministic fixed-size
+sequential 8,388,608-byte target policy defined in Core §8.
 
 A Resource Object that fails verification MUST NOT be accepted as the requested Resource Object.
+
+Verification strength states what identity proposition was established;
+method/evidence states how. Provider-supplied evidence counts as verification
+only when it is cryptographically equivalent to the exact OMVCS SHA-256
+identity over the exact same bytes. Existence, matching length, provider
+success, ETag, version, CRC, or an unproven checksum does not establish
+verification. Verification evidence MUST NOT affect Resource, Component
+State, Project State, Revision identity, or creative provenance.
 
 ---
 
@@ -768,11 +792,22 @@ If a physical replica fails content verification, OMVCS MUST mark or treat that 
 
 The existence of a corrupt replica MUST NOT invalidate other verified replicas of the same Resource Object.
 
+Unavailable or missing bytes are not a failed identity check and MUST NOT be
+classified as corrupt. A Replica is corrupt only when bytes actually checked
+against its required identity fail; one corrupt Replica does not make the
+Resource Object itself corrupt.
+
 ---
 
 ## INV-INT-003 — Failure must not fabricate success
 
 A failed or incomplete operation MUST NOT leave the system reporting a successfully published Revision, migration, replica or checkout if required guarantees were not satisfied.
+
+Provider upload/copy success alone MUST NOT report verification or authorize
+Resource Replica registration. A new Replica registration requires
+destination-applicable `resource_identity` assurance. Missing/unavailable
+bytes produce an indeterminate outcome, not corruption; a checked identity
+mismatch is a failed verification.
 
 Storage Map mutations MUST satisfy the Project-scoped
 `StorageMapGeneration` compare-and-swap and atomicity contract in Core §34.

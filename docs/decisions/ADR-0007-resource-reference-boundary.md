@@ -21,7 +21,13 @@ The Draft 0.1 Specs described Resource References and Resource Manifests without
 3. Every field present in a Resource Reference is part of the containing historical object's canonical body and contributes to that object's identity. No Resource Reference field changes the Resource Identifier, which remains SHA-256 of the complete raw Resource bytes.
 4. `logical_name`, Friendly Name, and filename are excluded from the generic historical Resource Reference in OMVCS 0.1. Renaming a Resource for presentation or local working purposes MUST NOT by itself alter historical creative state. If a DAW requires naming information for exact native reconstruction, that information belongs in Adapter State.
 5. Chunk structure, Chunk IDs, Chunk Manifest information, Storage Endpoint, Storage Location, Replica information, credentials, provider metadata, and other physical reconstruction or storage details MUST NOT appear in the historical Resource Reference and MUST NOT affect historical object identity.
-6. Chunk Manifests remain operational physical-reconstruction information. Replicas or Endpoints MAY use different physical chunk layouts for the same Resource without changing the Resource Identifier or creative history.
+6. Chunk Manifests remain operational physical-reconstruction information.
+   Replicas or Endpoints MAY use different provider-internal physical
+   segmentation for the same Resource without changing the Resource
+   Identifier or creative history. For OMVCS 0.1, every chunked OMVCS
+   representation uses the fixed boundaries in ADR-0036; different
+   OMVCS-level Chunking policies require explicit identification/versioning
+   in a future protocol version.
 7. In OMVCS 0.1, Resource Manifest is descriptive terminology for a Resource-oriented metadata/reconstruction view that may combine historical Resource Reference information with operational reconstruction information. It has no independent content-derived historical identifier. A future formal Resource Manifest object requires an explicit schema/version decision and MUST NOT change existing Resource Identifiers.
 
 ## Rationale
@@ -50,7 +56,10 @@ WORK-0004 and dependent model acceptance tests/test plans MUST cover:
 - required typed `resource_id` and non-negative complete-resource `byte_length`, plus optional `role`, `media_type`, and schema/Adapter-supplied `properties`;
 - changes to the canonical value of a present Resource Reference field change the containing historical object's identity, while Resource Identifier remains determined only by raw Resource bytes; reordering `properties` map insertion does not change canonical identity;
 - rejection/exclusion of logical/friendly filename and physical storage/reconstruction fields from generic Resource References;
-- presentation/local renaming, storage location, Replica changes, and physical chunk-layout changes do not change Resource or historical identity;
+- presentation/local renaming, storage location, Replica changes, and
+  provider-internal physical segmentation do not change Resource or
+  historical identity; OMVCS Chunk boundaries follow the applicable
+  versioned policy;
 - required DAW reconstruction naming is represented in Adapter State rather than generic Resource Reference;
 - Resource Manifest has no separate content-derived historical identifier in 0.1.
 

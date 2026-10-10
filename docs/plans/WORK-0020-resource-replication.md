@@ -1,6 +1,6 @@
 # WORK-0020 — Resource replication
 
-Status: PLANNED — blocked on Replica and verification contracts
+Status: PLANNED — pending WORK-0017 verification implementation
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0020-resource-replication`
@@ -27,10 +27,9 @@ never remove or invalidate the source as part of replication.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
   approved interfaces; Storage Map registration uses the Project-wide
   guarded mutation contract in ADR-0034.
-- DEC-STORAGE-004/005 resolved for verification behavior. The joint
-  DEC-CORE-001/DEC-STORAGE-002 decision is required only if this package
-  selects policy-dependent chunk transfer/rechunking; complete-Resource
-  byte streaming does not select a Chunking policy.
+- ADR-0036/0037/0038 define chunking, verification, and destination
+  assurance. Replication MUST NOT automatically rechunk an existing OMVCS
+  0.1 representation because an Endpoint prefers another physical layout.
 - No filesystem dependency: conformance runs against approved mock/fake
   Endpoints and other adapters as available.
 
@@ -57,6 +56,11 @@ never remove or invalidate the source as part of replication.
 - Source remains registered and retrievable on all copy/verify/register
   failures.
 - Provider-native copy success alone is not treated as verification.
+- Chunked replication preserves the approved OMVCS 0.1 Chunk boundaries;
+  provider-internal segmentation is not exposed as different OMVCS ChunkIds.
+- Destination `resource_identity` assurance follows direct full Resource
+  verification or ADR-0038's complete deterministic verified-reconstruction
+  path. Source assurance does not transfer automatically.
 - A failure reports the observed operation stage explicitly without claiming
   that unfinished work succeeded.
 - Replication changes only operational Storage Map data; ResourceId,

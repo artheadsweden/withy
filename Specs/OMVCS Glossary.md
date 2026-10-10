@@ -559,9 +559,22 @@ A **Chunk** is an immutable content-addressed subsection of a Resource Object us
 
 Large Resource Objects MAY be represented physically as a sequence of Chunks.
 
-Chunk boundaries MUST be deterministic according to the relevant OMVCS storage specification.
+OMVCS 0.1 Chunk boundaries MUST follow the fixed-size sequential policy in
+Core Specification §8: target size 8,388,608 bytes, with the exact same
+ordered boundaries for identical Resource bytes. A future policy requires
+explicit identification/versioning and does not alter Resource identity.
 
 A Chunk is an implementation/storage concept and is normally invisible to the musician.
+
+---
+
+## Chunking Policy
+
+A **Chunking Policy** defines how a Resource byte sequence is divided into
+ordered Chunks for one physical representation. OMVCS 0.1 defines the
+fixed-size sequential reference policy in Core Specification §8, with an
+exact 8,388,608-byte target. The policy determines Chunk boundaries and
+therefore which ChunkIds are produced, but does not affect ResourceId.
 
 ---
 
@@ -569,7 +582,10 @@ A Chunk is an implementation/storage concept and is normally invisible to the mu
 
 A **Chunk Manifest** identifies the ordered Chunks required to reconstruct a Resource Object. Its Chunk collection is an ordered sequence in reconstruction order; that order is significant.
 
-The Chunk Manifest MUST permit verification that reconstructed bytes equal the Resource Identifier.
+The Chunk Manifest MUST permit verification that reconstructed bytes equal
+the Resource Identifier. For OMVCS 0.1, a chunked representation retains
+the fixed-size sequential policy under which it was created; an Endpoint
+preference does not automatically rechunk it.
 
 A Resource Object may conceptually remain one object even though its physical storage consists of many Chunks.
 
@@ -638,7 +654,8 @@ A **Resource Replica** is an operational record for one complete recoverable
 physical representation of one Resource Object at one Storage Endpoint.
 A candidate object that is incomplete or unverified is not a registered
 Resource Replica. A registered, valid Resource Replica MUST have passed the
-applicable Content Verification requirements. Reconstruction from an
+applicable `resource_identity` Content Verification requirements.
+`chunk_identity` for individual Chunks alone does not qualify. Reconstruction from an
 authoritative Repository Home continues prior registration and is not a new
 registration; decoding a record alone establishes neither registration nor
 Repository Home authority.
@@ -722,6 +739,12 @@ Storage Migration MUST NOT create a new Revision merely because physical locatio
 ## Replica Addition
 
 A **Replica Addition** records a newly verified Resource Replica.
+
+The new representation MUST have applicable `resource_identity` assurance;
+source verification, provider copy-success, existence, matching length, or
+`chunk_identity` alone is not sufficient. The deterministic
+verified-reconstruction path defined by the Storage Adapter Specification
+may establish `resource_identity`.
 
 It changes operational metadata only.
 
@@ -1326,15 +1349,78 @@ Synchronization MUST distinguish creative history from operational storage chang
 
 ## Content Verification
 
-**Content Verification** is the operation of hashing retrieved or stored bytes and confirming that they match the expected immutable object identity.
+**Content Verification** is the operation of hashing retrieved or stored
+bytes and confirming that they match the expected immutable object identity.
 
-A Resource Replica MUST NOT be marked verified until Content Verification succeeds.
+A verification result distinguishes outcome, strength, and method/evidence.
+The outcome is `verified`, `failed`, or `indeterminate`. A missing or
+unavailable byte sequence is indeterminate/unavailable, not a failed
+identity check. `failed` means bytes actually checked did not match the
+expected identity.
+
+---
+
+## Verification Strength
+
+**Verification Strength** identifies the immutable-content proposition
+established by Content Verification:
+
+- `chunk_identity`: the exact bytes of one Chunk were cryptographically
+  verified against that ChunkId. This proves only that Chunk.
+- `resource_identity`: the complete Resource byte sequence was
+  cryptographically verified against its ResourceId, either by complete
+  Resource hashing or by the deterministic verified-reconstruction path.
+
+`chunk_identity` alone does not establish a complete Resource Replica's
+eligibility for registration. New Resource Replica registration requires
+`resource_identity`.
+
+---
+
+## Verification Method
+
+**Verification Method** describes how a Verification Strength was
+established, such as direct byte-read hashing, deterministic Chunk
+reconstruction, or `provider_equivalent_checksum`. A method is not itself a
+strength. Provider checksum evidence is equivalent only when it proves the
+exact OMVCS SHA-256 identity over the exact same Chunk or complete Resource
+bytes. Generic provider success, existence, length, ETag, provider version,
+CRC, multipart ETag, or an unproven checksum is not Content Verification.
+
+Verification evidence is operational metadata and MUST NOT enter Resource
+hash preimages or historical identity/provenance. Evidence MUST NOT contain
+credentials or transient signed URLs.
+
+---
+
+## Verification Evidence
+
+**Verification Evidence** is the operational record supporting a
+Verification Result. It identifies the subject, outcome, requested or
+established strength, and method; permitted timing/source details may also
+be recorded. It is scoped to the exact immutable Resource or Chunk identity
+and MUST NOT contain credentials or transient signed URLs. It MUST NOT
+affect Resource, Component State, Project State, Revision identity, or
+creative provenance.
+
+---
+
+## Verification Result
+
+A **Verification Result** reports a Content Verification outcome for a
+subject and requested/established strength, together with its method and
+evidence. Outcomes are `verified`, `failed`, or `indeterminate`. An
+indeterminate result caused by unavailable bytes is not corruption.
 
 ---
 
 ## Corrupt Replica
 
-A **Corrupt Replica** is a physical Resource Replica whose contents no longer match the expected Resource Identifier.
+A **Corrupt Replica** is a physical Resource Replica for which Resource or
+Chunk bytes actually checked against the required immutable identity fail to
+match. Missing or unavailable bytes are not corruption. Corruption is
+scoped to that Replica and does not invalidate another Replica or the
+Resource Object.
 
 OMVCS MUST reject corrupt replicas as valid sources.
 
