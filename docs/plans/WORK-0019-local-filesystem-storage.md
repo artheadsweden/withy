@@ -1,6 +1,7 @@
 # WORK-0019 — Local filesystem Storage Adapter
 
-Status: PLANNED — base opaque-key provider may proceed; logical layout and Repository Home features are gated
+Status: PLANNED — PARTIALLY BLOCKED; byte storage may proceed, but Home
+bootstrap/conformance is blocked by DG-0035
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0019-local-filesystem-storage`
@@ -23,13 +24,15 @@ logical-key and discovery/layout rules.
 ## Dependencies
 
 - WORK-0015 through WORK-0017.
-- DEC-STORAGE-001: canonical logical-key layout. Without it, limit the
-  Adapter to caller-supplied opaque keys and make no OMVCS logical-layout
+- ADR-0039 resolves DEC-STORAGE-001 for canonical Resource and Chunk
+  logical keys. No canonical metadata path layout is defined; use the
+  existing logical metadata operation contracts without adding a layout
   claim.
-- DEC-STORAGE-003: Repository Home minimum, if this Adapter claims Home
-  conformance.
-- DEC-STORAGE-014: layout marker and repository discovery. Without it, do
-  not implement Home discovery/bootstrap or layout migration.
+- ADR-0040 resolves DEC-STORAGE-003 and defines the minimum Home profile;
+  advertise Home and Resource Storage capabilities independently.
+- ADR-0041 resolves DEC-STORAGE-014 for filesystem Home marker,
+  explicit-root bootstrap, and discovery. Automatic layout migration
+  remains excluded.
 - Chunking-dependent behavior follows the approved OMVCS 0.1 policy in
   ADR-0036; it does not choose alternate chunk boundaries.
 - DEC-STORAGE-013 is required only for official reference-conformance
@@ -44,9 +47,11 @@ logical-key and discovery/layout rules.
 
 - Local filesystem provider implementation for approved byte-I/O operations.
 - Safe immutable creation and exact-byte retrieval.
-- Filesystem byte-I/O over caller-supplied opaque keys before layout
-  decisions; approved key/layout and discovery/version-marker behavior only
-  after their decisions.
+- Canonical Resource/Chunk logical-key mapping, independent of physical
+  storage-root prefix and content identity.
+- After DG-0035 is resolved: filesystem Repository Home metadata
+  operations and ADR-0034-compatible complete-map CAS, plus
+  marker/bootstrap/discovery under ADR-0041.
 - Explicit handling of filesystem-specific case, path-length, link, and
   atomicity constraints within the normative contract.
 
@@ -58,8 +63,18 @@ logical-key and discovery/layout rules.
 - Path traversal, symlink, case-folding, and overlong-path cases cannot
   escape or alias the approved logical namespace.
 - Interrupted writes do not appear as complete valid objects.
-- Layout version/discovery behavior matches the resolved contract and
-  rejects unsupported/ambiguous markers explicitly.
+- Canonical Resource/Chunk keys match ADR-0039 exactly; hostile,
+  alternate-case, absolute, traversal, and platform-separator forms are
+  rejected before native path resolution.
+- Symlink/reparse-point escape is prevented; unsupported safe containment
+  or atomic no-replace publication fails explicitly.
+- The following Home acceptance tests are gated by DG-0035; do not encode
+  partial-bootstrap recovery behavior before its resolution:
+- Layout marker/bootstrap/discovery matches ADR-0041, including missing,
+  malformed, unsupported, and Project-mismatch cases; discovery does not
+  search ancestors.
+- Home capability claims meet ADR-0040, independently of Resource/Chunk
+  byte-storage capability; Storage Map CAS preserves ADR-0034 atomicity.
 - Filesystem errors remain typed and do not become not-found or success.
 - Moving a file or changing a locator does not change Resource or history
   identity.
@@ -67,7 +82,8 @@ logical-key and discovery/layout rules.
 ## Explicit non-goals
 
 - S3-compatible or other remote providers.
-- Choosing logical keys, Repository Home minimum, or layout marker.
+- Changing the approved logical keys, Repository Home minimum, or layout
+  marker.
 - Defining alternate chunking behavior; OMVCS 0.1 uses ADR-0036.
 - Official reference-conformance designation before DEC-STORAGE-013.
 - GC, delete, orphan cleanup, retention, encrypted storage, or public grants.
@@ -78,17 +94,25 @@ logical-key and discovery/layout rules.
 - Storage Map mutation integration must implement ADR-0034's complete-map
   conditional atomicity; a filesystem path/provider token is not the Core
   generation.
-- DEC-STORAGE-001/003/014 gate their corresponding layout/Home features,
-  not the restricted opaque-key filesystem backend. Chunked behavior follows
-  ADR-0036.
+- DG-0034 remains OPEN and limits only generic lexical validation of
+  ProviderLocator schema identifiers; WORK-0019 uses the approved opaque
+  envelope and MUST NOT invent a generic grammar.
+- DG-0035 remains OPEN and blocks filesystem Repository Home
+  bootstrap/conformance only. Resource/Chunk byte-storage implementation
+  may proceed; WORK-0019 MUST NOT invent partial-initialization recovery
+  semantics or claim complete Home conformance.
+- DEC-STORAGE-011 and DEC-STORAGE-013 remain OPEN and are excluded:
+  no namespace-sharing claims or official reference designation.
 
 ## Implementation plan
 
-1. Implement only isolated opaque-key filesystem operations against the
-   approved contract.
-2. Do not implement layout, discovery, or Home behavior until the listed
-   decisions are recorded in updated Specs and this plan.
-3. Test filesystem failure/aliasing/atomicity cases on supported platforms.
+1. Implement canonical Resource/Chunk logical keys and safe byte storage.
+2. After DG-0035 resolution, implement the independently declared
+   Repository Home capability profile, marker/bootstrap/discovery, and
+   ADR-0034-compatible CAS.
+3. Test filesystem byte-storage failure, aliasing, containment, durability,
+   and atomicity on supported platforms; fail explicitly when guarantees
+   are unavailable. Add Home bootstrap tests only after the gap is resolved.
 4. Obtain independent Verifier acceptance.
 
 ## Verification requirements

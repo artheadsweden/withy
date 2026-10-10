@@ -277,15 +277,33 @@ delete or explicit non-deletable semantics
 content verification support
 ```
 
-A Storage Adapter capable of acting as **Repository Home** MUST additionally provide enough functionality to safely store and update repository metadata.
-
-This normally requires:
+A Storage Adapter claiming **Repository Home** conformance MUST additionally
+provide all of the following for one OMVCS Project:
 
 ```text
-atomic or guarded metadata updates
-listing or known-key retrieval
-durable write acknowledgement
+durable storage and retrieval of locally admitted immutable historical
+  metadata required by the implemented Core repository model
+durable storage and retrieval of operational repository metadata required
+  by implemented Core contracts
+conditional and logically atomic guarded updates for mutable operational
+  metadata, including the complete Project Storage Map and its
+  StorageMapGeneration under Core §34
+the Repository Home marker and discovery information defined in §§124–126
+durable-write acknowledgement meeting the Storage Adapter's declared
+  durability semantics
 ```
+
+Historical metadata MAY be locally incomplete only with the applicable
+declared-boundary state. Repository Home status MUST NOT be treated as proof
+that metadata history is complete.
+
+Resource and Chunk byte storage are not required capabilities of a
+Repository Home. A Home MAY also provide them only when it independently
+advertises the applicable Resource Storage capabilities. Repository Home
+capability and Resource Storage capability are separate.
+
+The Platform MUST NOT serve as the authoritative Repository Home merely
+because it stores or mirrors OMVCS metadata.
 
 ---
 
@@ -325,11 +343,13 @@ Supports storage and retrieval of immutable Resource Objects or Chunks.
 
 ## Class H — Repository Home
 
-Supports durable OMVCS metadata plus operational metadata.
+Supports the complete minimum Repository Home capability profile in §10
+for one Project. Resource and Chunk byte storage are not required.
 
 ## Class RH — Combined
 
-Supports both Resource Storage and Repository Home functionality.
+Supports both Resource Storage and Repository Home functionality, with
+each capability independently declared.
 
 ## Class A — Archival
 
@@ -343,18 +363,38 @@ These are capability groupings, not user-facing names.
 
 Storage Adapters operate on **logical OMVCS keys** supplied by Core.
 
-Core SHOULD use deterministic provider-independent key conventions.
+The canonical logical keys for immutable Resource and Chunk bytes are
+defined in Core Specification §8.3. Conforming implementations MUST use
+those exact keys for those objects.
 
-Example:
+Other metadata operations use the logical keys or object identifiers
+defined by their applicable Core/Storage operation contracts. This section
+does not define a canonical metadata-key path layout.
+
+The Resource and Chunk key forms are:
 
 ```text
-objects/resources/96/d2/<resource-digest>
-objects/chunks/aa/13/<chunk-digest>
-metadata/revisions/0c/a7/<revision-digest>.json
-metadata/project-states/84/aa/<digest>.json
+resources/sha256/<p1>/<p2>/<digest>
+chunks/sha256/<p1>/<p2>/<digest>
 ```
 
-A provider MAY internally map these keys differently.
+The digest is the complete 64-character lowercase hexadecimal SHA-256
+digest of the corresponding ResourceId or ChunkId. `<p1>` is characters
+1–2 of that digest and `<p2>` is characters 3–4. The typed identifier is
+authoritative; a logical key is an operational address and MUST NOT be
+used as identity.
+
+Logical keys use `/` separators regardless of host OS. The canonical
+Resource and Chunk keys are relative, consist only of ASCII lowercase
+components, and contain no empty, `.` or `..` segments, drive letters,
+absolute-path syntax, platform-dependent separators, or user-controlled
+filename components. They contain no Resource metadata, Project name,
+creator name, timestamps, Endpoint identifier, or credentials.
+
+A provider MAY add its configured physical storage-root prefix or use an
+internal physical mapping, provided that it preserves the externally
+observable logical key, does not create aliases, and does not change
+content or historical identity.
 
 Provider-specific paths MUST NOT become historical identity.
 
@@ -373,7 +413,10 @@ case-insensitive filesystem
 object-name restrictions
 ```
 
-The mapping MUST be deterministic and reversible or persistently recorded.
+The physical mapping MUST be deterministic and reversible or persistently
+recorded. It MUST preserve the logical key presented at the OMVCS boundary.
+A mapping MUST NOT truncate a key or cause two distinct logical keys to
+alias the same physical object.
 
 A provider-specific mapped key MUST NOT replace the OMVCS identity of the object.
 
@@ -468,6 +511,10 @@ The Adapter MUST either:
 - or fail.
 
 It MUST NOT return success before the provider's durability semantics satisfy the Adapter's declared guarantee.
+For a Resource stored under its canonical logical key, the Adapter MUST
+validate the key against the supplied ResourceId before native path
+resolution. The key MUST be derived from that identifier as specified in
+Core §8.3; caller-supplied filename or metadata MUST NOT participate.
 
 ---
 
@@ -478,6 +525,9 @@ If the destination already contains the requested object, the Adapter MAY avoid 
 Before treating the operation as satisfied, it MUST establish that the stored object corresponds to the requested Resource Identifier.
 
 How strongly this must be verified depends on available provider guarantees and previous verification metadata.
+If the bytes at the canonical key do not verify as the requested immutable
+object, the Adapter MUST report an integrity/storage conflict and MUST NOT
+silently overwrite them.
 
 ---
 
@@ -494,6 +544,18 @@ semantics.
 Concurrent uploads of the same Resource MUST result logically in one Resource Object.
 
 Concurrent attempts to write different bytes to the same content-derived key MUST be treated as integrity failure.
+
+For the filesystem Adapter, immutable Resource and Chunk creation MUST use
+a safe temporary-write and atomic-publication process: write complete bytes
+to a temporary object inside the controlled filesystem root, perform the
+applicable flush/durability handling, verify the bytes as required, then
+publish atomically to the canonical destination without replacing an
+existing object. A concurrent create MUST be resolved without an
+existence-check/creation race that can overwrite the existing object.
+Interrupted temporary writes MUST NOT appear at the final canonical key.
+If the platform cannot provide safe no-replace publication and the
+required containment/durability guarantees, the operation MUST fail
+explicitly rather than weaken these requirements.
 
 ---
 
@@ -905,7 +967,7 @@ Example:
 
 ```text
 metadata/revisions/
-objects/chunks/
+chunks/sha256/
 ```
 
 Listing is useful for:
@@ -1300,12 +1362,33 @@ It MUST NOT overwrite such content silently.
 
 The local filesystem Adapter is a first-class Storage Adapter.
 
-It SHOULD use:
+It MUST validate a canonical Resource or Chunk logical key before resolving
+it to a native path. Validation MUST reject any key that does not exactly
+match the applicable Core §8.3 form, including alternate-case spellings,
+absolute paths, drive letters, backslashes, empty or dot segments, and
+extra path components.
+
+Resolution MUST remain contained beneath the explicitly configured
+filesystem storage root. The Adapter MUST NOT follow a symlink or
+reparse-point component in a way that permits access outside that root.
+It MUST use safe no-follow/open or equivalent containment semantics across
+path resolution and the operation; if those guarantees cannot be provided
+on a supported platform, the operation MUST fail explicitly.
+
+The Adapter MUST prevent a case-folded or alternate-case physical alias
+from satisfying or replacing a canonical logical key. It MUST NOT silently
+truncate or normalize a key to satisfy native path restrictions. It MAY use
+the deterministic physical mapping permitted by §15, or fail explicitly
+when the native path cannot be represented safely.
+
+Filesystem writes MUST satisfy the atomic immutable creation requirements
+in §21. Temporary objects MUST remain inside the controlled root and MUST
+NOT be exposed at a canonical key before complete write, required
+durability handling, and verification.
+
+It SHOULD also use:
 
 - deterministic directory layout;
-- temporary writes;
-- fsync/durability where available;
-- atomic rename where supported;
 - file permissions appropriate to the host OS.
 
 It MUST remain portable across supported operating systems.
@@ -1314,25 +1397,27 @@ It MUST remain portable across supported operating systems.
 
 # 65. Filesystem case sensitivity
 
-The filesystem Adapter MUST not depend on case-sensitive path distinction.
-
-OMVCS canonical keys SHOULD use lowercase-safe naming to avoid Windows/macOS/Linux inconsistencies.
+Canonical Resource and Chunk logical keys use lowercase hexadecimal and
+lowercase path components. The filesystem Adapter MUST NOT depend on a
+host filesystem's case-sensitive path distinction and MUST preserve the
+exact canonical logical-key namespace on case-insensitive filesystems.
 
 ---
 
 # 66. Filesystem path length
 
-The filesystem Adapter MUST account for host path-length limitations.
-
-It MAY use shortened deterministic internal layout.
-
-Path-shortening MUST NOT alter object identity.
+The filesystem Adapter MUST account for host path-length and native-name
+limitations without truncation or aliasing. It MAY use the deterministic
+physical mapping allowed by §15 while preserving the canonical logical
+key. If a path cannot be represented safely under the selected mapping,
+the Adapter MUST fail explicitly.
 
 ---
 
 # 67. Filesystem links
 
-Hard links or reflinks MAY be used as optimization.
+Hard links or reflinks MAY be used as optimization only where they preserve
+the immutable-byte, containment, and no-replace requirements.
 
 They MUST NOT be required for correctness.
 
@@ -2224,47 +2309,83 @@ Tombstone use is implementation-specific.
 
 # 124. Repository Home bootstrap
 
-A new Repository Home MUST support creation of a minimal repository root record identifying:
+A filesystem-backed Repository Home MUST use the explicit
+caller-selected filesystem repository root. The root MUST be new or empty
+for bootstrap; a populated directory without a valid marker MUST NOT be
+silently reinterpreted as a repository.
+
+The marker MUST be stored at:
 
 ```text
-Project ID
-Repository format version
-current metadata generation
-configured namespace
+.omvcs/repository.json
 ```
 
-No creative history is changed merely by bootstrap.
+The `.omvcs` directory is reserved for OMVCS repository metadata at that
+root. Bootstrap MUST create the marker atomically and MUST NOT replace an
+existing marker. It MUST initialize the empty Storage Map and Core
+`StorageMapGeneration` `0` as part of the repository operational-metadata
+initialization boundary. The marker and generation are distinct records;
+the marker MUST NOT be treated as a generation value or proof that the Home
+is complete. Absence of a persisted Storage Map record after initialization
+is not equivalent to generation `0`.
 
-As part of the existing repository operational-metadata initialization
-boundary, the Storage Map is initialized as empty at Core
-`StorageMapGeneration` `0`. Absence of a persisted Storage Map record after
-initialization is not equivalent to generation `0`.
+Bootstrap MUST fail explicitly if it cannot establish the safe root,
+create the marker without replacement, or initialize the required
+operational state. No creative history is changed merely by bootstrap.
 
 ---
 
 # 125. Repository Home discovery
 
-A client connecting to a Storage Endpoint MAY attempt to discover an OMVCS Repository Home at a known configured root.
+A filesystem Repository Home discovery operation MUST use only the
+explicitly supplied candidate root. It MUST NOT walk parent directories
+looking for `.omvcs/repository.json`.
 
-Discovery MUST not infer Project identity solely from folder name.
+If the marker is absent, discovery MUST report `not_repository` or the
+exactly equivalent typed result. If present, it MUST validate the marker
+schema and layout versions and the Project identity before interpreting
+the root as a Repository Home.
+
+Discovery MUST NOT infer Project identity from the folder name or path.
 
 ---
 
 # 126. Repository Home root record
 
-Conceptually:
+A filesystem Repository Home marker is a closed canonical JSON object
+containing exactly these fields:
 
 ```json
 {
   "schema": "omvcs.repository-home/0.1",
-  "project_id": "019...",
-  "repository_format": "omvcs/0.1",
-  "current_generation": 188
+  "project_id": "<canonical ProjectId>",
+  "layout": "omvcs.storage-layout/0.1"
 }
 ```
 
-This is operational metadata. Its `current_generation` example is not
-defined as, and MUST NOT be substituted for, the Core `StorageMapGeneration`.
+The JSON bytes MUST use the canonical serialization rules in Core §5.
+`project_id` MUST use the existing canonical ProjectId serialization.
+Unknown, missing, duplicate, or incorrectly typed members, invalid
+canonical JSON, and invalid ProjectId values MUST be reported as invalid
+repository metadata.
+
+If the marker schema or `layout` value is valid but unsupported, discovery
+MUST report an explicit unsupported-version result. If a requested Project
+identity differs from `project_id`, discovery MUST report an explicit
+Project-identity-mismatch result. Only a valid marker with supported schema
+and layout and a matching requested Project identity permits
+Repository Home interpretation.
+
+The marker establishes intentional repository-root status, marker schema,
+Project identity, and storage-layout version only. It is not proof of
+history completeness, Resource verification, Platform registration,
+publication state, or an operation log. Repository completeness and
+operational records MUST be validated independently.
+
+The marker MUST NOT contain a separate RepositoryId, Repository format
+version, namespace identifier, generation, credentials, or other fields.
+The Storage Map and `StorageMapGeneration` are persisted separately under
+§51 and Core §34.
 
 ---
 
@@ -3786,18 +3907,20 @@ At most Endpoint operational configuration changes.
 
 # 240. Storage layout version
 
-An Endpoint MAY have a storage-layout version distinct from the Adapter version.
+An Adapter's physical storage layout MAY have a version distinct from its
+Adapter version. For a filesystem Repository Home, the marker's `layout`
+field MUST be `omvcs.storage-layout/0.1`.
 
 Example:
 
 ```text
-omvcs-storage-layout/1
+omvcs.storage-layout/0.1
 ```
 
-This allows Adapter software to evolve while preserving stored object layout.
-Storage-layout version is not a negotiated OMVCS Chunking policy. An OMVCS
-0.1 chunked representation continues to use the Core §8 policy regardless
-of the provider's internal layout version.
+This allows Adapter software to evolve while preserving stored object
+layout. The marker value does not select or negotiate an OMVCS Chunking
+policy. An OMVCS 0.1 chunked representation continues to use the Core §8
+policy regardless of provider-internal layout.
 
 ---
 
@@ -3823,17 +3946,11 @@ layout versions may describe provider-internal representation only.
 
 # 243. Repository discovery marker
 
-A Storage Endpoint root MAY contain a small OMVCS marker identifying:
-
-```text
-storage layout version
-namespace ID
-Repository Home information where applicable
-```
-
-This marker is operational metadata.
-It does not select or negotiate an OMVCS Chunking policy; OMVCS 0.1
-chunked representations use the single policy defined in Core §8.
+A filesystem Repository Home uses the marker at `.omvcs/repository.json`
+with the exact schema and layout defined in §126. It MUST NOT include a
+namespace identifier; DEC-STORAGE-011 remains unresolved. A Resource-only
+Endpoint is not required to have a Repository Home marker. The marker is
+operational metadata and does not select or negotiate a Chunking policy.
 
 ---
 
@@ -4427,10 +4544,14 @@ The following finite decisions are recorded here. Entries marked resolved
 have an accepted ADR; the remaining questions should be settled before 0.1
 is frozen:
 
-1. Exact canonical logical-key layout for Resources, Chunks and metadata.
+1. RESOLVED by ADR-0039: canonical provider-neutral logical keys for
+   immutable Resource and Chunk bytes; metadata uses its existing logical
+   operation contract without a canonical metadata path layout.
 2. RESOLVED by ADR-0036: OMVCS 0.1 mandates fixed-size sequential chunking
    with an exact 8,388,608-byte target.
-3. Exact minimum capability set required for Repository Home conformance.
+3. RESOLVED by ADR-0040: Repository Home minimum durable historical and
+   operational metadata, guarded-update, discovery, and durability
+   capabilities; Resource/Chunk byte storage is not required.
 4. RESOLVED by ADR-0037: verification strength is `chunk_identity` or
    `resource_identity`, separate from method/evidence.
 5. RESOLVED by ADR-0038: destination assurance may be established by direct
@@ -4445,7 +4566,8 @@ is frozen:
 11. Whether Endpoint namespace identity is mandatory.
 12. Exact retention policy for abandoned multipart uploads and unreferenced complete objects.
 13. Whether local filesystem and S3-compatible Adapters become official reference conformance implementations.
-14. Exact storage-layout version marker and repository discovery format.
+14. RESOLVED by ADR-0041: filesystem Repository Home marker and explicit
+   root discovery/bootstrap format.
 
 These are finite decisions within the Storage Adapter Specification, not
 additional top-level specifications.

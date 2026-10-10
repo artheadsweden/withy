@@ -534,6 +534,54 @@ preserving the OMVCS representation and Resource identity. It MUST NOT
 automatically replace an existing OMVCS Chunk Manifest merely because a
 different Endpoint prefers another layout.
 
+## 8.3 Canonical Resource and Chunk logical keys
+
+OMVCS 0.1 defines provider-neutral logical keys for immutable Resource and
+Chunk bytes. These keys are operational storage addresses derived from the
+already-defined content identifiers. They are not identities and MUST NOT
+be included in historical objects or hash preimages.
+
+For a ResourceId with a lowercase hexadecimal SHA-256 digest, the canonical
+logical key is:
+
+```text
+resources/sha256/<p1>/<p2>/<digest>
+```
+
+For a ChunkId with a lowercase hexadecimal SHA-256 digest, the canonical
+logical key is:
+
+```text
+chunks/sha256/<p1>/<p2>/<digest>
+```
+
+`<digest>` is the complete 64-character lowercase hexadecimal digest.
+`<p1>` is characters 1–2 of the digest and `<p2>` is characters 3–4.
+For example, a digest beginning `abcdef...` has the key prefix
+`resources/sha256/ab/cd/` or `chunks/sha256/ab/cd/`, as applicable.
+
+Canonical keys use `/` as the logical separator on every host operating
+system. They are relative and contain only the prescribed ASCII lowercase
+path components; they contain no empty, `.` or `..` segments, absolute
+path or drive syntax, platform-dependent separators, or user-controlled
+filename components. They contain no Resource metadata, Project or creator
+names, timestamps, Endpoint identifiers, or credentials.
+
+The ResourceId or ChunkId remains authoritative. Moving or remapping the
+stored bytes MUST NOT change either identifier or any historical identity.
+A provider MAY add a configured physical storage-root prefix or map the
+logical key internally, provided the logical key remains externally
+observable and distinct logical keys do not alias.
+
+An existing object at a canonical key MAY satisfy a repeated immutable
+write only if its bytes verify as the requested object under the applicable
+content-verification contract. Mismatching bytes MUST produce an integrity
+or storage conflict and MUST NOT be silently overwritten.
+
+This section does not define a canonical path layout for metadata objects;
+their logical addressing follows the applicable metadata operation
+contracts.
+
 ---
 
 # 9. Creative Component
@@ -1584,6 +1632,13 @@ intentionally incomplete local historical metadata. An intentional omission
 of a required historical reference MUST have a matching declared history
 boundary under section 55; an absent target without one is unresolved.
 
+A Repository Home is the durable authoritative repository-metadata home
+for one OMVCS Project. Its minimum capabilities are defined in Storage
+Adapter §10. Repository Home conformance does not require Resource or
+Chunk byte storage; such storage, if provided, is declared independently.
+The Open Music Platform is not a Repository Home merely because it mirrors
+metadata.
+
 It is not necessarily the same place that stores every Resource Object.
 
 Example:
@@ -1612,6 +1667,11 @@ reconstruct only Resource Replica records admitted through the applicable
 registration requirements. Deserializing a Replica record alone does not
 establish this authority or register the record. These persistence and
 reconstruction requirements are defined further in Storage Adapter §51.
+
+A filesystem-backed Repository Home uses the explicit-root marker and
+bootstrap/discovery contract in Storage Adapter §§124–126. The marker does
+not assert history completeness or publication state and does not replace
+validation of historical or operational metadata.
 
 It MUST NOT contain credentials in historical metadata.
 

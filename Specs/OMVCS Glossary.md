@@ -638,6 +638,36 @@ Credentials MUST NOT be stored in immutable creative history.
 
 ---
 
+## Logical Storage Key
+
+A **Logical Storage Key** is the provider-neutral operational address used
+by OMVCS storage operations to request an object. In OMVCS 0.1, canonical
+Resource and Chunk keys are derived from their content identifiers under
+Core §8.3. A logical key is not an object identifier, storage-location
+identity, or historical field; provider mapping and physical paths MUST
+NOT alter content or historical identity.
+
+---
+
+## Repository Home
+
+A **Repository Home** is the durable authoritative repository-metadata
+home for one OMVCS Project. Its minimum capabilities are defined by Storage
+Adapter §10. It is distinct from Resource storage, any one Storage
+Endpoint, a filesystem root layout, and the Open Music Platform.
+
+---
+
+## Repository Home Marker
+
+A **Repository Home Marker** is the filesystem marker at
+`.omvcs/repository.json` that establishes intentional repository-root
+status, marker schema, Project identity, and storage-layout version. It
+does not prove history completeness, Resource verification, publication,
+or Platform registration.
+
+---
+
 ## Replica Identifier (ReplicaId)
 
 A **Replica Identifier** (`ReplicaId`) is the assigned operational

@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, ADR-0035 resolves DG-0033; WORK-0016 bounded Replica/locator/Storage Map/generation/CAS is VERIFIED / INTEGRATED at ee8d77ddfc9859ee8c7bcae13018332632f6efa4; ADR-0036 resolves DEC-CORE-001 + DEC-STORAGE-002, ADR-0037 resolves DEC-STORAGE-004, and ADR-0038 resolves DEC-STORAGE-005; WORK-0017 is VERIFIED / INTEGRATED at `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`; DG-0034 remains open and blocks syntax-specific ProviderLocator schema-identifier validation only)
+Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, ADR-0035 resolves DG-0033; WORK-0016 bounded Replica/locator/Storage Map/generation/CAS is VERIFIED / INTEGRATED at ee8d77ddfc9859ee8c7bcae13018332632f6efa4; ADR-0036 resolves DEC-CORE-001 + DEC-STORAGE-002, ADR-0037 resolves DEC-STORAGE-004, and ADR-0038 resolves DEC-STORAGE-005; WORK-0017 is VERIFIED / INTEGRATED at `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`; ADR-0039/0040/0041 resolve DEC-STORAGE-001/003/014; WORK-0018 is VERIFIED / INTEGRATED at `43edf520bd4f7ef8f3f1fbe73efbab71763fa576`; WORK-0019 byte-storage work may proceed, but Home bootstrap/conformance is blocked by DG-0035; DG-0036 blocks non-filesystem Home conformance only; DG-0034 remains open and limits generic ProviderLocator schema-identifier lexical validation only)
 
 ## Specification state
 
@@ -127,4 +127,17 @@ IN PROGRESS; WORK-0019 is next to inspect and WORK-0019–WORK-0021 remain
 unstarted. DEC-STORAGE-013 remains OPEN; this mock is not an official
 reference-conformance designation.
 DEC-STORAGE-011 and DG-0034 remain OPEN and outside the bounded scope.
-No new storage semantics or Design Gaps were introduced.
+ADR-0039 resolves DEC-STORAGE-001 for canonical Resource/Chunk logical keys
+only; no canonical metadata path layout is defined. ADR-0040 resolves
+DEC-STORAGE-003; Resource/Chunk byte storage is not required for Repository
+Home. ADR-0041 resolves DEC-STORAGE-014. WORK-0019 remains unstarted;
+Resource/Chunk byte-storage work may proceed, but filesystem Home
+bootstrap/conformance is blocked by DG-0035. DG-0034 remains OPEN and
+non-blocking for WORK-0019's use of the approved opaque ProviderLocator
+envelope; no generic grammar is inferred.
+DEC-STORAGE-011 and DEC-STORAGE-013 remain OPEN; shared-namespace semantics
+and official reference designation remain excluded. No new Design Gap was
+introduced beyond DG-0035 (filesystem bootstrap atomicity/recovery) and
+DG-0036 (marker/discovery applicability to non-filesystem Homes). DG-0036
+does not affect WORK-0019's filesystem marker scope. No production code
+changed.

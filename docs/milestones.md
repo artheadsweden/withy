@@ -113,6 +113,15 @@ tests, 343 Storage/model/Core package tests, 370 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. WORK-0019 is next to inspect;
 WORK-0019–WORK-0021 remain unstarted. DEC-STORAGE-013 remains OPEN; no
 reference designation. M3 remains IN PROGRESS.
+ADR-0039/0040/0041 resolve DEC-STORAGE-001/003/014. WORK-0019's
+Resource/Chunk byte-storage scope may proceed with approved keys and
+capabilities. DG-0035 blocks filesystem Home bootstrap/conformance until
+failure atomicity and recovery for marker plus generation-zero map
+initialization are specified. DG-0034 remains OPEN and non-blocking for
+WORK-0019's use of the approved opaque ProviderLocator envelope; WORK-0019
+MUST NOT invent a generic schema-identifier grammar. DG-0036 blocks only
+non-filesystem Repository Home conformance pending a provider-neutral
+marker/discovery contract.
 
 - generic storage contract;
 - mock storage;
