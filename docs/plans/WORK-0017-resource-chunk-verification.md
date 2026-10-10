@@ -1,7 +1,7 @@
 # WORK-0017 — Resource and Chunk verification model
 
-Status: READY — semantic gates resolved and implementation authorized by the
-human-approved decisions recorded in ADR-0036/0037/0038. Not started.
+Status: VERIFIED — implementation and validation complete; Storage Engineer
+review and independent Verifier ACCEPT. Not integrated.
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0017-resource-chunk-verification`
@@ -142,3 +142,26 @@ registration eligibility.
 Relevant tests, rustfmt, warnings-denied Clippy, coverage update, handover,
 and clean diff checks pass. No verification taxonomy or acceptance rule is
 left for implementation discretion.
+
+## Implementation status
+
+Implemented on `work/0017-resource-chunk-verification`. The model now exposes
+deterministic OMVCS 0.1 chunking, streaming direct Resource/Chunk checks,
+candidate- and manifest-bound evidence, bounded-memory verified manifest
+derivation, destination reconstruction assurance, and exact provider checksum
+scope evaluation. Core stages verified candidates as additions in the
+existing Project StorageMapGeneration mutation and atomic CAS. No Replica
+identity, representation, locator, generation, or historical identity
+contract was changed.
+
+Focused conformance coverage includes exact target boundaries, complete
+Resource hashing, verified/failed/indeterminate Chunk checks, reconstruction
+ordering/completeness and source/destination binding, checksum algorithm and
+scope equivalence, evidence independence from history, promotion gating, and
+CAS conflict/invalid-request atomicity. See `docs/spec-coverage.md` for exact
+test names and execution status. Storage Engineer review accepted the Adapter
+boundary. The Verifier identified and rejected an initial version for
+allowing nonconforming manifests; manifest construction and deserialization
+now enforce the approved policy, with explicit rejection tests. The Verifier
+accepted that remediation and independently ACCEPTED the complete package
+with no findings. Implementation is not integrated or pushed.

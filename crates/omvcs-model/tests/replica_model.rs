@@ -41,10 +41,18 @@ fn endpoint_id() -> StorageEndpointId {
 fn manifest() -> ChunkManifest {
     ChunkManifest::new(
         resource_id(),
-        length(5),
+        length(8_388_611),
         vec![
-            ChunkManifestEntry::new(CHUNK_ONE.parse().expect("ChunkId"), length(0), length(2)),
-            ChunkManifestEntry::new(CHUNK_TWO.parse().expect("ChunkId"), length(2), length(3)),
+            ChunkManifestEntry::new(
+                CHUNK_ONE.parse().expect("ChunkId"),
+                length(0),
+                length(8_388_608),
+            ),
+            ChunkManifestEntry::new(
+                CHUNK_TWO.parse().expect("ChunkId"),
+                length(8_388_608),
+                length(3),
+            ),
         ],
     )
     .expect("ordered complete manifest")

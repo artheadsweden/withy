@@ -15,10 +15,12 @@
 
 mod identity;
 mod stream;
+mod verification;
 
 pub use identity::ChunkId;
 pub use omvcs_model::{ResourceId, StorageEndpointId};
 pub use stream::Download;
+pub use verification::{ProviderChecksumReport, verify_chunk_checksum, verify_resource_checksum};
 
 use std::fmt;
 use std::io::Read;

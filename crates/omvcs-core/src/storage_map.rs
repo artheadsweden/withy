@@ -1,10 +1,14 @@
 //! Project-scoped Storage Map snapshots and guarded operational mutations.
 //!
-//! This module deliberately exposes no Replica-addition operation. Removal
-//! affects only Storage Map metadata; it does not invoke a Storage Adapter or
-//! authorize physical deletion.
+//! Replica additions require destination-applicable Resource identity
+//! assurance and use the same Project-scoped CAS mutation as other map
+//! changes. Removal affects only Storage Map metadata; it does not invoke a
+//! Storage Adapter or authorize physical deletion.
 
-use omvcs_model::replica::{ProviderLocator, Replica, ReplicaAvailability};
+use omvcs_model::replica::{
+    ProviderLocator, Replica, ReplicaAvailability, ReplicaCandidate, ReplicaError,
+};
+use omvcs_model::verification::PromotionEligibility;
 use omvcs_model::{ProjectId, ReplicaId, ResourceId};
 use serde::de::Error as _;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
@@ -318,23 +322,23 @@ pub enum ReplicaChange {
     },
 }
 
-/// A logical map mutation request with at most one change per `ReplicaId`.
+/// A logical map mutation request with at most one operation per `ReplicaId`.
 ///
-/// Replica addition is deliberately absent until the approved verification
-/// result contract is available. In particular, this API cannot promote an
-/// unverified model value:
+/// A candidate can enter a request only through verified destination
+/// eligibility:
 ///
 /// ```compile_fail
 /// use omvcs_core::storage_map::StorageMapMutation;
-/// use omvcs_model::replica::Replica;
+/// use omvcs_model::replica::{ReplicaAvailability, ReplicaCandidate};
 ///
 /// let mut mutation = StorageMapMutation::new();
-/// let candidate: Replica = todo!();
-/// mutation.add_replica(candidate);
+/// let candidate: ReplicaCandidate = todo!();
+/// mutation.add_replica(candidate, ReplicaAvailability::Available);
 /// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct StorageMapMutation {
     changes: BTreeMap<ReplicaId, ReplicaChange>,
+    additions: BTreeMap<ReplicaId, Replica>,
 }
 
 /// Invalid construction of a single logical mutation request.
@@ -344,6 +348,8 @@ pub enum StorageMapMutationBuildError {
     DuplicateReplicaChange,
     /// A removal and an operational update were requested for one record.
     ConflictingReplicaChange,
+    /// Candidate assurance is invalid or does not apply to its representation.
+    InvalidPromotionAssurance,
 }
 
 impl fmt::Display for StorageMapMutationBuildError {
@@ -354,6 +360,9 @@ impl fmt::Display for StorageMapMutationBuildError {
             }
             Self::ConflictingReplicaChange => {
                 formatter.write_str("mutation cannot update and remove one ReplicaId")
+            }
+            Self::InvalidPromotionAssurance => {
+                formatter.write_str("Replica candidate lacks applicable Resource assurance")
             }
         }
     }
@@ -411,10 +420,41 @@ impl StorageMapMutation {
         Ok(())
     }
 
+    /// Adds a candidate only after destination-applicable
+    /// `resource_identity` assurance has been established.
+    ///
+    /// The returned identifier is assigned for this proposed Replica record;
+    /// it becomes registered only if the complete mutation wins the Storage
+    /// Map CAS. The caller supplies retrieval state separately from integrity.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`StorageMapMutationBuildError::InvalidPromotionAssurance`]
+    /// unless `eligibility` applies to the exact candidate.
+    pub fn add_replica(
+        &mut self,
+        candidate: ReplicaCandidate,
+        eligibility: &PromotionEligibility,
+        availability: ReplicaAvailability,
+    ) -> Result<ReplicaId, StorageMapMutationBuildError> {
+        let replica =
+            candidate
+                .promote(eligibility, availability)
+                .map_err(|_error: ReplicaError| {
+                    StorageMapMutationBuildError::InvalidPromotionAssurance
+                })?;
+        let id = replica.id();
+        if self.changes.contains_key(&id) || self.additions.contains_key(&id) {
+            return Err(StorageMapMutationBuildError::DuplicateReplicaChange);
+        }
+        self.additions.insert(id, replica);
+        Ok(id)
+    }
+
     /// Returns whether the logical request contains no changes.
     #[must_use]
     pub fn is_empty(&self) -> bool {
-        self.changes.is_empty()
+        self.changes.is_empty() && self.additions.is_empty()
     }
 }
 
@@ -529,8 +569,8 @@ pub enum StorageMapMutationOutcome {
 
 /// Applies a batch against one coherent pre-mutation snapshot.
 ///
-/// This function never retries a conflict and never offers Replica addition.
-/// All requested IDs are validated before any staged edit is committed.
+/// This function never retries a conflict. All requested IDs are validated
+/// before any staged edit is committed, including newly promoted Replica IDs.
 #[must_use]
 pub fn apply_storage_map_mutation(
     persistence: &impl StorageMapPersistence,
@@ -566,6 +606,15 @@ pub fn apply_storage_map_mutation(
             };
         }
     }
+    for replica_id in mutation.additions.keys() {
+        if snapshot.map.replicas.contains_key(replica_id)
+            || mutation.changes.contains_key(replica_id)
+        {
+            return StorageMapMutationOutcome::Invalid {
+                replica_id: *replica_id,
+            };
+        }
+    }
 
     let mut proposed = snapshot.map.clone();
     for (replica_id, change) in &mutation.changes {
@@ -593,6 +642,12 @@ pub fn apply_storage_map_mutation(
             }
         }
     }
+    proposed.replicas.extend(
+        mutation
+            .additions
+            .iter()
+            .map(|(id, replica)| (*id, replica.clone())),
+    );
 
     if proposed == snapshot.map {
         return StorageMapMutationOutcome::Unchanged {

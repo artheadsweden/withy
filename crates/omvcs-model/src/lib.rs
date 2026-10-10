@@ -14,6 +14,7 @@ pub mod replica;
 pub mod resource;
 pub mod revision;
 mod timestamp;
+pub mod verification;
 
 pub use component_state::ComponentState;
 pub use creative_component::CreativeComponent;
