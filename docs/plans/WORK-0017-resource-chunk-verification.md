@@ -1,7 +1,8 @@
 # WORK-0017 — Resource and Chunk verification model
 
-Status: VERIFIED — implementation and validation complete; Storage Engineer
-review and independent Verifier ACCEPT. Not integrated.
+Status: VERIFIED / INTEGRATED at
+`60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. Storage Engineer and independent
+Verifier ACCEPT.
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0017-resource-chunk-verification`
@@ -129,6 +130,12 @@ between unavailable, corrupt, unverified, and verified copies.
    without changing Replica identity, Storage Map, or CAS semantics.
 5. Obtain Storage Engineer review and independent Verifier acceptance.
 
+## Integration status
+
+No-fast-forward integrated into `spec/0003-canonical-collection-order` at
+`60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. Post-merge focused and workspace
+tests, formatting, warnings-denied Clippy, and diff check passed.
+
 ## Verification requirements
 
 Verifier must test every acceptance case above, including wrong bytes,
@@ -164,4 +171,6 @@ boundary. The Verifier identified and rejected an initial version for
 allowing nonconforming manifests; manifest construction and deserialization
 now enforce the approved policy, with explicit rejection tests. The Verifier
 accepted that remediation and independently ACCEPTED the complete package
-with no findings. Implementation is not integrated or pushed.
+with no findings. Implementation is integrated at the commit recorded in the
+Integration status section and pushed to both feature and integration
+branches.

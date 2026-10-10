@@ -160,14 +160,15 @@ ADR-0036/0037/0038.
 DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0019 waits
 for its concrete key/layout/Home decisions. WORK-0016 was authorized by the
 original preflight and is now integrated at its bounded scope. WORK-0017 is
-separately READY / AUTHORIZED under ADR-0036/0037/0038; other packages retain
-their own implementation gates and authorization process.
+verified and integrated at its bounded scope; WORK-0018–0021 remain
+unstarted and retain their own implementation gates and authorization
+process.
 
 | Work | Title | Dependency / gate |
 |---|---|---|
 | WORK-0015 | Storage primitives and provider-neutral contract | No new human decision for its restricted Resource/Chunk byte-I/O and capability seam. This is the first package that can be implemented from current Specs, after separate authorization. It makes no Repository Home conformance claim. |
 | WORK-0016 | Replica model and Storage Map | VERIFIED / INTEGRATED at `ee8d77ddfc9859ee8c7bcae13018332632f6efa4`. Its previously gated promotion integration is now semantically defined by ADR-0037/0038 and can accompany WORK-0017's result API or land as a bounded WORK-0016 follow-up. DEC-STORAGE-011 shared namespace claims remain excluded. |
-| WORK-0017 | Resource and Chunk verification model | READY / AUTHORIZED. WORK-0015/0016 and ADR-0032/0033/0034/0035; chunking, strength/evidence, and destination assurance resolved by ADR-0036/0037/0038. |
+| WORK-0017 | Resource and Chunk verification model | VERIFIED / INTEGRATED at `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. Uses WORK-0015/0016 and ADR-0032/0033/0034/0035/0036/0037/0038. |
 | WORK-0018 | Mock Storage Adapter | WORK-0015/0016/0017; approved identity/locator/CAS contracts and deterministic failure injection. It is not an official reference conformance decision. |
 | WORK-0019 | Local filesystem Storage Adapter | WORK-0015/0016/0017; DEC-STORAGE-001, 003, 014 gate logical layout, Repository Home, and discovery only. Chunked behavior follows ADR-0036. DEC-STORAGE-013 is needed only before claiming official reference status. |
 | WORK-0020 | Resource replication | WORK-0015/0016/0017; source-preserving copy, verify, register under ADR-0032/0033/0034 and ADR-0037/0038. ADR-0036 supplies Chunk boundaries; no automatic rechunking to satisfy Endpoint preference. No deletion, GC, retention policy, or M4 recovery state. |
@@ -216,12 +217,12 @@ task. Other packages retain their own gates and authorization process.
   with WORK-0017's result API or delivered as a bounded WORK-0016 follow-up.
   DEC-STORAGE-011 remains open but does not block the explicitly excluded
   shared-namespace claims.
-- WORK-0017 is READY and AUTHORIZED under ADR-0036/0037/0038. It may
-  implement typed outcomes/strength/evidence, deterministic Chunk and
+- WORK-0017's typed outcomes/strength/evidence, deterministic Chunk and
   Resource verification, corruption/unavailability distinction, provider
-  checksum-equivalence rules, and promotion eligibility consumed by the
-  WORK-0016 registration boundary. It may use integrated WORK-0016 without
-  reopening its identity, Storage Map, or CAS semantics.
+  checksum-equivalence rules, and promotion eligibility are VERIFIED /
+  INTEGRATED at `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. It consumes the
+  WORK-0016 registration boundary without reopening its identity, Storage Map,
+  or CAS semantics.
 - At initial M3 preflight, no production implementation beyond WORK-0015 had
   started. WORK-0016 was subsequently completed and integrated at its bounded
   approved scope.

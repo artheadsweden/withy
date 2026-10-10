@@ -99,11 +99,10 @@ integrated at `ee8d77ddfc9859ee8c7bcae13018332632f6efa4` on
 `origin/work/0016-replica-storage-map`. ADR-0036 resolves
 DEC-CORE-001/DEC-STORAGE-002 with fixed-size sequential 8,388,608-byte
 chunking; ADR-0037 resolves DEC-STORAGE-004; ADR-0038 resolves
-DEC-STORAGE-005. WORK-0017 is independently VERIFIED on
-`work/0017-resource-chunk-verification` at
-`4e2e13313625c1e7409d4138100cc324a3bd60f1`; its verified-promotion
+DEC-STORAGE-005. WORK-0017 is VERIFIED / INTEGRATED at
+`60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`; its verified-promotion
 integration consumes the WORK-0016 registration boundary without changing
-the integrated identity or CAS semantics. WORK-0017 is not integrated.
+the integrated identity or CAS semantics.
 DG-0034 remains open and
 blocks syntax-specific ProviderLocator schema-identifier validation only.
 DEC-STORAGE-011 remains open; shared namespace, deletion, GC, and retention

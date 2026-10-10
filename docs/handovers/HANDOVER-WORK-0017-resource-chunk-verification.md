@@ -137,17 +137,17 @@ suites, including doctests.
 ## Remaining work
 
 1. WORK-0017 has the required Storage Engineer and independent Verifier
-   acceptance. Follow the established closeout process before integration.
-2. WORK-0018–WORK-0021 have not been started by this implementation.
+   acceptance and is integrated. WORK-0018 is the next M3 package to inspect
+   and authorize.
+2. WORK-0018–WORK-0021 remain unstarted.
 
 ## Git state
 
 Implementation commit: `7b2ffb8222b87c14080cc8db51966d695c583a5f`.
-Implementation/handover HEAD reviewed: `4e2e13313625c1e7409d4138100cc324a3bd60f1`.
-The Verifier independently accepted the complete package at this HEAD with
-no findings. A subsequent documentation-only commit reconciles the status
-and handover with that ACCEPT; it does not change implementation or tests.
-Remote push performed: NO. Remote publishing is enabled in project state;
-do not push or integrate unless the authorized closeout task requests it.
-Remote push performed: NO. Remote publishing is enabled in project state,
-but this work was not pushed or integrated.
+Implementation/handover HEAD reviewed:
+`4e2e13313625c1e7409d4138100cc324a3bd60f1`. The Verifier independently
+accepted the complete package at this HEAD with no findings. No-fast-forward
+integration commit: `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. Feature and
+integration branches were pushed and verified synchronized. Post-merge
+validation passed. Documentation-only integration reconciliation followed;
+no production code changed after verification.
