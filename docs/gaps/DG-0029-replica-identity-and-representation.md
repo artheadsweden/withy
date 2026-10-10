@@ -1,6 +1,6 @@
 # DG-0029 — Resource Replica identity and representation
 
-Status: OPEN
+Status: RESOLVED
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead
 Discovered during: M3 bounded preflight
@@ -76,4 +76,20 @@ Resource/Chunk identity, reconstruction ordering, and integrity rules.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved [ADR-0032](../decisions/ADR-0032-resource-replica-identity-and-representation.md)
+and specified in Core §§32–35, Storage Adapter §§73–75 and 161–164,
+the Glossary, and INV-RES-003/005/006.
+
+Resource Replicas have assigned stable UUIDv7 ReplicaIds, one record per
+complete recoverable representation, and may have multiple independently
+addressable representations at one Endpoint. A record binds either a
+complete-object representation or an ordered Chunk Manifest and its
+provider locator. Chunk identity and reconstruction order remain unchanged.
+Locator envelope semantics are separately resolved by ADR-0033 for
+DEC-STORAGE-007.
+
+DEC-STORAGE-011 remains OPEN; no shared-namespace or cross-Project
+physical-object identity or deduplication guarantee is introduced.
+DEC-STORAGE-004/005 remain OPEN; verification evidence, strength taxonomy,
+and upload assurance remain outside this resolution. Storage Map generation
+domain and exact CAS semantics are tracked separately by [DG-0032](DG-0032-storage-map-generation-and-cas.md).

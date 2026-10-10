@@ -67,8 +67,9 @@ and absence of implicit history, Replica, or chunking effects.
 
 ## Design Gaps discovered
 
-`None` for WORK-0015. DG-0029 remains OPEN and continues to block WORK-0016
-Replica/Storage Map semantics; it is not changed by this work.
+`None` for WORK-0015. At the time of this handover, DG-0029 was OPEN and
+blocked WORK-0016 Replica/Storage Map semantics. It was subsequently
+resolved by ADR-0032; DG-0032 now gates guarded Storage Map mutations.
 
 ## Assumptions
 

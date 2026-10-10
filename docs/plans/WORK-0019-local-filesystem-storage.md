@@ -74,7 +74,7 @@ logical-key and discovery/layout rules.
 
 ## Known Design Gaps
 
-- DG-0029 gates Replica-aware Storage Map integration but does not block
+- DG-0032 gates guarded Storage Map mutation integration but does not block
   isolated approved byte-I/O implementation.
 - DEC-STORAGE-001/003/014 and joint chunking decision gate their
   corresponding layout/Home/chunked features, not the restricted opaque-key

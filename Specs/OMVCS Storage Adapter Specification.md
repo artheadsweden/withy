@@ -600,7 +600,8 @@ A resumed download MUST still result in final whole-object verification.
 
 # 29. Temporary upload state
 
-Incomplete uploads MUST NOT be registered as verified Resource Replicas.
+Incomplete uploads MUST NOT be registered as Resource Replicas or reported
+as verified.
 
 They may exist physically as:
 
@@ -616,13 +617,14 @@ but remain operationally:
 pending
 ```
 
-until complete and verified.
+until complete and verified. Such pending upload state is not a registered
+Resource Replica.
 
 ---
 
 # 30. Replica lifecycle
 
-A Resource Replica SHOULD progress through states such as:
+A storage workflow MAY use operational labels such as:
 
 ```text
 planned
@@ -636,6 +638,13 @@ removing
 removed
 ```
 
+`planned`, `uploading`, and `stored_unverified` describe candidate
+representations before registration, not registered Resource Replicas.
+These illustrative workflow/status values do not form one availability or
+verification taxonomy. `corrupt` is an integrity finding, not an
+availability state; unavailable does not imply corrupt, and existence does
+not imply verified. A candidate may be registered as a Resource Replica
+only after the applicable Content Verification requirements succeed.
 Exact storage-provider internals may differ.
 
 Core-visible state MUST never mark a replica `verified` before verification requirements are satisfied.
@@ -1292,27 +1301,89 @@ Creative history remains unaffected.
 
 # 73. Storage Location representation
 
-A Resource Replica record SHOULD contain enough provider-independent operational information to identify the physical copy.
+A Resource Replica record MUST contain enough operational information to
+retrieve or reconstruct exactly one complete Resource representation at
+its associated Storage Endpoint. The Resource's physical representation
+MUST be bound as exactly one representation. OMVCS 0.1 implementations
+MUST support at least the complete-object and chunked representation kinds
+defined in Core §32; a chunked representation is bound to an ordered Chunk
+Manifest under Core §8.2.
 
 Conceptually:
 
 ```json
 {
-  "replica_id": "019...",
+  "replica_id": "019f1234-5678-7abc-8def-0123456789ab",
   "resource_id": "omvcs:resource:sha256:...",
-  "endpoint_id": "019...",
-  "locator": {
-    "provider_key": "..."
+  "endpoint_id": "019ef123-4567-7abc-8def-0123456789ab",
+  "representation": {
+    "kind": "chunked",
+    "manifest": {
+      "resource_id": "omvcs:resource:sha256:...",
+      "total_length": 1234,
+      "chunks": [
+        {
+          "chunk_id": "omvcs:chunk:sha256:...",
+          "offset": 0,
+          "length": 1234
+        }
+      ]
+    }
   },
-  "state": "verified",
-  "verification": {
-    "kind": "full_content",
-    "verified_at": "..."
-  }
+  "locator": {
+    "schema": "example.storage.chunk-locator/1",
+    "value": {
+      "opaque": "provider-specific data"
+    }
+  },
+  "availability": "available"
 }
 ```
 
-`locator` is Adapter-specific operational information.
+Provider locator data MUST use a generic typed envelope equivalent to:
+
+```text
+ProviderLocator {
+    schema: string identifying the exact versioned locator schema,
+    value: canonical JSON data governed by that schema
+}
+```
+
+The exact field names MAY follow the applicable schema conventions, but the
+semantics are normative. The schema identifier MUST use the existing
+versioned schema-identifier convention and MUST identify the exact provider
+locator schema and version. Generic Core MUST be able to persist,
+reproduce, compare, and pass the envelope unchanged to the applicable
+Storage Adapter without understanding the provider-specific meaning of
+`value`; canonical JSON serialization is the only representation step.
+The envelope and `value` MUST use RFC 8785/JCS canonical JSON
+serialization, without transformations beyond those canonical JSON rules.
+The Storage Adapter/provider owns validation under the named schema and
+translation to provider operations. The named schema and its provider
+validator MUST reject credentials, access tokens, expiring signed URLs,
+other secrets, and process-local handles, and MUST ensure the locator can
+rediscover the physical representation after restart.
+
+The Endpoint Identifier and ProviderLocator together identify where the
+Replica representation can be accessed. A locator is interpreted only in
+the context of its Endpoint and Storage Adapter. The same locator value at
+two Endpoints MUST NOT imply the same physical object or Replica.
+
+An `availability` value describes retrieval only. It MUST NOT be treated
+as evidence of integrity or verification.
+
+ProviderLocator is mutable operational metadata. It MUST NOT be Resource
+identity, Replica identity, Chunk identity, or historical metadata. It MUST
+NOT contain credentials, access tokens, expiring signed URLs, or other
+secrets; rely on process-local handles; or prevent rediscovery of the
+physical representation after restart. Temporary access grants remain
+separate from ProviderLocator.
+
+For `complete-object`, the locator MUST permit access to the provider
+object whose bytes are the complete Resource. For `chunked`, it MUST permit
+the Adapter to retrieve every Chunk identified by the Replica's manifest.
+Provider-specific Chunk locations are reconstruction details of that
+Resource Replica; an individual Chunk copy is not a Resource Replica.
 
 ---
 
@@ -1329,6 +1400,11 @@ provider returns replacement file ID
 ```
 
 Updating locator metadata MUST NOT change Resource identity.
+
+Updating the locator for the same logical physical representation within
+the same Endpoint/provider context MUST retain the ReplicaId. Creating a
+distinct independently addressable copy MUST create a new Replica record
+with a new ReplicaId.
 
 ---
 
@@ -2439,6 +2515,10 @@ according to implementation.
 
 It MUST preserve privacy and access-control requirements.
 
+This permission does not define cross-Project physical-object identity,
+shared-namespace identity, shared Chunk-location records, or deletion and
+ownership semantics. DEC-STORAGE-011 remains open.
+
 ---
 
 # 162. Chunk manifest storage
@@ -2446,6 +2526,12 @@ It MUST preserve privacy and access-control requirements.
 Chunk Manifests are operational physical-reconstruction information and MAY live in Repository metadata or Storage Endpoint representation. They MUST NOT be included in a historical Resource Reference or affect historical object identity. Their `chunks` collection is an ordered sequence in reconstruction order, as defined in the Core Specification and Glossary; this ordering requirement is for reconstruction and does not make the Chunk Manifest part of historical identity.
 
 Regardless, a Replica using chunked representation MUST expose enough information to reconstruct the complete Resource.
+
+The ordered Chunk Manifest is bound to one Resource Replica representation.
+Provider-specific Chunk locations required by that representation are
+operational details of that Replica's locator. A Storage Map MUST NOT
+register individual Chunk copies as Resource Replicas. This section does
+not define shared Chunk-location records or shared-object ownership.
 
 ---
 
@@ -2471,6 +2557,10 @@ A missing/corrupt Chunk MAY be repaired from:
 - reconstruction from another complete Resource Replica.
 
 Repair does not alter Resource identity.
+
+Repairing a Chunk from another Resource Replica does not make the Chunk a
+separate Resource Replica and does not change the identity or representation
+binding of either Resource.
 
 ---
 
@@ -3688,6 +3778,9 @@ Repository Home suitability declaration
 migration source retention on failure
 provider path/key mapping
 unknown provider metadata
+provider locator schema/version validation and exact opaque pass-through
+locator durability across process restart
+provider locator contains no credentials, expiring grants, or process-local handles
 ```
 
 ---
@@ -4168,9 +4261,11 @@ The most important requirements of this specification are:
 
 ---
 
-# 270. Unresolved Storage Adapter decisions for 0.1
+# 270. Storage Adapter decisions for 0.1
 
-The following questions remain inside this specification and should be settled before 0.1 is frozen:
+The following finite decisions are recorded here. Entries marked resolved
+have an accepted ADR; the remaining questions should be settled before 0.1
+is frozen:
 
 1. Exact canonical logical-key layout for Resources, Chunks and metadata.
 2. Whether fixed 8 MiB chunking is mandated for the reference implementation or only recommended.
@@ -4178,7 +4273,8 @@ The following questions remain inside this specification and should be settled b
 4. Exact verification-strength taxonomy.
 5. Whether full Resource hash verification is mandatory after every upload or may rely on previously verified deterministic chunk reconstruction.
 6. Exact layout and compaction semantics for the Repository Operation Log.
-7. Exact representation of provider locator data inside Replica records.
+7. RESOLVED by ADR-0033: provider locator data uses the generic typed
+   `{schema, value}` envelope defined in §73.
 8. Exact treatment of client-side encryption in OMVCS 0.1.
 9. Whether temporary read-grant support is mandatory for an Endpoint used for public Open Music playback.
 10. Exact requirements for shared-namespace garbage collection.

@@ -622,13 +622,31 @@ Credentials MUST NOT be stored in immutable creative history.
 
 ---
 
+## Replica Identifier (ReplicaId)
+
+A **Replica Identifier** (`ReplicaId`) is the assigned operational
+identifier of one Resource Replica record. It is a UUIDv7 in canonical
+lowercase textual form and remains stable for the lifetime of that record.
+It is independent of ResourceId, EndpointId, provider locator,
+representation layout, verification evidence, and availability state.
+
+---
+
 ## Resource Replica
 
-A **Resource Replica** is one verified physical copy of a Resource Object at a Storage Endpoint.
+A **Resource Replica** is an operational record for one complete recoverable
+physical representation of one Resource Object at one Storage Endpoint.
+A candidate object that is incomplete or unverified is not a registered
+Resource Replica. A registered, valid Resource Replica MUST have passed the
+applicable Content Verification requirements.
 
-A Resource Object MAY have zero, one or many known replicas.
+A Resource Object MAY have zero, one, or many Resource Replicas. Multiple
+distinct, independently addressable representations of the same Resource
+MAY be recorded at one Endpoint.
 
 All valid replicas of the same Resource Object MUST reconstruct to the same Resource Identifier.
+
+Each Resource Replica has one `ReplicaId`.
 
 ---
 
@@ -636,13 +654,13 @@ All valid replicas of the same Resource Object MUST reconstruct to the same Reso
 
 A **Storage Location** describes where one Resource Replica can currently be retrieved.
 
-It identifies:
+It binds the Resource Identifier and Endpoint to the Replica's complete
+object or chunked reconstruction representation and its provider locator.
+The provider locator is interpreted only in the context of that Endpoint
+and its Storage Adapter.
 
-- the Resource Object;
-- Storage Endpoint;
-- provider-specific object key/path;
-- verification/availability state;
-- optional operational information.
+The locator is opaque operational data to generic Core. It MUST NOT
+influence Resource, Replica, or historical identity.
 
 Storage Location is mutable operational metadata.
 
@@ -653,6 +671,10 @@ It MUST NOT influence Revision identity.
 ## Storage Map
 
 The **Storage Map** is the current mapping between Resource Objects and their known Resource Replicas.
+
+Conceptually it maps each `ResourceId` to a set of `ReplicaId` values, and
+each `ReplicaId` to its Replica record. A Resource may map to zero or more
+Replicas, including multiple distinct representations at one Endpoint.
 
 The Storage Map answers:
 
@@ -684,15 +706,21 @@ A **Replica Addition** records a newly verified Resource Replica.
 
 It changes operational metadata only.
 
+It MUST NOT imply publication, global availability, or verification
+strength beyond the applicable verification result.
+
 ---
 
 ## Replica Removal
 
-A **Replica Removal** removes a known Storage Location from the Storage Map.
+A **Replica Removal** removes one known Resource Replica record from the
+Storage Map.
 
 It MUST NOT remove the historical Resource Object identity from any Revision.
 
 Removal of the final replica MAY make historical content unavailable, but does not alter history.
+Replica Removal alone MUST NOT imply physical deletion, garbage-collection
+eligibility, retention expiry, or permission to remove the last valid copy.
 
 ---
 
@@ -700,15 +728,15 @@ Removal of the final replica MAY make historical content unavailable, but does n
 
 **Availability State** describes whether a Resource Object or Project State can currently be retrieved.
 
-For Resource Objects, the operational states are `available`, `degraded`,
-`temporarily_unavailable`, `missing`, `corrupt`, and `unknown`, as defined
-in Core §51.
+For Resource Objects, the availability states are `available`, `degraded`,
+`temporarily_unavailable`, `missing`, and `unknown`, as defined in Core §51.
+`corrupt` is an integrity finding, not an Availability State.
 
 Availability is operational, not historical.
 Resource availability is separate from validation's `not_checked` state:
 validation does not imply availability when Resource bytes were not
 examined. An unavailable or non-materialised Resource is not thereby
-corrupt.
+corrupt. A located or existing Resource Replica is not thereby verified.
 
 ---
 

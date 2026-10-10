@@ -24,7 +24,9 @@ never remove or invalidate the source as part of replication.
 ## Dependencies
 
 - WORK-0015 through WORK-0017.
-- DG-0029 resolved.
+- ADR-0032/0033 Replica identity and locator contracts reflected in
+  approved interfaces; DG-0032 resolved before guarded destination-map
+  registration.
 - DEC-STORAGE-004/005 resolved for verification behavior. The joint
   DEC-CORE-001/DEC-STORAGE-002 decision is required only if this package
   selects policy-dependent chunk transfer/rechunking; complete-Resource
@@ -71,7 +73,7 @@ never remove or invalidate the source as part of replication.
 
 ## Known Design Gaps
 
-- DG-0029 blocks Replica registration semantics.
+- DG-0032 blocks the Storage Map mutation used to register the destination.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 affect deletion/cleanup only,
   all of which are excluded.
 

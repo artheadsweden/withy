@@ -89,8 +89,12 @@ started.
 Status: IN PROGRESS — bounded preflight complete; WORK-0015 through WORK-0021
 are defined in `docs/plans/`. WORK-0015's restricted byte-I/O implementation
 is independently verified and integrated at
-`aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. WORK-0016 through WORK-0021
-remain unstarted and retain their decision and Design Gap gates.
+`aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. ADR-0032 resolves DG-0029 and
+ADR-0033 resolves DEC-STORAGE-007. WORK-0016 Replica/locator modeling may
+proceed as a subdeliverable; WORK-0017 may consume that reviewed contract
+without waiting for full WORK-0016 completion. Guarded Storage Map updates
+await DG-0032, and WORK-0016 promotion integration awaits WORK-0017's
+approved verification result. WORK-0016–WORK-0021 remain unstarted.
 
 - generic storage contract;
 - mock storage;

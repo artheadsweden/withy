@@ -268,6 +268,10 @@ Moving a Resource Object from Server A to Server B MUST NOT change:
 - any Project State that references it;
 - any Revision Identifier.
 
+Replica identifiers, Endpoint identifiers, provider locators, and
+representation layouts are operational identities or metadata. None may
+participate in Resource identity.
+
 ---
 
 ## INV-RES-004 — Historical references use identities, not locations
@@ -290,11 +294,17 @@ When `properties` is present, a Resource Reference MUST be validated under the e
 
 ## INV-RES-005 — One Resource Object may have many replicas
 
-A Resource Object MAY exist simultaneously on multiple Storage Endpoints.
+A Resource Object MAY have zero, one, or multiple Resource Replicas.
+Multiple distinct, independently addressable complete representations of
+one Resource MAY exist at the same Storage Endpoint.
 
 All valid Resource Replicas of the same Resource Object MUST verify to the same Resource Identifier.
 
 The existence of additional replicas MUST NOT alter creative history.
+Each independently addressable physical representation has its own assigned
+stable ReplicaId. Operational changes to the same representation do not
+change that ReplicaId; creation of a new independently addressable
+representation requires a new ReplicaId.
 
 ---
 
@@ -310,6 +320,10 @@ Server A -> Server B
 ```
 
 MUST leave all creative history unchanged.
+
+Changing a Replica's locator or availability does not change Resource
+identity or historical metadata when it continues to identify the same
+physical representation.
 
 ---
 

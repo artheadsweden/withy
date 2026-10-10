@@ -32,8 +32,9 @@ Repository Home conformance.
 - No human decision is required for the restricted byte-I/O seam.
 - Do not choose Chunking policy; DEC-CORE-001 and DEC-STORAGE-002 remain
   coupled and open.
-- No persistent Replica or Storage Map model; DG-0029 is deferred to
-  WORK-0016.
+- No persistent Replica or Storage Map model; DG-0029 was deferred to
+  WORK-0016 and has since been resolved by ADR-0032. Guarded Storage Map
+  mutations remain gated by DG-0032.
 - DEC-STORAGE-003's Repository Home minimum is not claimed or implemented.
 
 ## Allowed scope
@@ -79,8 +80,9 @@ Repository Home conformance.
 
 ## Known Design Gaps
 
-- DG-0029 blocks persistent Replica/Storage Map semantics in WORK-0016, not
-  this byte-I/O contract.
+- At WORK-0015 closeout, DG-0029 blocked persistent Replica/Storage Map
+  semantics, not this byte-I/O contract. ADR-0032 later resolved DG-0029;
+  DG-0032 now gates guarded map mutations.
 - DEC-CORE-001 and DEC-STORAGE-002 remain open; no chunking policy is chosen.
 
 ## Implementation plan

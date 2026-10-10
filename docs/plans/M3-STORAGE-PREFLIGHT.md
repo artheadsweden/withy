@@ -26,7 +26,7 @@ ComponentStateId, ProjectStateId, RevisionId, or historical bytes.
 
 | Normative area / terms | Requirements read and cross-searched | Direct invariants | M3 impact |
 |---|---|---|---|
-| Resource Object, ResourceId, Chunk, Chunk Manifest, Resource Replica, Storage Location, Storage Map | Core §§6-8, 29-36, 48-51, 55; Storage §§14-36, 59-75, 157-164; Glossary Resource Object/Identifier, Chunk/Manifest, Resource Replica, Storage Location, Storage Map | INV-RES-001–007; INV-STOR-003–005; INV-INT-001–002 | Contract accepts immutable identities and byte streams; physical representation and location stay outside historical objects. Provider-neutral Replica identity/cardinality and binding to reconstruction representation remain unspecified (DG-0029); Resource/Chunk identity, order, and integrity are defined. |
+| Resource Object, ResourceId, Chunk, Chunk Manifest, Resource Replica, Storage Location, Storage Map | Core §§6-8, 29-36, 48-51, 55; Storage §§14-36, 59-75, 157-164; Glossary Resource Object/Identifier, Chunk/Manifest, Resource Replica, Storage Location, Storage Map | INV-RES-001–007; INV-STOR-003–005; INV-INT-001–002 | Resource/Chunk identity, order, and integrity are defined. DG-0029 is resolved by ADR-0032 and provider locator representation by ADR-0033. Storage Map generation/CAS semantics remain open in DG-0032. |
 | Endpoint, capabilities, Repository Home, logical keys, operational metadata | Core §§29-34, 57-58; Storage §§3-15, 41-53, 124-129, 221, 235-243; Glossary Storage Endpoint, Project Storage, OMVCS Repository, Repository Home, Operational Metadata | INV-STOR-001–004; INV-PLAT-001–005; INV-SYNC-002–003 | Keep Endpoint, Resource storage, and Repository Home roles distinct. Expose capabilities without claiming the unresolved Repository Home conformance minimum. |
 | Verification, availability, corruption, evidence | Core §§48-51, 55; Storage §§30-36, 76-80, 109-111, 183, 192; Glossary Availability State/Resource Replica | INV-INT-001–003; INV-RES-005–007 | Resource SHA-256 covers reconstructed complete bytes; Chunk hashes cover each Chunk; mere existence/length is not integrity. Exact strength taxonomy and post-upload requirement remain open. |
 | Replication, migration, failure | Core §§35-36, 57-58, 69; Storage §§54-59, 111-112, 204-205; Interaction §§94-99 | INV-STOR-005; INV-INT-003–004; INV-GC-001–003 | Copy, verify, then register; retain the old valid copy on failure. M3 returns explicit operation outcomes but does not add M4 recovery orchestration. |
@@ -36,7 +36,9 @@ ComponentStateId, ProjectStateId, RevisionId, or historical bytes.
 
 The full fixed set was searched for storage, Resource/Chunk identity,
 Replica, Endpoint, Repository Home, verification, grant, encryption,
-retention, replication, migration, and decision terms:
+retention, replication, migration, and decision terms. Subsequent
+approved decisions ADR-0032/0033 and WORK-0015 closeout have been reconciled
+in the package/dependency status below:
 
 - Core Specification
 - Storage Adapter Specification
@@ -53,7 +55,10 @@ changes. Existing relevant ADRs include ADR-0001/0005 (historical
 canonicalization only), ADR-0007/0008/0009 (Resource Reference identity and
 admission), ADR-0027/0028/0029 (Repository Home completeness and validation),
 and ADR-0030/0031 (Working State roots and unresolved classification).
-None selects M3 storage semantics. No storage-specific ADR exists.
+ADR-0032/0033 now resolve the bounded Replica identity/representation and
+provider-locator-envelope decisions; they do not resolve chunking,
+verification-strength, upload-assurance, Repository Home, or shared
+namespace policy.
 
 ## Repository Home boundary
 
@@ -85,7 +90,9 @@ M3 must keep these roles separate:
 
 The decision register's `Blocks` value is not treated as a blanket gate on
 every M3 package. These are the actual dependencies for the proposed
-packages. All listed DEC entries remain OPEN; this analysis resolves none.
+packages. Listed DEC entries remain OPEN except for the approved resolution
+of DEC-STORAGE-007 recorded by ADR-0033; this preflight itself resolves
+none.
 
 | Open decision(s) | Actual dependency and package gate |
 |---|---|
@@ -95,13 +102,13 @@ packages. All listed DEC entries remain OPEN; this analysis resolves none.
 | DEC-PLATFORM-009 + DEC-STORAGE-009 | Whether a public-playback Endpoint must support direct grants or whether limited proxy fallback is allowed. Gates public-playback capability/conformance only, not generic storage. Storage §§101–102/190 already establish that general grant support is optional. |
 | DEC-STORAGE-001 | Exact canonical logical-key layout. Gates choosing persistent key generation/layout in the filesystem Adapter; the generic API may accept opaque Core-supplied logical keys. |
 | DEC-STORAGE-003 | Exact Repository Home minimum capabilities. Gates claiming Class H/RH conformance and a complete filesystem Repository Home, not capability reporting or the Resource-only interface. |
-| DEC-STORAGE-004 | Verification-strength taxonomy. Gates typed strength classification and evidence mapping in WORK-0017; the existing `verified` / `failed` / `indeterminate` outcome and full-content SHA-256 test are specified already. |
-| DEC-STORAGE-005 | Whether upload-time assurance must hash the full reconstructed Resource or may use previously verified deterministic Chunk reconstruction. Gates automatic upload promotion and publication-strength claims; WORK-0015 keeps Put and explicit Verify separate. |
+| DEC-STORAGE-004 | Verification-strength taxonomy. Gates typed strength classification and evidence mapping in WORK-0017 and verified-Replica promotion; WORK-0016 may model records but incomplete/unverified candidates stay outside the registered map, and no evidence or strength may be invented. |
+| DEC-STORAGE-005 | Whether upload-time assurance must hash the full reconstructed Resource or may use previously verified deterministic Chunk reconstruction. Gates upload promotion and publication-strength claims; WORK-0015 keeps Put and explicit Verify separate. |
 | DEC-STORAGE-006 | Repository Operation Log format and compaction. M4 only; no initial M3 package persists this log. |
-| DEC-STORAGE-007 | Provider locator record representation. Gates durable Replica location records and update semantics in WORK-0016 and downstream providers; it does not by itself resolve Replica identity/cardinality (DG-0029). |
+| DEC-STORAGE-007 | Resolved by ADR-0033: durable Replica location uses the typed `{schema, value}` ProviderLocator envelope; provider-specific values remain opaque to Core. |
 | DEC-STORAGE-008 | Client-side encryption treatment. Gates encrypted Endpoint conformance only. Plain, exact-byte storage remains in scope; no encryption/key management is inferred. |
 | DEC-STORAGE-010 | Shared-namespace GC requirements. Gates GC only; GC is excluded from M3's first package set. |
-| DEC-STORAGE-011 | Whether stable Endpoint namespace identity is mandatory. Gates shared-namespace identity, cross-Project deduplication and GC claims in WORK-0016; not an isolated Endpoint's basic I/O. |
+| DEC-STORAGE-011 | Whether stable Endpoint namespace identity is mandatory. Remains open and gates shared-namespace identity, cross-Project physical-object/deduplication guarantees, and shared-namespace GC only; WORK-0016 excludes these claims. |
 | DEC-STORAGE-012 | Abandoned multipart/unreferenced-object retention. Gates cleanup and interrupted-transfer retention behavior; M3 leaves incomplete/unregistered objects untouched and defers recovery/cleanup policy. |
 | DEC-STORAGE-013 | Official reference-conformance status of filesystem/S3 Adapters. Gates the official designation and scope only. A local filesystem implementation may be planned from §64/§201 without claiming official status; S3 is not in the bounded package list. |
 | DEC-STORAGE-014 | Storage-layout marker and discovery format. Gates Repository Home bootstrap/discovery and layout migration; not the low-level provider-neutral Resource interface. |
@@ -117,46 +124,53 @@ Open M6, M5, M8, LATER and NONE decisions do not gate these storage packages.
 
 ## Unresolved specification gaps
 
-- [DG-0029 — Resource Replica identity and representation](../gaps/DG-0029-replica-identity-and-representation.md):
-  blocks the Replica/Storage Map model, not WORK-0015.
+- [DG-0032 — Storage Map generation domain and CAS contract](../gaps/DG-0032-storage-map-generation-and-cas.md):
+  blocks guarded Storage Map mutations and WORK-0016 completion, but not
+  Replica/locator model work or WORK-0015.
 
 The existing open DG-0015 is M6 Contribution provenance; it does not block
 M3. DG-0027/0028 and other M2 gaps are resolved. The independent Spec
 Guardian review confirmed that Resource/Chunk identity, reconstruction
 order, and integrity rules are already specified, and that temporary-grant
-optionality is not a contradiction. No other open Design Gap currently
-blocks the restricted first interface package.
+optionality is not a contradiction. DG-0029 and DEC-STORAGE-007 were
+resolved by ADR-0032 and ADR-0033 respectively. No additional gap was found
+for cross-Replica Chunk-location ownership because WORK-0016 stores
+provider-specific Chunk locations within each Resource Replica and makes no
+shared-object or deletion claim.
 
 ## Bounded M3 work packages and dependency graph
 
-The actual prerequisite graph is:
+The staged prerequisite flow is:
 
 ```text
-WORK-0015 -> WORK-0016 -> WORK-0017
-                               +-> WORK-0018
-                               +-> WORK-0019 (layout/Home decisions)
-                               +-> WORK-0020 -> WORK-0021
+WORK-0015 -> WORK-0016 model/locator subdeliverable -> WORK-0017
+DG-0032 ---------------------------------------------> WORK-0016 guarded-map completion
+WORK-0017 approved result ---------------------------> WORK-0016 promotion integration
 ```
 
-WORK-0018 through WORK-0020 can proceed independently after WORK-0017 and
-their own gates; WORK-0021 depends on replication, not on a filesystem or
-mock provider.
+WORK-0017 may consume the independently reviewed WORK-0016 model/locator
+subdeliverable without waiting for WORK-0016's full completion. WORK-0016
+promotion integration follows WORK-0017. WORK-0018 through WORK-0020 use
+their specified package prerequisites and own gates; WORK-0021 depends on
+replication, not on a filesystem or mock provider.
 The arrows indicate package prerequisites, not permission to bypass the
-semantic gates below. WORK-0016 may be developed only after DG-0029 and the
-locator/namespace decisions; WORK-0017 additionally waits for the shared
-chunking decision and verification decisions. WORK-0019 waits for the
-concrete key/layout/Home decisions. Every package remains unstarted and
+semantic gates below. WORK-0016 may develop its Replica/locator model under
+ADR-0032/0033, but guarded map updates and completion wait for DG-0032;
+verified promotion waits for WORK-0017's approved verification result.
+DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0017
+additionally waits for the shared chunking and verification decisions.
+WORK-0019 waits for the concrete key/layout/Home decisions. Every package
 requires its own implementation authorization.
 
 | Work | Title | Dependency / gate |
 |---|---|---|
 | WORK-0015 | Storage primitives and provider-neutral contract | No new human decision for its restricted Resource/Chunk byte-I/O and capability seam. This is the first package that can be implemented from current Specs, after separate authorization. It makes no Repository Home conformance claim. |
-| WORK-0016 | Replica model and Storage Map | WORK-0015; resolve DG-0029 and DEC-STORAGE-007 for Replica identity/locator fields. DEC-STORAGE-011 gates stable namespace/shared-object claims only. It does not decide verification-strength state. |
-| WORK-0017 | Resource and Chunk verification model | WORK-0015/0016; resolve DG-0029; human decisions DEC-CORE-001 + DEC-STORAGE-002 together, DEC-STORAGE-004/005. |
-| WORK-0018 | Mock Storage Adapter | WORK-0015/0016/0017; test-only provider semantics, deterministic failure injection; it is not an official reference conformance decision. |
+| WORK-0016 | Replica model and Storage Map | WORK-0015; ADR-0032/0033 resolve Replica identity/representation and locator fields. DG-0032 blocks guarded map updates/completion. DEC-STORAGE-004/005 gate verified promotion and upload assurance. DEC-STORAGE-011 shared namespace claims are excluded. |
+| WORK-0017 | Resource and Chunk verification model | WORK-0015 and independently reviewed WORK-0016 model/locator subdeliverable; ADR-0032/0033; human decisions DEC-CORE-001 + DEC-STORAGE-002 together, DEC-STORAGE-004/005. DG-0032 gates map-mutating integration only. |
+| WORK-0018 | Mock Storage Adapter | WORK-0015/0016/0017; approved identity/locator contracts and deterministic failure injection; DG-0032 before guarded-map fixtures. It is not an official reference conformance decision. |
 | WORK-0019 | Local filesystem Storage Adapter | WORK-0015/0016/0017; DEC-STORAGE-001, 003, 014 and shared chunk policy for selected layout. DEC-STORAGE-013 is needed only before claiming official reference status. |
-| WORK-0020 | Resource replication | WORK-0015/0016/0017; source-preserving copy, verify, register. DEC-CORE-001/DEC-STORAGE-002 gate only chunk-policy-dependent transfer/rechunking, not complete-Resource byte streaming. No deletion, GC, retention policy, or M4 recovery state. |
-| WORK-0021 | Storage migration | WORK-0015/0016/0017/0020; copy, verify, register new Replica and retain source. Removing the old source is explicitly outside this package until deletion/retention rules are approved. |
+| WORK-0020 | Resource replication | WORK-0015/0016/0017; source-preserving copy, verify, register under ADR-0032/0033. DG-0032 before map registration; DEC-CORE-001/DEC-STORAGE-002 gate only chunk-policy-dependent transfer/rechunking. No deletion, GC, retention policy, or M4 recovery state. |
+| WORK-0021 | Storage migration | WORK-0015/0016/0017/0020; copy, verify, register new Replica under ADR-0032/0033 and retain source. DG-0032 before map update. Removing the old source is outside this package until deletion/retention rules are approved. |
 
 The work package files define exact sections, acceptance criteria, non-goals,
 Verifier scope, owners, and Design Gap gates. M3's first package is executable
@@ -183,14 +197,17 @@ authorized by this task.
   machine. Storage calls return explicit local outcomes and never report
   success for unverified/incomplete content.
 
-## M3 preflight result
+## Current M3 readiness status
 
-- M3 is planned; no M3 package existed before this preflight.
-- Seven bounded plans, WORK-0015 through WORK-0021, now define a staged
-  decomposition.
-- WORK-0015 is first and can proceed without a new semantic decision only
-  within its restricted, non-provider scope. Human authorization for
-  implementation is still required.
-- WORK-0016/0017/0019 are decision/gap gated as stated above.
-- No production Rust, Storage Adapter, Mock Adapter, or filesystem code was
-  written.
+- M3 is IN PROGRESS. WORK-0015 is VERIFIED/integrated; its restricted
+  provider-neutral Resource/Chunk byte-I/O scope is complete.
+- WORK-0016 is PLANNED. Its model/locator subdeliverable may proceed under
+  ADR-0032/0033. DG-0032 blocks guarded Storage Map mutations and package
+  completion; DEC-STORAGE-004/005 gate verified promotion. DEC-STORAGE-011
+  remains open but does not block the explicitly excluded shared-namespace
+  claims.
+- WORK-0017 is not ready for verification implementation until its listed
+  chunking and verification decisions are resolved. It may use the reviewed
+  WORK-0016 model/locator contract without waiting for WORK-0016 closeout.
+- No M3 implementation beyond the already integrated WORK-0015 scope is
+  authorized by this preflight or the decision reconciliation.

@@ -1652,39 +1652,88 @@ Configuration references MAY differ between clients.
 
 # 32. Resource Replica record
 
-A replica record conceptually contains:
+A Resource Replica is an operational record for one complete recoverable
+physical representation of one Resource Object at one Storage Endpoint.
+`replica_id` is an assigned UUIDv7 in canonical lowercase textual form. It
+identifies the Replica record and remains stable for that record's lifetime.
+It is independent of the Resource Identifier, Endpoint Identifier, provider
+locator, representation layout, verification evidence, and availability
+state. It MUST NOT participate in Resource identity, historical metadata, or
+Revision identity.
+
+A Resource MAY have zero, one, or multiple Resource Replicas. Multiple
+Replicas of the same Resource MAY exist at one Endpoint when they identify
+distinct independently addressable complete or reconstructable
+representations. A Replica record MUST bind exactly one complete
+representation and enough operational information to retrieve or
+reconstruct the complete Resource.
+
+OMVCS 0.1 MUST support at least these `representation` kinds:
+
+- `complete-object`: the locator identifies one provider object whose bytes
+  are the complete Resource;
+- `chunked`: the Replica binds to an ordered Chunk Manifest as defined by
+  §8.2, and its locator permits the Storage Adapter to retrieve each
+  required Chunk representation at the associated Endpoint. The manifest
+  may be persisted in Repository metadata or in the Endpoint representation
+  as allowed by the Storage Adapter Specification.
+
+For `chunked`, the manifest's `resource_id` MUST equal the Replica's
+`resource_id`. Its ordered Chunk sequence, offsets, and lengths MUST obey
+§8.2. The manifest and representation are operational storage/reconstruction
+metadata; neither affects Resource identity or historical objects. A
+chunked Replica is fully available only while every required Chunk
+representation for that Replica is available under the Storage Adapter
+contract.
+
+A newly created independently addressable physical representation MUST
+receive a new `replica_id`, including a second copy at the same Endpoint.
+Changes to operational facts about the same representation, including its
+availability, preference, verification evidence, or provider locator after
+an in-context provider-side move, MUST retain its `replica_id`. A locator
+change that creates a distinct independently addressable copy is a new
+Replica, not an update to the old one.
+
+An incomplete or unverified candidate representation MUST NOT be registered
+as a Resource Replica in the Storage Map. Replica Addition MUST NOT mark a
+Resource Replica verified before the applicable Content Verification
+requirements succeed. This section does not define verification-strength
+labels, evidence, or upload assurance; those remain subject to the
+applicable Storage Adapter decisions and contracts.
+
+Conceptually, a record contains:
 
 ```json
 {
-  "replica_id": "019f...",
+  "replica_id": "019f1234-5678-7abc-8def-0123456789ab",
 
   "resource_id":
-    "omvcs:resource:sha256:ABC...",
+    "omvcs:resource:sha256:abc...",
 
   "endpoint_id":
-    "019ef...",
+    "019ef123-4567-7abc-8def-0123456789ab",
 
-  "object_key":
-    "objects/96/d2/...",
+  "representation": {
+    "kind": "complete-object"
+  },
 
-  "representation":
-    "chunked",
+  "locator": {
+    "schema": "example.storage.object-locator/1",
+    "value": {
+      "key": "opaque-provider-value"
+    }
+  },
 
   "availability":
-    "available",
-
-  "verification":
-    {
-      "state": "verified",
-      "verified_at":
-        "2026-10-08T14:00:00Z"
-    }
+    "available"
 }
 ```
 
-The replica record is operational metadata.
-
-Changing `object_key` does not change Resource identity.
+Provider locator structure and constraints are defined by the Storage
+Adapter Specification. The example values are illustrative. Replica records,
+including their locators, are mutable operational metadata. `availability`
+describes retrieval only and MUST NOT be treated as evidence of integrity or
+verification.
 
 ---
 
@@ -1694,46 +1743,73 @@ The Storage Map is conceptually:
 
 ```text
 Resource ABC
-    -> Endpoint A / Replica 1
-    -> Endpoint B / Replica 2
+    -> Replica 1 (Endpoint A, complete-object representation)
+    -> Replica 2 (Endpoint A, distinct chunked representation)
+    -> Replica 3 (Endpoint B, complete-object representation)
 
 Resource DEF
-    -> Endpoint C / Replica 3
+    -> no known Replica
 ```
 
-The Storage Map MUST support multiple replicas.
+The Storage Map MUST support zero or more Replicas for each Resource and
+multiple Replicas of one Resource at the same Endpoint when their physical
+representations are distinct and independently addressable. Its logical
+relationship is:
 
-Replica ordering MAY express preferred retrieval order but preference MUST NOT alter Resource identity.
+```text
+ResourceId -> set<ReplicaId>
+ReplicaId -> Replica record
+```
+
+Every `ReplicaId` MUST identify at most one record in the Storage Map.
+Endpoint identity and provider locator are fields of the operational Replica
+record, not part of the ResourceId key.
+
+Replica ordering MAY express preferred retrieval order but preference MUST
+NOT alter Resource identity or Replica identity.
 
 ---
 
 # 34. Storage Map updates
 
-Storage Map mutation MUST be versioned operationally.
+Storage Map mutation MUST be versioned operationally and MUST compare the
+caller-supplied expected current generation atomically with the mutation. A
+stale expected generation MUST fail with a conflict and leave the complete
+Storage Map unchanged. A mutation that changes more than one map entry MUST
+be atomic across all affected entries.
 
-Each mutation SHOULD carry:
+Each mutation MUST carry:
 
 ```text
-operation identifier
-previous generation
+expected previous generation
 new generation
-actor
-timestamp
+operation identifier
 operation type
-affected replica
 ```
 
-Example:
+Actor and timestamp MAY be recorded as operational audit metadata. The
+generation's interoperable value domain, initial value, and successful
+advance rule, and the exact Core operation/result interface, are not
+specified here; implementations MUST NOT substitute the Line generation
+rules from §17. See [DG-0032](../docs/gaps/DG-0032-storage-map-generation-and-cas.md).
+
+Conceptual history:
 
 ```text
-generation 91
+expected version: A
 ADD_REPLICA ABC -> Server B
+resulting version: B
 
-generation 92
+expected version: B
 REMOVE_REPLICA ABC -> Server A
+resulting version: C
 ```
 
-This operational history MUST NOT become Revision history.
+This operational history MUST NOT become Revision history. Replica
+registration records a newly verified complete Resource representation;
+removal removes operational location metadata only and MUST NOT imply
+physical deletion, garbage-collection eligibility, retention expiry, or
+permission to remove the last valid copy.
 
 ---
 
@@ -2208,7 +2284,6 @@ available
 degraded
 temporarily_unavailable
 missing
-corrupt
 unknown
 ```
 
@@ -2228,17 +2303,22 @@ A known replica exists but cannot presently be accessed.
 
 No retrievable valid replica is known.
 
-### Corrupt
-
-A located replica fails verification.
+Corruption is an integrity finding, not an availability state. A located
+Replica that fails verification is corrupt and MUST NOT be treated as a
+valid source. A corrupt Replica does not determine the availability of
+other Replicas of the same Resource.
 
 ### Unknown
 
 Availability has not been established.
 
-A Resource may have several replicas with different individual states.
+Availability may differ among a Resource's Replicas; integrity findings are
+tracked separately.
 
-Overall Resource availability is derived from them.
+Overall Resource availability is derived from currently known retrievable
+valid Replicas and is reported separately from integrity/verification
+findings. Existence or successful location of a Replica does not imply that
+it is verified.
 
 ---
 
