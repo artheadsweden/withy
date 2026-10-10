@@ -10,3 +10,4 @@ workspace = true
 
 [dependencies]
 omvcs-model = { path = "../omvcs-model" }
+sha2 = "0.10"
