@@ -4,7 +4,8 @@ From agent: Spec Guardian
 To agent: OMVCS Lead / next implementation owner
 Date: 2026-10-10
 Branch: `spec/0003-canonical-collection-order`
-HEAD: `c9834059323fcbf83e7745fb4698aa6a26cebfe3` (decision/specification commit)
+HEAD at decision/specification closeout:
+`c9834059323fcbf83e7745fb4698aa6a26cebfe3`
 
 ## Completed
 
@@ -102,7 +103,6 @@ changing the integrated WORK-0016 identity, Storage Map, or CAS contracts.
 ## Git state
 
 Decision/specification commit: `c9834059323fcbf83e7745fb4698aa6a26cebfe3`.
-Remote publishing is ENABLED for `origin`; the decision commit has been
-pushed and its remote tip verified. The working tree is temporarily dirty
-while this handover is added; the handover commit must also be pushed before
-closeout, after which the worktree is expected to be clean.
+Handover commit: `33226fbecee4738932dd8011e91690db38024763`. Remote
+publishing is ENABLED for `origin`; both commits were pushed, local and
+remote tips matched at the handover commit, and the working tree was clean.
