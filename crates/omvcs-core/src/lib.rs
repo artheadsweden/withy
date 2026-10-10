@@ -9,4 +9,5 @@ pub mod reachability;
 pub mod release;
 pub mod repository_validation;
 pub mod revision_graph;
+pub mod storage_map;
 pub mod working_state;
