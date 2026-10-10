@@ -1,11 +1,13 @@
 # Handover WORK-0015 — Storage primitives and provider-neutral contract
 
 From agent: Storage Engineer, coordinated by OMVCS Lead
-To agent: Integration owner / future OMVCS Lead
+To agent: Future OMVCS Lead
 Date: 2026-10-10
-Branch: `work/0015-storage-primitives-contract`
+Feature branch: `work/0015-storage-primitives-contract`
+Integration branch: `spec/0003-canonical-collection-order`
 Implementation commit: `1be170e4cc3afd8e825580d41129847870f359f7`
-Documentation/status commit: includes this handover and closeout records
+Documentation/status commit: `74474db9d3007ffa0ee54623ba9e1d4d4d719f5d`
+Integration commit: `aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`
 
 ## Completed
 
@@ -94,12 +96,13 @@ Replica/Storage Map semantics; it is not changed by this work.
 
 - WORK-0015 Core Engineer review: ACCEPT, no findings.
 - WORK-0015 independent Verifier review: ACCEPT, no findings.
-- Do not start WORK-0016–WORK-0021 under this authorization.
-- Feature branch push and integration are pending; proceed only under the
-  established integration workflow.
+- No remaining WORK-0015 implementation or verification tasks.
+- WORK-0016–WORK-0021 were not started by this closeout.
+- Feature branch was pushed and merged no-fast-forward into the integration
+  branch; the integration branch was pushed after status reconciliation.
 
 ## Git state
 
-Working tree: CLEAN after the implementation and documentation/status
-commits on `work/0015-storage-primitives-contract`.
-Remote push performed: NO
+Working tree: CLEAN on `spec/0003-canonical-collection-order` after status
+reconciliation and integration push.
+Remote push performed: YES — feature and integration branches.

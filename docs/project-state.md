@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (ACTIVE; WORK-0015 implemented and independently accepted on feature branch, not integrated; WORK-0016–WORK-0021 unstarted)
+Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; WORK-0016–WORK-0021 unstarted)
 
 ## Specification state
 
@@ -86,6 +86,8 @@ COMPLETE at the stated integration commit. M3 bounded preflight is complete:
 WORK-0015–WORK-0021 are defined, with DG-0029 and decision gates recorded.
 WORK-0015's restricted byte-I/O implementation has passed focused and
 workspace tests, formatting, warnings-denied Clippy, Core Engineer review,
-and independent Verifier review. It remains uncommitted and unintegrated on
-`work/0015-storage-primitives-contract`. WORK-0016–WORK-0021 remain
-unstarted.
+and independent Verifier review; it is integrated at
+`aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. DG-0029 remains OPEN and blocks
+WORK-0016 Replica/Storage Map semantics. DEC-CORE-001 and
+DEC-STORAGE-002 remain OPEN; no chunking algorithm was selected. WORK-0016
+through WORK-0021 remain unstarted.
