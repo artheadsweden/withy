@@ -106,7 +106,12 @@ the integrated identity or CAS semantics.
 DG-0034 remains open and
 blocks syntax-specific ProviderLocator schema-identifier validation only.
 DEC-STORAGE-011 remains open; shared namespace, deletion, GC, and retention
-remain excluded. WORK-0018–WORK-0021 remain unstarted.
+remain excluded. WORK-0018 is implemented on
+`work/0018-mock-storage-adapter`, with local validation PASS (27 mock tests,
+67 unchanged prerequisite tests, 370 workspace tests) and
+Core Engineer review + independent Verifier acceptance pending; no push or
+integration. DEC-STORAGE-013 remains OPEN; no reference designation.
+WORK-0019–WORK-0021 remain unstarted. M3 remains IN PROGRESS.
 
 - generic storage contract;
 - mock storage;
