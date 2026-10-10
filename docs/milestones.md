@@ -86,11 +86,10 @@ started.
 
 ## M3 — Storage abstraction
 
-Status: PLANNED — bounded preflight complete; WORK-0015 through WORK-0021
-are defined in `docs/plans/`. No implementation has started. WORK-0015 is
-executable within its explicitly restricted byte-I/O scope; later packages
-have the decision and Design Gap gates documented in their plans. Each
-package still requires its own implementation authorization.
+Status: ACTIVE — bounded preflight complete; WORK-0015 through WORK-0021
+are defined in `docs/plans/`. WORK-0015's restricted byte-I/O implementation
+is accepted on its feature branch but not integrated. WORK-0016 through
+WORK-0021 remain unstarted and retain their decision and Design Gap gates.
 
 - generic storage contract;
 - mock storage;

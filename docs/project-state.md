@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (PLANNED; bounded preflight complete; WORK-0015–WORK-0021 defined; no implementation started)
+Current milestone: M3 — Storage abstraction (ACTIVE; WORK-0015 implemented and independently accepted on feature branch, not integrated; WORK-0016–WORK-0021 unstarted)
 
 ## Specification state
 
@@ -83,7 +83,9 @@ Contributions, configured archival pins, and pending publication
 transactions remain unsupported Core §62 root classes; reachability is
 explicitly partial and does not classify global unreachability. M2 is
 COMPLETE at the stated integration commit. M3 bounded preflight is complete:
-WORK-0015–WORK-0021 are PLANNED, with DG-0029 and decision gates recorded.
-WORK-0015's restricted byte-I/O scope can begin without another semantic
-decision, but requires separate implementation authorization. No M3
-production implementation has started.
+WORK-0015–WORK-0021 are defined, with DG-0029 and decision gates recorded.
+WORK-0015's restricted byte-I/O implementation has passed focused and
+workspace tests, formatting, warnings-denied Clippy, Core Engineer review,
+and independent Verifier review. It remains uncommitted and unintegrated on
+`work/0015-storage-primitives-contract`. WORK-0016–WORK-0021 remain
+unstarted.

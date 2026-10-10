@@ -1,10 +1,10 @@
 # WORK-0015 — Storage primitives and provider-neutral contract
 
-Status: PLANNED
+Status: ACCEPTED — integration pending
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0015-storage-primitives-contract`
-Required review: Core Engineer + Verifier
+Required review: Core Engineer ACCEPT; independent Verifier ACCEPT
 
 ## Objective
 
@@ -91,6 +91,9 @@ Repository Home conformance.
 3. Add contract tests using a minimal fake provider.
 4. Obtain Core Engineer review, then independent Verifier review.
 
+Implementation and both reviews are complete on the feature branch. The
+implementation commit is `1be170e`; integration is pending.
+
 ## Verification requirements
 
 Verifier must compare each exposed operation and failure distinction with
@@ -102,5 +105,6 @@ identity.
 
 Relevant workspace and crate tests pass; rustfmt and warnings-denied
 Clippy pass; `docs/spec-coverage.md` is updated; handover is completed;
-`git diff --check` is clean; no unresolved requirement has been silently
-implemented.
+`git diff --check` is clean; independent Verifier accepts; no unresolved
+requirement has been silently implemented. Integration remains a separate
+step.
