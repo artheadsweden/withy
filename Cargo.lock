@@ -187,7 +187,11 @@ dependencies = [
 name = "omvcs-storage-mock"
 version = "0.0.0"
 dependencies = [
+ "omvcs-core",
+ "omvcs-model",
  "omvcs-storage",
+ "serde_json",
+ "sha2",
 ]
 
 [[package]]

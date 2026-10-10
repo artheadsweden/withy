@@ -1,6 +1,7 @@
 # WORK-0018 — Mock Storage Adapter
 
-Status: PLANNED
+Status: IMPLEMENTED — local validation PASS; Core Engineer review and
+independent Verifier acceptance PENDING. Not integrated or pushed.
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0018-mock-storage-adapter`
@@ -74,6 +75,47 @@ shared conformance fixtures and controlled provider failures.
 2. Add deterministic failure injection.
 3. Run all applicable conformance tests.
 4. Obtain Core Engineer review and independent Verifier acceptance.
+
+## Bounded execution record
+
+Independent preflight read AGENTS, workflow/ownership, WORK-0015/16/17 plans
+and handovers, the exact referenced Storage/Core sections and invariants,
+ADR-0032/0033/0034/0036/0037/0038, and applicable gaps; searched all Specs for
+mock/failure/capability/error/Replica/CAS/chunk/verification terms. Clean
+integration baseline: `565edf6836fc3971fa60ca7bd2e86339dc8d1c91`.
+
+Implemented only the six `ByteStorage` operations, configured Endpoint
+capabilities, explicit FIFO mock scripts, byte snapshots, immutable
+create-if-absent behavior, and exact-scope checksum reports. No production
+Core/model/storage contract changes. WORK-0017 chunking/verification and
+Core promotion/CAS are consumed unchanged by tests. Test-local coherent
+map snapshots and injected conditional-write outcomes are not Adapter
+features or a Repository Home claim.
+
+Fixtures remain within the mock crate. `omvcs-test-support` is untouched:
+these controls are mock-specific; no new shared suite or designation is
+introduced. Existing WORK-0015/16/17 suites ran unchanged (67 passing tests).
+
+Storage §253-style visibility is purely scripted per call; no seconds,
+eventual-consistency policy, slow-storage guarantee, or background races.
+Transfer interruptions include zero, middle, and final-byte failures.
+Adversarial returned bytes never rewrite immutable stored content.
+
+Semantic decisions beyond Specs: `None`. New Design Gaps: `None`.
+DG-0029/0032 remain RESOLVED; DG-0034 remains OPEN/out of scope.
+DEC-STORAGE-013 and DEC-STORAGE-011 remain OPEN. WORK-0019–0021 unstarted.
+
+Local validation: 27 mock tests (21 byte-contract + 6 verification/Core
+scenarios), 67 unchanged prerequisite tests, and 370 workspace tests across
+42 suites including doctests passed with no failures. Formatting,
+warnings-denied Clippy for mock/storage/model/Core and all targets, and
+diff checks passed. `tests/conformance/` contains only its placeholder;
+there is no additional shared executable suite. No required review is
+claimed: submit this branch to Core Engineer, then independent Verifier.
+
+Validated implementation commit:
+`ec7551a9dcdc447ad42b84ca9a8cd8935d596c42`.
+Handover: [HANDOVER-WORK-0018](../handovers/HANDOVER-WORK-0018-mock-storage-adapter.md).
 
 ## Verification requirements
 

@@ -10,3 +10,9 @@ workspace = true
 
 [dependencies]
 omvcs-storage = { path = "../omvcs-storage" }
+omvcs-model = { path = "../omvcs-model" }
+sha2 = "0.10"
+
+[dev-dependencies]
+omvcs-core = { path = "../omvcs-core" }
+serde_json = "1"

@@ -118,4 +118,13 @@ RESOLVED by ADR-0036/0037/0038. DEC-STORAGE-011 remains OPEN and shared
 namespace claims remain excluded; deletion, GC, and retention remain
 excluded. WORK-0017 is VERIFIED / INTEGRATED at
 `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`;
-WORK-0018–WORK-0021 remain unstarted.
+WORK-0018 is implemented on `work/0018-mock-storage-adapter` from clean
+baseline `565edf6836fc3971fa60ca7bd2e86339dc8d1c91`, with local validation
+PASS (27 mock tests, 67 unchanged prerequisite tests, 370 workspace tests;
+formatting, warnings-denied affected-crate/all-target Clippy and diff checks).
+Core Engineer review and independent Verifier acceptance are
+PENDING. No push or integration is authorized in this task. M3 remains
+IN PROGRESS; WORK-0019–WORK-0021 remain unstarted. DEC-STORAGE-013 remains
+OPEN; this mock is not an official reference-conformance designation.
+DEC-STORAGE-011 and DG-0034 remain OPEN and outside the bounded scope.
+No new storage semantics or Design Gaps were introduced.
