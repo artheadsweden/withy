@@ -24,8 +24,9 @@ between unavailable, corrupt, unverified, and verified copies.
 ## Dependencies
 
 - WORK-0015 and the independently reviewed WORK-0016 Replica
-  model/locator subdeliverable; WORK-0016's guarded map updates and full
-  package closeout are not prerequisites for verification work.
+  model/locator and generation/CAS subdeliverables; verified-promotion
+  integration and full WORK-0016 closeout are not prerequisites for
+  verification work.
 - Use the approved Replica identity, representation, and locator contracts
   from ADR-0032/0033.
 - DEC-CORE-001 and DEC-STORAGE-002 resolved together as one chunking-policy
@@ -77,9 +78,8 @@ between unavailable, corrupt, unverified, and verified copies.
 
 ## Known Design Gaps
 
-- DG-0032 blocks guarded Storage Map mutations, not the verification
-  algorithm itself. Integration tests that mutate the map depend on its
-  resolution.
+- DG-0032 is resolved by ADR-0034. Map-mutating integration tests must
+  follow the approved Project-scoped CAS contract.
 - DEC-CORE-001 + DEC-STORAGE-002 and DEC-STORAGE-004/005 block the named
   semantics.
 

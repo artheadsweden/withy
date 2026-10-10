@@ -69,7 +69,8 @@ and absence of implicit history, Replica, or chunking effects.
 
 `None` for WORK-0015. At the time of this handover, DG-0029 was OPEN and
 blocked WORK-0016 Replica/Storage Map semantics. It was subsequently
-resolved by ADR-0032; DG-0032 now gates guarded Storage Map mutations.
+resolved by ADR-0032. DG-0032 was later resolved by ADR-0034, which
+authorizes WORK-0016's generation/CAS mechanics.
 
 ## Assumptions
 

@@ -23,8 +23,8 @@ shared conformance fixtures and controlled provider failures.
 
 - WORK-0015, WORK-0016, and WORK-0017.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
-  approved interfaces; DG-0032 resolved before implementing guarded
-  Storage Map mutation fixtures.
+  approved interfaces; ADR-0034 Storage Map generation/CAS contract
+  reflected in guarded mutation fixtures.
 - DEC-STORAGE-013 is not required to develop the test Adapter and must not
   be interpreted as official reference-implementation designation.
 
@@ -61,8 +61,8 @@ shared conformance fixtures and controlled provider failures.
 
 ## Known Design Gaps
 
-- DG-0032 must be resolved before guarded Storage Map mutation fixtures
-  are final.
+- DG-0032 is resolved by ADR-0034; guarded Storage Map mutation fixtures
+  must assert the Project-wide atomic generation contract.
 - Temporary grants remain optional under Storage §§101–102/190; public
   playback decisions do not block this package.
 

@@ -688,6 +688,18 @@ That information belongs to creative history.
 
 ---
 
+## Storage Map Generation
+
+`StorageMapGeneration` is the Project-scoped unsigned JSON integer that
+guards the complete logical Storage Map. Its inclusive domain is
+`0 ..= 9007199254740991` (`2^53 - 1`); a newly initialized empty map has
+generation `0`. It is operational concurrency metadata, not content
+identity, historical identity, provenance, or verification evidence. Its
+canonical JSON representation follows Core §5 (RFC 8785/JCS) and the
+Storage-Map-specific exact-integer rules in Core §34.
+
+---
+
 ## Storage Migration
 
 A **Storage Migration** moves or replicates one or more Resource Objects between Storage Endpoints without modifying creative history.

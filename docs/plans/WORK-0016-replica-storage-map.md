@@ -1,7 +1,7 @@
 # WORK-0016 — Replica model and Storage Map
 
-Status: PLANNED — Replica/locator model may proceed; guarded map updates
-and verified promotion remain gated
+Status: READY — Replica model and guarded/CAS map updates are authorized;
+verified promotion remains gated
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0016-replica-storage-map`
@@ -22,8 +22,9 @@ historical references.
   State, Corrupt Replica, Replica Addition, and Replica Removal.
 - Core Invariants: INV-RES-005–007, INV-STOR-001–005, INV-INT-001–003,
   INV-GC-001–003.
-- Approved decisions: ADR-0032 and ADR-0033. Open gates: DG-0032 and
-  DEC-STORAGE-004/005; DEC-STORAGE-011 is explicitly excluded.
+- Approved decisions: ADR-0032, ADR-0033, and ADR-0034. Open gates:
+  DEC-STORAGE-004/005 for verification promotion; DEC-STORAGE-011 is
+  explicitly excluded.
 
 ## Dependencies
 
@@ -32,19 +33,20 @@ historical references.
   representation binding.
 - ADR-0033 resolves DEC-STORAGE-007 and defines the provider locator
   envelope.
-- DG-0032 blocks implementation of guarded/versioned Storage Map mutations
-  and completion of this package. Replica, representation, and locator
-  models may proceed before that decision.
+- ADR-0034 resolves DG-0032 and defines the Project-wide generation and
+  guarded mutation contract. Replica, representation, locator, Storage Map,
+  generation, and CAS mechanics may proceed under the approved contracts.
 - DEC-STORAGE-011 gates stable namespace identity and shared-object
   semantics only. This package explicitly excludes stable namespace,
   cross-Project shared-object/deduplication, and shared-namespace GC claims.
-- DEC-STORAGE-004/005 remain open. WORK-0016 may define records and the
-  registration boundary, but MUST NOT invent verification evidence,
-  strength labels, or upload assurance. Verified promotion/registration
-  requires the approved verification result contract from WORK-0017.
-  WORK-0017 may consume the independently reviewed WORK-0016
-  model/locator subdeliverable before WORK-0016 is fully complete; its
-  result then gates WORK-0016's promotion integration.
+- DEC-STORAGE-004/005 remain open. WORK-0016 MUST NOT invent verification
+  evidence, strength labels, or upload assurance. It MUST NOT register an
+  incomplete or unverified candidate as a Resource Replica. Any verified
+  promotion/registration integration requires the approved verification
+  result contract from WORK-0017. WORK-0017 may consume independently
+  reviewed WORK-0016 model/locator and generation/CAS subdeliverables;
+  verified-promotion integration is not a prerequisite for implementing
+  those subdeliverables.
 
 ## Allowed scope
 
@@ -58,8 +60,8 @@ historical references.
 
 - Core-owned typed Replica and Storage Map models reflecting approved
   identity, representation, and locator decisions.
-- Guarded/versioned map updates consistent with Core §34 once DG-0032
-  defines the generation/CAS contract.
+- Project-scoped `StorageMapGeneration` and guarded/CAS updates consistent
+  with Core §34 and ADR-0034.
 - Explicit separation of availability from integrity and verification.
 - Tests proving moves and map changes do not alter immutable object IDs.
 
@@ -71,7 +73,21 @@ historical references.
 - Complete-object and chunked representations bind to their complete
   Resource bytes or ordered Chunk Manifest and Endpoint-scoped locator.
 - Storage Map updates are guarded/versioned and stale updates are rejected
-  atomically, under the generation/CAS contract resolved from DG-0032.
+  atomically under ADR-0034.
+- Generation parsing/serialization accepts only exact canonical JSON
+  integers in `0 ..= 9007199254740991`, including rejection of negative
+  zero, leading-zero, decimal, exponent, string, and out-of-range forms;
+  initialization distinguishes the empty map at generation zero from
+  absent/incomplete map metadata.
+- A state-changing mutation affecting multiple entries validates against
+  one pre-mutation map, commits atomically, and advances the Project map
+  generation exactly once. A no-op does not advance it.
+- Stale conflicts, validation failures, and generation exhaustion leave the
+  complete map and generation unchanged; conflict reports the observed
+  generation where available, and stale requests are not retried
+  automatically.
+- Core generation is distinct from provider conditional-write tokens;
+  unsupported conditional atomicity cannot produce success.
 - Endpoint, locator, preference, and availability changes do not alter
   ResourceId, ChunkId, RevisionId, or historical bytes.
 - Unavailable is not corrupt; existence/availability is not verification.
@@ -86,7 +102,7 @@ historical references.
 
 ## Explicit non-goals
 
-- Resolving Storage Map generation domain/CAS behavior before DG-0032.
+- Verified promotion/registration without the approved WORK-0017 result.
 - Stable namespace identity and shared-object guarantees before
   DEC-STORAGE-011 resolution.
 - Verification-strength taxonomy or upload assurance.
@@ -96,8 +112,7 @@ historical references.
 
 ## Known Design Gaps
 
-- DG-0032 blocks guarded/versioned Storage Map mutations and completion;
-  Replica and locator model work may proceed.
+- DG-0032 is resolved by ADR-0034; guarded map mutations are within scope.
 - DEC-STORAGE-004/005 block verification-dependent promotion, not the
   operational record model.
 - DEC-STORAGE-011 remains open but does not block the explicitly isolated
@@ -108,29 +123,34 @@ historical references.
 ## Implementation plan
 
 1. Implement the approved Core-owned Replica identity, representation,
-   Storage Map record shape, and ProviderLocator envelope.
-2. Do not implement guarded map mutations until DG-0032 is resolved.
-3. Submit the model/locator subdeliverable for review so WORK-0017 can
-    proceed once its own semantic gates are resolved; keep
-    verified-promotion integration behind its approved result.
+   Storage Map structure, `StorageMapGeneration`, guarded mutation contract,
+   and ProviderLocator envelope.
+2. Keep verified-promotion/registration behind the approved WORK-0017
+    result; incomplete/unverified candidates are not registered Replicas.
+3. Submit independently reviewable model/locator and generation/CAS
+    subdeliverables so WORK-0017 can proceed once its own semantic gates are
+    resolved.
 4. Exclude DEC-STORAGE-011 shared namespace claims, deletion, GC,
    retention, and physical cleanup.
 5. Add direct conformance and failure/concurrency tests for the executable
    scope, then complete the gated tests after the remaining contracts are
    approved.
 6. Obtain Storage Engineer review and independent Verifier acceptance for
-    each executable subdeliverable.
+   each executable subdeliverable.
 
 ## Verification requirements
 
-Verifier must trace record identity/cardinality to the resolved Spec text,
-attempt stale and conflicting map updates, and prove that changing
-operational location cannot change content or history identity.
+Verifier must trace record identity/cardinality and the generation/CAS
+contract to the resolved Spec text; attempt stale, invalid, no-op,
+multi-entry, exhausted, unsupported, and provider-failure updates; and prove
+that changing operational location cannot change content or history
+identity.
 
 ## Completion criteria
 
-The independently executable model/locator scope may begin now. WORK-0016
-is not complete until DG-0032 is resolved, guarded updates pass their
-conformance tests, and verified-promotion integration uses the approved
-WORK-0017 result. Relevant workspace tests, rustfmt, warnings-denied
-Clippy, coverage update, handover, and clean diff checks must pass.
+The Replica/representation/locator model and guarded Storage Map CAS
+mechanics may begin now. WORK-0016's model/CAS scope is complete when its
+conformance tests pass review and independent verification. No verified
+promotion is included before the approved WORK-0017 result. Relevant
+workspace tests, rustfmt, warnings-denied Clippy, coverage update, handover,
+and clean diff checks must pass.

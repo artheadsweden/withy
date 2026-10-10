@@ -894,6 +894,14 @@ This is critical for safe concurrent updates to:
 - Storage Map generations;
 - operational metadata.
 
+An Adapter/Repository Home that accepts Core Storage Map mutations MUST
+provide conditional persistence sufficient to atomically guard the complete
+Project Storage Map and its `StorageMapGeneration`, including a mutation
+that changes multiple entries. If that guarantee is unavailable, the
+operation MUST be reported as unsupported or as an applicable provider
+failure; the Adapter MUST NOT weaken the Core CAS contract or report
+success.
+
 ---
 
 # 45. Compare-and-swap abstraction
@@ -917,12 +925,17 @@ Possible outcomes:
 ```text
 success
 conflict
+unsupported
 not_found
 permission_denied
 provider_error
 ```
 
 Core handles the semantic consequence.
+The `expected current version/generation/token` may be a provider token for
+this conditional write. It is not thereby the portable Core
+`StorageMapGeneration`; the Adapter maps the Core generation comparison
+onto provider facilities.
 
 ---
 
@@ -1003,11 +1016,22 @@ MUST use guarded update semantics.
 
 They MUST NOT rely on blind overwrite under concurrency.
 
+For Storage Map updates, the guarded state is the entire Project Storage
+Map together with its Core `StorageMapGeneration`. The conditional write
+MUST provide the logical atomicity defined by Core §34, regardless of
+provider-internal write count.
+
 ---
 
 # 51. Storage Map persistence
 
 Repository Home MUST durably persist the Storage Map or enough operational log/state to reconstruct it.
+
+The logical Storage Map and its `StorageMapGeneration` MUST be persisted or
+reconstructed together as one guarded state. A persisted map with an old
+generation, a new generation with an old map, or a partial multi-entry
+mutation MUST NOT be exposed as a successful state. Repository Home
+initialization MUST establish the empty Storage Map at generation `0`.
 
 The Platform Mirror MUST NOT be the sole copy.
 
@@ -2109,6 +2133,11 @@ configured namespace
 
 No creative history is changed merely by bootstrap.
 
+As part of the existing repository operational-metadata initialization
+boundary, the Storage Map is initialized as empty at Core
+`StorageMapGeneration` `0`. Absence of a persisted Storage Map record after
+initialization is not equivalent to generation `0`.
+
 ---
 
 # 125. Repository Home discovery
@@ -2132,7 +2161,8 @@ Conceptually:
 }
 ```
 
-This is operational metadata.
+This is operational metadata. Its `current_generation` example is not
+defined as, and MUST NOT be substituted for, the Core `StorageMapGeneration`.
 
 ---
 
@@ -4033,8 +4063,8 @@ The Platform coordinates but does not become the media store.
 Client A believes:
 
 ```text
-main -> R10
-generation 20
+Line main -> R10
+Line generation 20
 ```
 
 Client B believes the same.
@@ -4042,15 +4072,15 @@ Client B believes the same.
 A updates to:
 
 ```text
-main -> R11
-generation 21
+Line main -> R11
+Line generation 21
 ```
 
 B attempts:
 
 ```text
-main -> R12
-expected generation 20
+Line main -> R12
+expected Line generation 20
 ```
 
 Conditional update fails.

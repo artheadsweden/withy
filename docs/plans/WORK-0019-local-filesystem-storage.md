@@ -74,8 +74,9 @@ logical-key and discovery/layout rules.
 
 ## Known Design Gaps
 
-- DG-0032 gates guarded Storage Map mutation integration but does not block
-  isolated approved byte-I/O implementation.
+- Storage Map mutation integration must implement ADR-0034's complete-map
+  conditional atomicity; a filesystem path/provider token is not the Core
+  generation.
 - DEC-STORAGE-001/003/014 and joint chunking decision gate their
   corresponding layout/Home/chunked features, not the restricted opaque-key
   filesystem backend.

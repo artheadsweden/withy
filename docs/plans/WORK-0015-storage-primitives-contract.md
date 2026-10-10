@@ -33,8 +33,9 @@ Repository Home conformance.
 - Do not choose Chunking policy; DEC-CORE-001 and DEC-STORAGE-002 remain
   coupled and open.
 - No persistent Replica or Storage Map model; DG-0029 was deferred to
-  WORK-0016 and has since been resolved by ADR-0032. Guarded Storage Map
-  mutations remain gated by DG-0032.
+  WORK-0016 and has since been resolved by ADR-0032. Storage Map generation
+  and guarded mutation mechanics are defined separately by ADR-0034 and
+  remain outside WORK-0015.
 - DEC-STORAGE-003's Repository Home minimum is not claimed or implemented.
 
 ## Allowed scope

@@ -93,7 +93,8 @@ introducing a separate Chunk-level Replica or shared-ownership contract.
   Removal.
 - `Specs/OMVCS Storage Adapter Specification.md` §§29–36, 73–75, and
   161–164.
-- Storage Map guarded-update mechanics remain subject to DG-0032.
+- Storage Map guarded-update mechanics are defined separately by ADR-0034,
+  which resolves DG-0032.
 
 ## Test impact
 
@@ -106,16 +107,16 @@ order, and reconstruction consistency; per-Replica chunk availability; and
 identity/history independence from Endpoint, locator, preference,
 availability, and verification metadata. Tests must ensure that a Chunk
 copy is not registered as a Resource Replica. Guarded-update tests must
-follow DG-0032 and must not copy Line-generation rules.
+follow ADR-0034 and must not copy Line-generation rules.
 
 ## Implementation impact
 
 WORK-0016 may implement the Replica model and representation binding once
 DEC-STORAGE-007 is reflected in the Specs. Guarded Storage Map mutations
-remain gated by DG-0032. Registration-to-verified promotion remains gated
-by the approved verification result contract in WORK-0017 and DEC-STORAGE-
-004/005. WORK-0017–WORK-0021 must use these identity and representation
-rules without adding shared-namespace claims.
+follow ADR-0034, which resolves DG-0032. Registration-to-verified promotion
+remains gated by the approved verification result contract in WORK-0017
+and DEC-STORAGE-004/005. WORK-0017–WORK-0021 must use these identity and
+representation rules without adding shared-namespace claims.
 
 ## Compatibility / migration impact
 

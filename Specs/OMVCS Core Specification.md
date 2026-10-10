@@ -1768,41 +1768,94 @@ record, not part of the ResourceId key.
 Replica ordering MAY express preferred retrieval order but preference MUST
 NOT alter Resource identity or Replica identity.
 
+The Storage Map and its `StorageMapGeneration` form one Project-scoped
+operational state. The generation guards the complete logical Storage Map,
+not an individual Resource, Replica, Endpoint, or entry. It is not content
+identity, historical identity, provenance, or verification evidence.
+
 ---
 
 # 34. Storage Map updates
 
-Storage Map mutation MUST be versioned operationally and MUST compare the
-caller-supplied expected current generation atomically with the mutation. A
-stale expected generation MUST fail with a conflict and leave the complete
-Storage Map unchanged. A mutation that changes more than one map entry MUST
-be atomic across all affected entries.
+`StorageMapGeneration` is an unsigned integer in the inclusive range
+`0 ..= 9007199254740991` (`2^53 - 1`). Its canonical JSON representation is
+a JSON integer serialized according to §5 (RFC 8785/JCS). Implementations
+MUST reject negative values, fractions,
+strings, floating-point encodings, and alternate textual forms, including
+negative zero, leading zeroes, decimal points, or exponent notation. Its
+canonical decimal integer form is `0` or a nonzero digit followed by zero
+or more decimal digits. Parsing and serialization MUST preserve the exact
+integer value and MUST NOT depend on host-language integer width.
 
-Each mutation MUST carry:
+A newly initialized empty Storage Map has generation `0`. Generation zero
+denotes an existing empty map; it does not denote an absent generation.
+Repository Home bootstrap/operational-metadata initialization MUST establish
+this empty map and generation. If a Storage Map record is absent outside
+that initialization boundary, Core MUST treat the map as absent or
+incomplete operational metadata, not as an existing generation-zero map.
+
+Core exposes an operation equivalent to:
 
 ```text
-expected previous generation
-new generation
-operation identifier
-operation type
+ApplyStorageMapMutation(project_id, expected_generation, mutation)
 ```
 
-Actor and timestamp MAY be recorded as operational audit metadata. The
-generation's interoperable value domain, initial value, and successful
-advance rule, and the exact Core operation/result interface, are not
-specified here; implementations MUST NOT substitute the Line generation
-rules from §17. See [DG-0032](../docs/gaps/DG-0032-storage-map-generation-and-cas.md).
+The `mutation` is one logical request containing one or more Storage Map
+changes permitted by this specification. All changes MUST be validated
+against the same pre-mutation map state. Core MUST NOT infer additional
+Replica lifecycle operations from the ability to batch changes.
+
+The operation MUST atomically compare `expected_generation` with the
+current generation for the complete Project Storage Map. It may commit only
+when they are equal and every requested change is valid. A state-changing
+success MUST apply all changes atomically, advance the generation exactly
+once to `current_generation + 1` regardless of the number of entries
+changed, and return a success outcome with the resulting generation. No
+observer may see an intermediate map or generation.
+
+If `expected_generation` differs from the current generation, Core MUST
+return a typed generation-conflict outcome, MUST NOT mutate any entry, and
+MUST leave the generation unchanged. The outcome SHOULD include the current
+generation where available. Core MUST NOT automatically retry, merge, or
+rebase the request against the newer map; the caller must reread and
+explicitly reevaluate.
+
+If the generation matches but any requested change is invalid, the whole
+request MUST return a typed validation failure without changing the map or
+generation. This includes an invalid representation of
+`expected_generation`.
+
+After the generation matches and the request validates, if applying it
+would leave the logical Storage Map unchanged, it MUST NOT advance the
+generation. Core SHOULD return a typed `unchanged` outcome carrying the
+current generation. A no-op MUST NOT be used to bump the generation. A
+valid no-op at the maximum generation may return `unchanged`.
+
+If a state-changing request observes the maximum generation
+`9007199254740991`, it MUST fail atomically with a typed generation-
+exhausted/representation-limit outcome; it MUST NOT mutate the map, wrap,
+saturate, or switch representations.
+
+If the Storage Adapter or Repository Home cannot provide the required
+conditional-write and logical atomicity guarantees, Core MUST report the
+operation as unsupported or as an applicable provider failure and MUST NOT
+report success.
+
+The Core `StorageMapGeneration` is distinct from any provider ETag, object
+version, or conditional-write token. The Adapter MAY use such a provider
+token internally to implement the Core compare-and-swap, but provider token
+changes MUST NOT define or replace the portable Core generation. The
+Storage Map and its generation MUST be persisted/reconstructed as one
+guarded operational state boundary.
+
+Actor and timestamp MAY be recorded as operational audit metadata.
 
 Conceptual history:
 
 ```text
-expected version: A
-ADD_REPLICA ABC -> Server B
-resulting version: B
-
-expected version: B
-REMOVE_REPLICA ABC -> Server A
-resulting version: C
+empty Storage Map @ generation 0
+ApplyStorageMapMutation(expected_generation = 0, valid changes)
+result: applied, generation 1
 ```
 
 This operational history MUST NOT become Revision history. Replica
@@ -2602,19 +2655,27 @@ in §17. `SetDefaultLine` compares the expected current optional Line ID
 with the repository value atomically before changing or clearing that
 value.
 
-Some operations may commute safely.
+Every Storage Map mutation for one Project compares the same
+Project-scoped generation, including mutations whose changes could otherwise
+commute. If two callers submit mutations with the same expected generation,
+at most one state-changing mutation can succeed. The other receives a
+generation conflict and must reread and explicitly reevaluate its request;
+Core MUST NOT automatically merge or retry it. After reevaluation, both
+changes may be retained if the second request remains valid against the new
+map.
 
-Example:
+For example:
 
 ```text
 Client A:
-add replica Server B
+add replica Server B at expected generation 4
 
 Client B:
-add replica Server C
-```
+add replica Server C at expected generation 4
 
-Both may be retained.
+one mutation succeeds at generation 5
+the other conflicts; it may be explicitly resubmitted after rereading
+```
 
 But:
 

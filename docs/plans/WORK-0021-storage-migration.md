@@ -26,7 +26,7 @@ orchestration are explicitly excluded.
 
 - WORK-0015 through WORK-0017 and WORK-0020.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
-  approved interfaces; DG-0032 resolved before guarded Storage Map updates.
+  approved interfaces; guarded Storage Map updates follow ADR-0034.
 - DEC-STORAGE-004/005 and joint chunking decision resolved for migration's
   verification and reconstruction behavior.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 do not block this retained-source
@@ -70,8 +70,8 @@ orchestration are explicitly excluded.
 
 ## Known Design Gaps
 
-- DG-0032 blocks guarded Storage Map updates, including destination
-  registration.
+- Destination registration uses ADR-0034's Project-wide atomic CAS
+  contract.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 continue to block any future
   source-removal/cleanup extension.
 

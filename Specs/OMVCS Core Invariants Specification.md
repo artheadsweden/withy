@@ -774,6 +774,12 @@ The existence of a corrupt replica MUST NOT invalidate other verified replicas o
 
 A failed or incomplete operation MUST NOT leave the system reporting a successfully published Revision, migration, replica or checkout if required guarantees were not satisfied.
 
+Storage Map mutations MUST satisfy the Project-scoped
+`StorageMapGeneration` compare-and-swap and atomicity contract in Core §34.
+A stale, invalid, unsupported, provider-failed, or generation-exhausted
+mutation MUST NOT report success or leave a partial map or generation
+change. An unchanged map MUST NOT advance its generation.
+
 Exact transaction semantics will be specified later.
 
 For `ValidateRepository`, a completed report with findings MUST be
