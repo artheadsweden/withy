@@ -1588,6 +1588,14 @@ and declared-boundary records.
 This operational metadata includes the optional Project-scoped Default Line
 preference defined in §§16–17.
 
+The Repository Home is authoritative for the Storage Map it persists.
+Reconstructing that persisted map continues its prior registration state;
+it is not a new Replica Addition. A Repository Home MUST persist and
+reconstruct only Resource Replica records admitted through the applicable
+registration requirements. Deserializing a Replica record alone does not
+establish this authority or register the record. These persistence and
+reconstruction requirements are defined further in Storage Adapter §51.
+
 It MUST NOT contain credentials in historical metadata.
 
 ---
@@ -1700,6 +1708,15 @@ Resource Replica verified before the applicable Content Verification
 requirements succeed. This section does not define verification-strength
 labels, evidence, or upload assurance; those remain subject to the
 applicable Storage Adapter decisions and contracts.
+
+Reconstructing a Storage Map from an authoritative Repository Home does not
+perform a new Replica Addition and MUST NOT re-verify Resource bytes solely
+because the map is being loaded. The reconstruction MUST validate the
+persisted map structure and consistency. Decoding a Replica record alone
+does not establish that it came from an authoritative Repository Home and
+does not register it. Core MUST apply the applicable registration
+requirements to a candidate from a non-authoritative source before adding
+it to the Storage Map.
 
 Conceptually, a record contains:
 
@@ -1863,6 +1880,12 @@ registration records a newly verified complete Resource representation;
 removal removes operational location metadata only and MUST NOT imply
 physical deletion, garbage-collection eligibility, retention expiry, or
 permission to remove the last valid copy.
+
+When reconstructing persisted state, Core MUST use the authoritative
+Repository Home boundary defined in §29 and Storage Adapter §51.
+Reconstruction validates the complete map and generation as one guarded
+state and does not itself register Replica records or re-verify their
+Resource bytes.
 
 ---
 

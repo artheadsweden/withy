@@ -649,6 +649,12 @@ Exact storage-provider internals may differ.
 
 Core-visible state MUST never mark a replica `verified` before verification requirements are satisfied.
 
+These registration requirements apply when admitting a new candidate. A
+Repository Home's reconstruction of its authoritative persisted Storage
+Map is not a new registration and does not require re-verifying Resource
+bytes solely because the map is loaded; §51 defines that persistence
+boundary.
+
 ---
 
 # 31. VerifyResource
@@ -1032,6 +1038,17 @@ reconstructed together as one guarded state. A persisted map with an old
 generation, a new generation with an old map, or a partial multi-entry
 mutation MUST NOT be exposed as a successful state. Repository Home
 initialization MUST establish the empty Storage Map at generation `0`.
+
+The persisted Storage Map at a Repository Home is authoritative for its
+prior successful Replica registrations. Repository Home MUST persist only
+records admitted through the applicable registration requirements and
+MUST uphold that authority when reconstructing the map. Reconstruction
+MUST validate the map's structure and consistency with its generation, but
+MUST NOT re-verify Resource bytes solely because the map is being loaded.
+Deserializing or decoding a Replica record alone does not establish that
+the record came from an authoritative Repository Home and does not register
+it. A record from another source MUST satisfy the applicable new-registration
+requirements before it is admitted as a registered Resource Replica.
 
 The Platform Mirror MUST NOT be the sole copy.
 
@@ -4228,7 +4245,9 @@ Core establishes Server B as new Repository Home.
 
 Historical metadata is copied and verified.
 
-Storage Map reconstructed.
+The Storage Map is reconstructed from authoritative Repository Home state
+under §51; reconstruction continues prior Replica registration and does not
+re-verify Resource bytes solely because the map is loaded.
 
 Project identity and all Revision IDs remain unchanged.
 

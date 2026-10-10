@@ -109,6 +109,11 @@ availability, and verification metadata. Tests must ensure that a Chunk
 copy is not registered as a Resource Replica. Guarded-update tests must
 follow ADR-0034 and must not copy Line-generation rules.
 
+For persisted records, tests distinguish new registration from
+reconstruction of an authoritative Repository Home map under ADR-0035.
+Reconstruction continues prior registration after structural validation and
+does not re-verify Resource bytes solely because the map is loaded.
+
 ## Implementation impact
 
 WORK-0016 may implement the Replica model and representation binding once
@@ -116,7 +121,8 @@ DEC-STORAGE-007 is reflected in the Specs. Guarded Storage Map mutations
 follow ADR-0034, which resolves DG-0032. Registration-to-verified promotion
 remains gated by the approved verification result contract in WORK-0017
 and DEC-STORAGE-004/005. WORK-0017–WORK-0021 must use these identity and
-representation rules without adding shared-namespace claims.
+representation rules without adding shared-namespace claims. Persisted
+Replica rehydration follows the authority boundary defined by ADR-0035.
 
 ## Compatibility / migration impact
 
