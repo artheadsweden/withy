@@ -19,7 +19,7 @@ Rules:
 
 ## Current milestone
 
-Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, and ADR-0034 resolves DG-0032; WORK-0016 Replica/locator/Storage Map/generation/CAS implementation is READY and authorized, while verified promotion remains gated by WORK-0017 and DEC-STORAGE-004/005; implementation has not started)
+Current milestone: M3 — Storage abstraction (IN PROGRESS; WORK-0015 VERIFIED and integrated at aade8af1031a42fd9c7d093f35f6c4ae3f2818a0; ADR-0032 resolves DG-0029, ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, and ADR-0035 resolves DG-0033; bounded WORK-0016 Replica/locator/Storage Map/generation/CAS and authoritative persisted-map reconstruction are independently verified on work/0016-replica-storage-map but not integrated; DG-0034 remains open for ProviderLocator schema-identifier grammar and blocks syntax-specific validation only; verified promotion remains gated by WORK-0017 and DEC-STORAGE-004/005)
 
 ## Specification state
 
@@ -90,18 +90,20 @@ WORK-0015's restricted byte-I/O implementation has passed focused and
 workspace tests, formatting, warnings-denied Clippy, Core Engineer review,
 and independent Verifier review; it is integrated at
 `aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. Human-approved ADR-0034 resolves
-DG-0032; WORK-0016's Replica/locator/Storage Map/generation/CAS scope is
-READY and authorized. `StorageMapGeneration` is one exact
-unsigned JSON integer in `0 ..= 9007199254740991`, initialized to zero for
-the empty map. DEC-STORAGE-004/005 continue to gate verification evidence
-and upload assurance, so verified promotion cannot be implemented until
-the WORK-0017 result contract is approved. WORK-0017 may consume
+DG-0032; ADR-0035 resolves DG-0033's persistence reconstruction authority.
+WORK-0016's bounded Replica/locator/Storage Map/generation/CAS scope and
+authoritative map reconstruction have passed Storage Engineer and
+independent Verifier review on `work/0016-replica-storage-map`; they are not
+integrated. DG-0034 remains open and excludes syntax-specific
+ProviderLocator schema-identifier validation. `StorageMapGeneration` is one
+exact unsigned JSON integer in `0 ..= 9007199254740991`, initialized to
+zero for the empty map. DEC-STORAGE-004/005 continue to gate verification
+evidence and upload assurance, so verified promotion cannot be implemented
+until the WORK-0017 result contract is approved. WORK-0017 may consume
 WORK-0016's independently reviewed model/locator/generation/CAS
 subdeliverables without waiting for verified-promotion integration.
-Incomplete/unverified candidates are not registered Resource Replicas. No
-implementation beyond WORK-0015 has started.
+Incomplete/unverified candidates are not registered Resource Replicas.
 DEC-STORAGE-011 remains OPEN; stable shared-namespace, cross-Project
 physical-object/deduplication guarantees, and shared-namespace GC are
 excluded from WORK-0016. DEC-CORE-001 and DEC-STORAGE-002 remain OPEN; no
-chunking algorithm was selected. WORK-0016–WORK-0021 have not started
-implementation.
+chunking algorithm was selected. WORK-0017–WORK-0021 remain unstarted.

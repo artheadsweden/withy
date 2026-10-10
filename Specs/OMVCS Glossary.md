@@ -638,7 +638,10 @@ A **Resource Replica** is an operational record for one complete recoverable
 physical representation of one Resource Object at one Storage Endpoint.
 A candidate object that is incomplete or unverified is not a registered
 Resource Replica. A registered, valid Resource Replica MUST have passed the
-applicable Content Verification requirements.
+applicable Content Verification requirements. Reconstruction from an
+authoritative Repository Home continues prior registration and is not a new
+registration; decoding a record alone establishes neither registration nor
+Repository Home authority.
 
 A Resource Object MAY have zero, one, or many Resource Replicas. Multiple
 distinct, independently addressable representations of the same Resource
@@ -686,6 +689,10 @@ It does not answer:
 
 That information belongs to creative history.
 
+A map reconstructed from authoritative Repository Home persistence
+continues the prior registered map state; decoding a Replica record alone
+does not add it to the Storage Map.
+
 ---
 
 ## Storage Map Generation
@@ -717,6 +724,10 @@ Storage Migration MUST NOT create a new Revision merely because physical locatio
 A **Replica Addition** records a newly verified Resource Replica.
 
 It changes operational metadata only.
+
+Reconstructing an authoritative persisted Storage Map is not a Replica
+Addition and does not re-verify Resource bytes solely because the map is
+loaded.
 
 It MUST NOT imply publication, global availability, or verification
 strength beyond the applicable verification result.

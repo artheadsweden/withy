@@ -331,7 +331,7 @@ fn index_path(path: &str, index: usize) -> String {
     format!("{path}/{index}")
 }
 
-struct UniqueJsonValue(Value);
+pub(crate) struct UniqueJsonValue(pub(crate) Value);
 
 impl<'de> Deserialize<'de> for UniqueJsonValue {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>

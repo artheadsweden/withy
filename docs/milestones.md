@@ -89,13 +89,15 @@ started.
 Status: IN PROGRESS — bounded preflight complete; WORK-0015 through WORK-0021
 are defined in `docs/plans/`. WORK-0015's restricted byte-I/O implementation
 is independently verified and integrated at
-`aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. ADR-0032 resolves DG-0029 and
-ADR-0033 resolves DEC-STORAGE-007. WORK-0016 Replica/locator modeling may
-proceed, and ADR-0034 resolves DG-0032. WORK-0016 is READY and authorized
-for its Replica/locator/Storage Map model and Project-scoped generation and
-guarded/CAS mutation mechanics. Verified
-promotion remains gated by WORK-0017's approved verification result and
-DEC-STORAGE-004/005. WORK-0016–WORK-0021 remain unstarted.
+`aade8af1031a42fd9c7d093f35f6c4ae3f2818a0`. ADR-0032 resolves DG-0029,
+ADR-0033 resolves DEC-STORAGE-007, ADR-0034 resolves DG-0032, and ADR-0035
+resolves DG-0033's authoritative persistence boundary. WORK-0016 Replica,
+locator, Storage Map, generation/CAS, and authoritative persisted-map
+reconstruction are independently verified at the bounded scope on
+`work/0016-replica-storage-map`; they are not integrated. DG-0034 remains
+open and blocks syntax-specific ProviderLocator schema-identifier validation
+only. Verified promotion remains gated by WORK-0017's approved verification
+result and DEC-STORAGE-004/005. WORK-0017–WORK-0021 remain unstarted.
 
 - generic storage contract;
 - mock storage;

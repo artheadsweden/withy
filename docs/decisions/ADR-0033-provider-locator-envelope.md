@@ -95,6 +95,10 @@ Endpoints not implying shared identity; locator mutation for the same
 Replica versus a new independently addressable copy; and rejection of
 credentials, expiring grants, and process-local handles.
 
+Core persistence implementations serialize Replica records through the
+canonical JCS representation exposed by the model; generic Serializer output
+alone does not promise the required byte representation.
+
 ## Implementation impact
 
 WORK-0016 owns the Core Replica/Storage Map model and its opaque locator

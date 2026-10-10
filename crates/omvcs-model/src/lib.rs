@@ -10,6 +10,7 @@ pub mod creative_component;
 pub mod hashing;
 pub mod project_state;
 pub mod release;
+pub mod replica;
 pub mod resource;
 pub mod revision;
 mod timestamp;
@@ -106,6 +107,7 @@ assigned_identifier!(ProjectId);
 assigned_identifier!(CreativeComponentId);
 assigned_identifier!(LineId);
 assigned_identifier!(StorageEndpointId);
+assigned_identifier!(ReplicaId);
 assigned_identifier!(ContributionId);
 assigned_identifier!(ActorId);
 
@@ -207,6 +209,7 @@ macro_rules! content_identifier {
 }
 
 content_identifier!(ResourceId, "resource");
+content_identifier!(ChunkId, "chunk");
 content_identifier!(ComponentStateId, "component-state");
 content_identifier!(AdapterStateId, "adapter-state");
 content_identifier!(ProjectStateId, "project-state");
