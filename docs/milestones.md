@@ -110,12 +110,17 @@ remain excluded. WORK-0018 is VERIFIED / INTEGRATED at
 `43edf520bd4f7ef8f3f1fbe73efbab71763fa576`. Core Engineer and independent
 Verifier ACCEPT with no findings. Post-merge validation passed: 27 mock
 tests, 343 Storage/model/Core package tests, 370 workspace tests, formatting,
-warnings-denied Clippy, and diff checks. WORK-0019 is next to inspect;
-WORK-0019–WORK-0021 remain unstarted. DEC-STORAGE-013 remains OPEN; no
-reference designation. M3 remains IN PROGRESS.
+warnings-denied Clippy, and diff checks. WORK-0019 implementation is now
+IN PROGRESS on
+`work/0019-local-filesystem-storage`; WORK-0019 is VERIFIED on its feature
+branch but not integrated. Independent Verifier ACCEPT with no findings.
+Windows/Linux workspace tests pass (378/407); focused adapter tests pass
+(8 Windows-enabled; 37 Linux). WORK-0020–WORK-0021 remain unstarted.
+WORK-0020–WORK-0021 remain unstarted.
+DEC-STORAGE-013 remains OPEN; no reference designation. M3 remains IN PROGRESS.
 ADR-0039/0040/0041 resolve DEC-STORAGE-001/003/014. WORK-0019's
 Resource/Chunk byte-storage and filesystem Repository Home scopes are
-READY TO IMPLEMENT under ADR-0039–0042. ADR-0042 resolves DG-0035 with
+IN PROGRESS under ADR-0039–0042. ADR-0042 resolves DG-0035 with
 logically atomic initialization, explicit incomplete-state discovery, and
 safe idempotent retry. DG-0034 remains OPEN for generic ProviderLocator
 schema-identifier lexical validation only; WORK-0019 uses the approved

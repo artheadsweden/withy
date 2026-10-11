@@ -9,4 +9,15 @@ publish = false
 workspace = true
 
 [dependencies]
+cap-std = "4.0.3"
+omvcs-core = { path = "../omvcs-core" }
 omvcs-storage = { path = "../omvcs-storage" }
+omvcs-model = { path = "../omvcs-model" }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["raw_value"] }
+serde_jcs = "=0.2.0"
+sha2 = "0.10"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+fs4 = "1.1.0"
+rustix = { version = "1.1.5", features = ["fs"] }
