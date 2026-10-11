@@ -1,6 +1,7 @@
 # WORK-0019 — Local filesystem Storage Adapter
 
-Status: VERIFIED on feature branch (not integrated) under ADR-0039/0040/0041/0042
+Status: VERIFIED / INTEGRATED at `0f426322394467c35e721248b8a0a18ab9a970bf`
+under ADR-0039/0040/0041/0042
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0019-local-filesystem-storage`

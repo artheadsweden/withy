@@ -4,7 +4,8 @@ From agent: OMVCS Lead (WORK-0019 implementation)
 To: Project record and next M3 package owner
 Date: 2026-10-11
 Branch: `work/0019-local-filesystem-storage`
-HEAD: `e4d46da4d03a665accd7e65473f474351d46b993`
+Feature commits: `0506261`, `e1c1573`, `54a2b9c`
+Integration merge: `0f426322394467c35e721248b8a0a18ab9a970bf`
 
 ## Completed
 
@@ -21,10 +22,10 @@ Opened Homes declare the six independent minimum ADR-0040 §10 capability
 groups. Bootstrap retry and matching immutable-metadata retry re-establish
 file and ancestor-directory durability before success.
 
-The implementation and validation are complete, but final independent
-Verifier review ACCEPTED with no findings. WORK-0019 is VERIFIED on the
-feature branch but is not integrated. No commit, push, or integration was
-performed.
+The implementation and validation are complete. Independent Verifier
+review ACCEPTED with no findings. The feature branch was pushed and
+integrated without conflicts or production-code changes. WORK-0019 is
+VERIFIED / INTEGRATED at `0f426322394467c35e721248b8a0a18ab9a970bf`.
 
 ## Specifications implemented
 
@@ -73,6 +74,13 @@ workspace passed 378 Windows tests and 407 Linux tests.
 
 ## Commands run
 
+- Post-merge `cargo test -p omvcs-storage-local -p omvcs-storage
+  -p omvcs-model -p omvcs-core --locked` — 351 tests passed.
+- Post-merge `cargo test --workspace --locked` — 378 passed on Windows.
+- Post-merge `cargo fmt --all -- --check` — passed.
+- Post-merge warnings-denied Clippy for affected crates/all targets —
+  passed.
+- Post-merge `git diff --check` — passed.
 - `cargo test -p omvcs-storage-local --locked` — Windows-enabled adapter
   tests passed.
 - `cargo test --workspace --locked` — 378 passed on Windows.
@@ -122,7 +130,8 @@ workspace passed 378 Windows tests and 407 Linux tests.
 
 ## Known limitations
 
-- WORK-0019 is VERIFIED on its feature branch, not integrated.
+- DG-0036 remains OPEN and outside WORK-0019; DG-0034 remains OPEN for
+  generic ProviderLocator schema-identifier lexical validation.
 - Official reference-conformance designation, non-filesystem Home
   discovery, shared namespace, deletion, GC, retention, orphan cleanup,
   M4 transaction/recovery semantics, and automatic layout migration remain
@@ -130,9 +139,8 @@ workspace passed 378 Windows tests and 407 Linux tests.
 
 ## Remaining work
 
-1. Commit, push, and integrate only after explicit user authorization.
-2. Keep M3 IN PROGRESS; WORK-0020–WORK-0021 remain unstarted.
-3. Do not start WORK-0020 without explicit
+1. WORK-0020 is next to inspect; WORK-0020–WORK-0021 remain unstarted.
+2. Keep M3 IN PROGRESS.
    authorization.
 
 ## Git state
