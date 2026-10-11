@@ -1,6 +1,6 @@
 # WORK-0019 — Local filesystem Storage Adapter
 
-Status: PLANNED — READY TO IMPLEMENT under ADR-0039/0040/0041/0042
+Status: VERIFIED on feature branch (not integrated) under ADR-0039/0040/0041/0042
 Owner agent: Storage Engineer
 Milestone: M3
 Branch: `work/0019-local-filesystem-storage`
@@ -15,7 +15,8 @@ logical-key and discovery/layout rules.
 ## Normative requirements
 
 - Storage Adapter Specification §§10–21, 22–38, 49–53, 63–67, 73–76,
-  85–86, 118–129, 176–189, and filesystem conformance sections.
+  85–86, 118–129, 176–189, 240–243, and conformance/failure-injection
+  sections §§252–253.
 - Core Specification §§29–36, 47–55, and 57–58.
 - Core Invariants: INV-RES-001–007, INV-STOR-001–005, INV-INT-001–003,
   INV-STOR-006, INV-SYNC-001–003.
@@ -45,6 +46,7 @@ logical-key and discovery/layout rules.
 
 - `crates/omvcs-storage-local/`
 - Focused filesystem-specific integration tests and fixtures.
+- `Cargo.lock` for dependency resolution required by the crate's manifest.
 
 ## Deliverables
 
