@@ -125,8 +125,9 @@ tests, 343 Storage/model/Core package tests, 370 workspace tests, formatting,
 warnings-denied affected-crate/all-target Clippy, and diff checks. M3 remains
 IN PROGRESS. WORK-0019 is VERIFIED / INTEGRATED at
 `0f426322394467c35e721248b8a0a18ab9a970bf`. Independent Verifier ACCEPT
-with no findings. Post-merge validation passed: 8 focused adapter tests,
-351 shared storage/model/Core tests, 378 workspace tests, formatting,
+with no findings. Post-merge validation passed: 351 tests across the
+selected local adapter/storage/model/Core packages (including 8
+local-adapter tests), 378 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. Previously recorded Linux
 validation passed: 37 focused adapter tests and 407 workspace tests.
 WORK-0020 is next to inspect; WORK-0020–WORK-0021 remain unstarted.
