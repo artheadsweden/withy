@@ -81,6 +81,13 @@ requires:
   resume, restart, retry, bulk replication, replication, migration,
   operation log, transaction, checkpoint, interruption, and recovery.
 - `git diff --check` — passed after final edits.
+- Independent Verifier review — first result `NEEDS CHANGES` only for
+  premature handover Git-state claims; corrected handover re-review:
+  `ACCEPT`, with no normative findings.
+- `git commit` — created reviewed specification/readiness commit
+  `392cf7ed3a98158d44e58e6ca6fa2d5c13190546`.
+- `git push origin work/0020-resource-replication` — passed; local and
+  remote feature tips matched at the specification/readiness commit.
 - No executable tests/build/Clippy run because code and test source were
   unchanged.
 
@@ -127,13 +134,12 @@ retention, cleanup, or M4 recovery machinery.
 
 ## Git state
 
-State at independent review:
-
-- Working tree: DIRTY — ADR-0044/specification documentation is uncommitted.
-- Remote push performed for this update: NO.
-- Local and remote feature tips before this update:
-  `841633b0a82e682863027ba6a90c0c1399c69cb8`.
-
-Final commit, push, synchronized-tip verification, and clean-tree
-verification remain required after independent Verifier ACCEPT.
-Integration occurred: NO.
+- Reviewed specification/readiness commit:
+  `392cf7ed3a98158d44e58e6ca6fa2d5c13190546`.
+- Remote push performed: YES — that commit was pushed to
+  `origin/work/0020-resource-replication` and synchronized-tip verification
+  passed.
+- This handover finalization is a documentation-only follow-up commit; its
+  final push and clean synchronized-tip verification are recorded in the
+  task's final report.
+- Integration occurred: NO.
