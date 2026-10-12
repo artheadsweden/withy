@@ -650,6 +650,10 @@ temporary partial object
 
 The Adapter MUST expose whether an interrupted upload can be resumed.
 
+This is transport/provider capability. It does not designate the enclosing
+Core operation as a durable resumable workflow or promise Core continuation
+after process restart. Object size does not alter the Core operation type.
+
 ---
 
 # 28. Resumable download
@@ -657,6 +661,9 @@ The Adapter MUST expose whether an interrupted upload can be resumed.
 Adapters SHOULD support resumable retrieval where possible.
 
 A resumed download MUST still result in final whole-object verification.
+
+Transport resumption MUST NOT imply that the enclosing Core operation
+survived restart or completed successfully.
 
 ---
 
@@ -1298,6 +1305,10 @@ COMPLETE
 Adapter results feed these states.
 
 The Adapter itself does not create creative history.
+
+This phase model does not by itself designate a durable resumable workflow
+or require persisted Core continuation state. Any such designation and
+state belong to the applicable Core operation contract.
 
 ---
 

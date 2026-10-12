@@ -2938,6 +2938,11 @@ MAY continue in background.
 
 The user should be able to inspect status.
 
+Background execution, elapsed time, progress reporting, or transfer size
+does not by itself designate a Core durable resumable workflow. A
+per-Resource replication invocation may run in the background while
+remaining invocation-scoped.
+
 ---
 
 # 161. Recording/performance priority
@@ -4188,13 +4193,19 @@ Platform synced
 
 # 241. Recoverable failure
 
-Errors that can be retried SHOULD retain enough operation state for:
+Operations whose contracts support resume SHOULD retain the state required
+by that contract for:
 
 ```text
 Resume
 ```
 
 rather than forcing restart.
+
+The UI MUST distinguish Adapter/provider transport resume from continuation
+of a Core durable resumable workflow. A Resume action MUST NOT imply
+cross-process Core continuation unless the operation contract explicitly
+provides it.
 
 ---
 
@@ -4212,6 +4223,10 @@ Cancel
 
 If provider/Adapter supports resumption.
 
+This MAY resume a provider/session transfer within the applicable operation
+contract. It does not by itself make the enclosing Core operation durable
+across process restart.
+
 ---
 
 # 243. Non-resumable transfer
@@ -4222,6 +4237,10 @@ If operation cannot resume:
 This provider cannot resume interrupted uploads.
 The transfer will restart.
 ```
+
+Restarting a transfer MUST NOT be presented as continuation of a prior Core
+invocation unless that invocation belongs to an explicitly designated
+durable resumable workflow.
 
 ---
 

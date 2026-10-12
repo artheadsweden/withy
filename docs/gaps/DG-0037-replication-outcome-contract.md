@@ -102,6 +102,5 @@ keeping M4's durable cross-step recovery orchestration outside WORK-0020.
 Resolved by human-approved ADR-0043, which defines the Core per-Resource
 outcome, stage, destination-effect, registration-state, source-preservation,
 and ordinary retry/idempotency contract. The affected Specs and WORK-0020
-test plan are updated. The separate interaction between the approved
-exclusion of M4 recovery and Core §69 resumability is recorded in DG-0038;
-DG-0038, not DG-0037, currently blocks WORK-0020 readiness.
+test plan are updated. ADR-0044 subsequently resolved DG-0038's separate
+Core §69 applicability question without altering ADR-0043.

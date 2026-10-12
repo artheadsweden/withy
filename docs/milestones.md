@@ -120,10 +120,13 @@ local-adapter tests), 378 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. Previously recorded Linux
 validation passed: 37 focused adapter tests and 407 workspace tests.
 ADR-0043 resolves DG-0037 and defines the per-Resource replication outcome
-contract. WORK-0020 remains BLOCKED by DG-0038, which records the unresolved
-Core §69 resumability boundary for potentially long-running single-Resource
-replication; no WORK-0020 production implementation has started. WORK-0021
-remains unstarted.
+contract. ADR-0044 resolves DG-0038: WORK-0020 single-Resource replication
+is invocation-scoped regardless of size/duration, while future
+bulk/multi-Resource replication remains a durable resumable workflow.
+Independent Verifier ACCEPT closes the prior ADR-0043 review findings and
+accepts the ADR-0044 reconciliation. WORK-0020 is READY / AUTHORIZED; no
+production implementation has started. WORK-0021 remains unstarted and is
+BLOCKED by DG-0039's separate migration resumability-designation gap.
 DEC-STORAGE-013 remains OPEN; no reference designation. M3 remains IN PROGRESS.
 ADR-0039/0040/0041 resolve DEC-STORAGE-001/003/014. WORK-0019's
 Resource/Chunk byte-storage and filesystem Repository Home scopes are

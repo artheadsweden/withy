@@ -1539,6 +1539,39 @@ an incomplete local history MUST NOT be represented as completely recovered.
 
 ---
 
+## Invocation-Scoped Operation
+
+An **Invocation-Scoped Operation** has no normative promise of Core durable
+continuation after the Core process terminates. If no result was returned
+before termination, a later caller action is a new invocation that
+re-observes authoritative state. Runtime duration, data size, Chunk count,
+background execution, progress, and operation identifiers do not change
+this classification.
+
+---
+
+## Durable Resumable Workflow
+
+A **Durable Resumable Workflow** is a workflow-scale Core operation whose
+normative contract explicitly spans independently recoverable steps or work
+units and defines persisted continuation across Core process restart.
+Designation is semantic and explicit; it is not inferred from elapsed time,
+data size, background execution, progress reporting, an operation log, or
+an operation identifier. Bulk/multi-Resource replication is subject to this
+classification when implemented.
+
+---
+
+## Transport Resume
+
+**Transport Resume** continues an interrupted Adapter/provider transfer
+using an existing transport session, byte range, multipart state, or
+equivalent provider mechanism where supported. It does not by itself
+designate a Core durable resumable workflow, prove verification, register a
+Replica, or establish Core operation success.
+
+---
+
 # Ownership and custody concepts
 
 ## Creator-Controlled Storage

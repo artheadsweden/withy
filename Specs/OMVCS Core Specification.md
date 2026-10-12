@@ -2075,9 +2075,14 @@ deduplication is promised.
 
 This result contract does not add automatic cleanup, deletion, garbage
 collection, retention, source removal, or durable cross-step recovery.
-Core §69 remains applicable where its long-running-operation requirement
-applies; whether it applies to a single-Resource WORK-0020 operation is
-unresolved in DG-0038.
+One per-Resource replication operation is invocation-scoped under §69. It
+does not become a durable resumable workflow because the Resource is large,
+the transfer takes a long time, or the operation runs in the background.
+If Core terminates before returning, no result for that invocation is
+guaranteed to survive restart. A later caller action is a new invocation
+that re-observes authoritative state and may reuse destination bytes or
+evidence only when the applicable Storage and verification contracts
+establish their identity, applicability, and safety.
 
 ---
 
@@ -3230,18 +3235,34 @@ No creative history changes.
 
 # 69. Partial failure recovery
 
-Long-running operations MUST be resumable.
+A Core operation or workflow is subject to durable resumability only when
+its normative contract explicitly designates it as a durable resumable
+workflow. Such a workflow spans independently recoverable steps or work
+units and MUST define durable continuation across Core process restart.
 
-An implementation SHOULD persist transaction state for:
+Observed runtime duration does not make an operation a durable resumable
+workflow. Resource size, Chunk count, bytes transferred, elapsed time,
+transfer rate, background execution, progress reporting, and an operation
+identifier MUST NOT switch the designation on or off. OMVCS 0.1 defines no
+size, duration, or Chunk-count threshold for durable resumability.
 
-```text
-publication
-storage migration
-repository-home migration
-bulk replication
-large materialisation
-repository import
-```
+Workflow-scale operations explicitly defined as durable resumable workflows
+MUST be resumable. Bulk/multi-Resource replication is such a workflow-scale
+operation when implemented. Other operation families are subject to this
+requirement only where their normative operation contract explicitly makes
+that designation. Publication and recovery workflows are examples where an
+operation-specific contract may make that designation.
+
+A designated durable resumable workflow SHOULD persist the transaction or
+workflow state required by its operation-specific contract. After restart,
+Core MUST determine the last confirmed durable workflow state and continue
+or safely roll back operational changes where that contract permits.
+
+One invocation-scoped operation does not require a durable continuation
+record, even if it streams a very large object or takes a long time. An
+operation log entry, progress record, Adapter transfer session, or provider
+resume token does not by itself designate a Core durable resumable workflow
+or supply its continuation state.
 
 Example publication transaction:
 
@@ -3255,7 +3276,9 @@ PLATFORM_PENDING
 COMPLETE
 ```
 
-After restart, Core MUST determine the last confirmed state and continue or safely roll back operational changes where possible.
+The example is a durable workflow only because its operation contract
+designates and defines that transaction; the phase names do not create a
+generic workflow schema.
 
 ---
 
@@ -3607,17 +3630,24 @@ Working-state effects
 Failure modes
 Retry behaviour
 Idempotency behaviour
+Resumability designation: invocation-scoped | durable resumable workflow
 Result
 ```
 
 Coding agents MUST NOT implement operations whose failure semantics are left implicit.
+
+An operation designated as a durable resumable workflow MUST additionally
+specify its durable identity, persisted continuation state, restart
+behavior, and safe continuation or rollback rules. An invocation-scoped
+operation MUST NOT claim cross-process continuation merely because it has
+progress state, an operation identifier, or Adapter transport resumption.
 
 The per-Resource replication result, failure-stage, destination-effect,
 registration, source-preservation, and retry/idempotency requirements are
 specified in §34, Resource replication outcome. An implementation-facing
 operation contract MUST also state the applicable inputs, preconditions,
 authorization, and exact invocation interface without weakening those
-normative outcomes.
+normative outcomes. Per-Resource replication is invocation-scoped.
 
 ## `ValidateRepository`
 

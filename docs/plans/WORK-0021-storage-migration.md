@@ -1,6 +1,7 @@
 # WORK-0021 — Storage migration
 
-Status: PLANNED — depends on WORK-0020 (BLOCKED by DG-0038)
+Status: BLOCKED — DG-0039 Storage Migration resumability designation;
+depends on WORK-0020 implementation
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0021-storage-migration`
@@ -25,7 +26,8 @@ orchestration are explicitly excluded.
 ## Dependencies
 
 - WORK-0015 through WORK-0017 are VERIFIED / INTEGRATED; WORK-0020 remains
-  a prerequisite and is BLOCKED by DG-0038. DG-0037 is resolved by ADR-0043.
+  an implementation prerequisite. DG-0037 and DG-0038 are resolved by
+  ADR-0043 and ADR-0044 respectively.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
   approved interfaces; guarded Storage Map updates follow ADR-0034.
 - ADR-0036/0037/0038 define the chunking, verification, and destination
@@ -74,6 +76,10 @@ orchestration are explicitly excluded.
 
 ## Known Design Gaps
 
+- DG-0039 is OPEN and blocks WORK-0021 authorization/implementation until
+  Core §83 designates single-Resource migration and any bulk migration
+  workflow without conflating Adapter Transport Resume with durable Core
+  continuation.
 - Destination registration uses ADR-0034's Project-wide atomic CAS
   contract.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 continue to block any future

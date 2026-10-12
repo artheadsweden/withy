@@ -161,10 +161,13 @@ DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0016 was
 authorized by the original preflight and is integrated at its bounded scope.
 WORK-0017 is verified and integrated at its bounded scope; WORK-0018 and
 WORK-0019 are VERIFIED / INTEGRATED. ADR-0043 resolves DG-0037 and defines
-the per-Resource replication outcome contract. WORK-0020 remains BLOCKED by
-DG-0038, which records the unresolved Core §69 resumability boundary for a
-single-Resource operation. WORK-0021 remains unstarted and retains its own
-implementation gate.
+the per-Resource replication outcome contract. ADR-0044 resolves DG-0038:
+WORK-0020 single-Resource replication is invocation-scoped, while future
+bulk/multi-Resource replication remains a durable resumable workflow.
+Independent Verifier ACCEPT closes the prior ADR-0043 test-plan review and
+accepts the ADR-0044 reconciliation. WORK-0020 is READY / AUTHORIZED.
+WORK-0021 remains unstarted and is BLOCKED by DG-0039's separate Storage
+Migration resumability-designation gap.
 
 | Work | Title | Dependency / gate |
 |---|---|---|
@@ -173,8 +176,8 @@ implementation gate.
 | WORK-0017 | Resource and Chunk verification model | VERIFIED / INTEGRATED at `60f71c9c624eb7b08bb8fd18ac7abb7a7a7ce250`. Uses WORK-0015/0016 and ADR-0032/0033/0034/0035/0036/0037/0038. |
 | WORK-0018 | Mock Storage Adapter | WORK-0015/0016/0017; approved identity/locator/CAS contracts and deterministic failure injection. It is not an official reference conformance decision. |
 | WORK-0019 | Local filesystem Storage Adapter | WORK-0015/0016/0017; ADR-0039/0040/0041/0042 define filesystem keys, Home profile, marker/discovery, and logical bootstrap atomicity/retry. Chunked behavior follows ADR-0036. DG-0036 (non-filesystem discovery) is outside scope. DEC-STORAGE-013 remains open only for official-reference designation. |
-| WORK-0020 | Resource replication | WORK-0015/0016/0017; source-preserving copy, verify, register under ADR-0032/0033/0034 and ADR-0037/0038. ADR-0036 supplies Chunk boundaries; no automatic rechunking to satisfy Endpoint preference. No deletion, GC, retention policy, or M4 recovery state. |
-| WORK-0021 | Storage migration | WORK-0015/0016/0017/0020; copy, verify, register new Replica under ADR-0032/0033/0034 and ADR-0037/0038 and retain source. ADR-0036 governs OMVCS Chunk boundaries; no automatic Endpoint-preference rechunking. Removing the old source remains outside this package. |
+| WORK-0020 | Resource replication | READY / AUTHORIZED after independent Verifier ACCEPT. WORK-0015/0016/0017; source-preserving one-Resource invocation, complete-object or Chunk-preserving copy, verify, and register under ADR-0032/0033/0034/0037/0038/0043/0044. No bulk workflow, durable continuation, deletion, GC, retention policy, cleanup, or M4 recovery state. |
+| WORK-0021 | Storage migration | BLOCKED by DG-0039; otherwise depends on WORK-0015/0016/0017/0020. Copy, verify, register new Replica under ADR-0032/0033/0034 and ADR-0037/0038 and retain source. ADR-0036 governs OMVCS Chunk boundaries; no automatic Endpoint-preference rechunking. Removing the old source remains outside this package. |
 
 The work package files define exact sections, acceptance criteria, non-goals,
 Verifier scope, owners, and Design Gap gates. WORK-0016's Replica/locator/

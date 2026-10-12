@@ -1,6 +1,6 @@
 # DG-0038 — Resource replication resumability boundary
 
-Status: OPEN
+Status: RESOLVED by ADR-0044
 Classification: BLOCKS-FEATURE
 Discovered by: OMVCS Lead
 Discovered during: DG-0037 resolution impact review
@@ -70,4 +70,9 @@ approved decision workflow.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved ADR-0044. Core §69 durable resumability now
+depends on explicit workflow designation, not Resource size, Chunk count,
+elapsed time, or background execution. WORK-0020 is invocation-scoped; a
+later caller action after process loss is a fresh ADR-0043 invocation that
+re-observes authoritative state. Bulk/multi-Resource replication remains a
+future durable resumable workflow outside WORK-0020.
