@@ -130,8 +130,10 @@ selected local adapter/storage/model/Core packages (including 8
 local-adapter tests), 378 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. Previously recorded Linux
 validation passed: 37 focused adapter tests and 407 workspace tests.
-WORK-0020 preflight found DG-0037, an open BLOCKS-FEATURE gap for the
-per-Resource replication outcome contract. WORK-0020 is BLOCKED on
+ADR-0043 resolves DG-0037 and defines the per-Resource replication outcome
+contract. DG-0038 remains OPEN and BLOCKS-FEATURE for the Core §69
+resumability boundary on potentially long-running single-Resource
+replication. WORK-0020 is BLOCKED on DG-0038 on
 `work/0020-resource-replication`; no production implementation has started.
 WORK-0021 remains unstarted.
 M3 remains IN PROGRESS.

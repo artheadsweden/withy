@@ -2899,10 +2899,11 @@ Cancellation should describe what remains.
 Example:
 
 ```text
-Move cancelled.
+Replication cancelled.
 
-Server A still contains the original files.
-3 partially transferred files on Server B will be cleaned up later.
+The source Replica on Server A remains untouched.
+3 partial destination files may remain on Server B.
+They are not verified or registered; automatic cleanup is not promised.
 ```
 
 ---
@@ -4226,7 +4227,13 @@ The transfer will restart.
 
 # 244. Background retry
 
-Temporary failures MAY retry automatically.
+Temporary failures MAY retry automatically only where the operation's
+specific contract permits the retry.
+
+This does not authorize Core to automatically re-invoke a per-Resource
+replication operation after it has returned a non-success result. Any
+caller reinvocation is a new operation that re-observes the authoritative
+Storage Map and current evidence under Core §34.
 
 The UI SHOULD show:
 

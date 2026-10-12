@@ -1,6 +1,6 @@
 # DG-0037 — Per-resource replication outcome contract
 
-Status: OPEN
+Status: RESOLVED by ADR-0043
 Classification: BLOCKS-FEATURE
 Discovered by: Spec Guardian
 Discovered during: WORK-0020 preflight
@@ -65,8 +65,10 @@ settle the operation's ordinary retry or idempotency behavior.
 
 ## Affected work
 
-- WORK-0020 Resource replication and its Core result API, storage transfer
-  integration, and acceptance tests are blocked.
+- At discovery, WORK-0020 Resource replication and its Core result API,
+  storage transfer integration, and acceptance tests were blocked by this
+  gap. ADR-0043 resolves the outcome contract; WORK-0020 remains blocked by
+  DG-0038's separate Core §69 resumability boundary.
 - WORK-0021 remains unstarted and retains its own work-package gate.
 
 ## Can unaffected work continue?
@@ -97,4 +99,9 @@ keeping M4's durable cross-step recovery orchestration outside WORK-0020.
 
 ## Resolution
 
-UNRESOLVED
+Resolved by human-approved ADR-0043, which defines the Core per-Resource
+outcome, stage, destination-effect, registration-state, source-preservation,
+and ordinary retry/idempotency contract. The affected Specs and WORK-0020
+test plan are updated. The separate interaction between the approved
+exclusion of M4 recovery and Core §69 resumability is recorded in DG-0038;
+DG-0038, not DG-0037, currently blocks WORK-0020 readiness.

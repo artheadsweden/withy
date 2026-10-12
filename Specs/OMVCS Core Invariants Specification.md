@@ -300,6 +300,11 @@ one Resource MAY exist at the same Storage Endpoint.
 
 All valid Resource Replicas of the same Resource Object MUST verify to the same Resource Identifier.
 
+For Core per-Resource replication, the outcome MUST follow Core §34:
+success requires destination `resource_identity` assurance and known
+committed registration; non-success MUST distinguish the furthest relevant
+stage and destination effects. Replication MUST preserve the source Replica.
+
 A newly registered Resource Replica MUST have `resource_identity`
 verification assurance for its complete representation. Individual
 `chunk_identity` results alone do not establish Resource-level assurance.
@@ -834,6 +839,13 @@ A stale, invalid, unsupported, provider-failed, or generation-exhausted
 mutation MUST NOT report success or leave a partial map or generation
 change. An unchanged map MUST NOT advance its generation.
 
+For per-Resource replication, Core MUST NOT report success before
+destination-applicable `resource_identity` verification and known-committed
+Storage Map registration. A non-success with destination effects or
+uncertain effects MUST be `incomplete`; `failed` is permitted only when no
+persistent destination replication effect is established. Core MUST NOT
+automatically retry the composed replication after returning non-success.
+
 Exact transaction semantics will be specified later.
 
 For `ValidateRepository`, a completed report with findings MUST be
@@ -845,6 +857,13 @@ coverage MUST NOT be reported as a clean or complete validation.
 ## INV-INT-004 — Retryable operations should be idempotent where practical
 
 Operations involving storage transfer, synchronization and publication SHOULD be designed so that repeating an interrupted operation does not duplicate or corrupt logical state.
+
+This recommendation does not promise global replay idempotency for
+per-Resource replication. After Core returns non-success, any caller
+reinvocation is a new operation that re-observes the authoritative Storage
+Map and current evidence; Core MUST NOT automatically retry the composed
+operation. Adapter stage-local retry remains governed by the applicable
+Storage Adapter operation contract.
 
 ---
 

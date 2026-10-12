@@ -1971,6 +1971,116 @@ Resource bytes.
 
 ---
 
+## Resource replication outcome
+
+This subsection defines the result of one Core operation that replicates a
+Resource to a destination Endpoint. It does not add or rename a Core
+operation in §82. Replication creates another valid Resource Replica and
+does not remove, invalidate, or demote the source; Storage Migration is
+specified separately below.
+
+### Result
+
+The Core result MUST report exactly one outcome:
+
+```text
+success | incomplete | failed
+```
+
+Every non-success result MUST identify the furthest relevant stage:
+
+```text
+source_retrieval
+destination_transfer
+destination_verification
+storage_map_registration
+```
+
+Every non-success result MUST classify destination effects as exactly one
+of:
+
+```text
+none
+may_exist
+complete_unverified
+verified_unregistered
+```
+
+`none` means Core establishes that no persistent destination replication
+effect exists. `may_exist` means the provider or interruption outcome
+leaves Core unable to establish whether destination effects remain.
+`complete_unverified` means destination transfer is known complete but
+destination-applicable `resource_identity` verification has not succeeded.
+`verified_unregistered` means destination-applicable
+`resource_identity` verification succeeded but successful registration is
+not confirmed; when registration status is `unknown`, this value does not
+prove that the Storage Map lacks the Replica.
+
+Registration status MUST be exactly one of:
+
+```text
+not_attempted | not_committed | unknown | committed
+```
+
+`unknown` is permitted only when the applicable Storage Map CAS/persistence
+outcome does not establish whether its atomic commit occurred. A typed
+conflict, validation failure, unsupported result, or generation-exhausted
+result that guarantees no mutation has status `not_committed`. `committed`
+is valid only with overall `success`.
+
+`success` requires transfer sufficient for verification, successful
+destination-applicable `resource_identity` verification, successful and
+known-committed Storage Map CAS registration, and the destination
+`ReplicaId`. Provider copy/write success alone is insufficient.
+
+`incomplete` MUST be returned for every non-success where destination
+effects may or definitely do exist. Provider uncertainty is
+`incomplete`/`may_exist`; it does not establish corruption, verification,
+or registration, and MUST NOT authorize registration or cleanup. A
+verification result of `failed` or `indeterminate` prevents registration;
+`indeterminate` is not corruption. A verified destination followed by
+known CAS non-commit is `incomplete`/`verified_unregistered` with
+registration `not_committed`. A persistence outcome that does not establish
+whether CAS committed uses registration `unknown` and remains
+`incomplete`.
+
+`failed` is permitted only when Core establishes that no persistent
+destination replication effect exists; it MUST use destination effect
+`none`. For all non-success results, the identified stage is the furthest
+stage whose operation was attempted or whose outcome is relevant to the
+failure.
+
+### Preconditions, effects, retry, and idempotency
+
+The operation uses an existing Resource and source Replica, a destination
+Endpoint, and the current authoritative Storage Map state needed for
+registration. Existing repository access, Endpoint authorization,
+retrieval, transfer, verification, and registration preconditions apply;
+this subsection adds no authorization grant.
+
+The operation has no historical, creative, or Working State effects. On
+success, it adds the verified destination Replica through the guarded
+Storage Map mutation. On every path, it MUST leave the source Replica and
+its retrieval eligibility untouched. It MUST NOT change ResourceId,
+ChunkId, immutable Resource bytes, Component State, Project State, Revision,
+or creative history.
+
+Adapters MAY retry only stage-local transport operations that existing
+operation contracts deem safe and idempotent. Core MUST NOT automatically
+retry the composed replication operation after it returns a non-success
+result. A caller reinvocation is a new operation that re-observes the
+authoritative Storage Map and current evidence. No global replay
+idempotency, physical deduplication, or automatic operation-level
+deduplication is promised.
+
+This result contract does not add automatic cleanup, deletion, garbage
+collection, retention, source removal, or durable cross-step recovery.
+Core §69 remains applicable where its long-running-operation requirement
+applies; whether it applies to a single-Resource WORK-0020 operation is
+unresolved in DG-0038.
+
+---
+
 # 35. Storage migration
 
 Moving Resource ABC from Server A to Server B proceeds:
@@ -3501,6 +3611,13 @@ Result
 ```
 
 Coding agents MUST NOT implement operations whose failure semantics are left implicit.
+
+The per-Resource replication result, failure-stage, destination-effect,
+registration, source-preservation, and retry/idempotency requirements are
+specified in §34, Resource replication outcome. An implementation-facing
+operation contract MUST also state the applicable inputs, preconditions,
+authorization, and exact invocation interface without weakening those
+normative outcomes.
 
 ## `ValidateRepository`
 

@@ -1321,6 +1321,12 @@ Storage Adapters treat replication physically like copy/upload.
 
 Core distinguishes replication from migration semantically.
 
+The Adapter reports only its operation-local transfer and provider outcome.
+Core composes retrieval, transfer, destination verification, and Storage Map
+registration into the per-Resource result defined by Core §34. An Adapter
+MUST NOT report provider copy/write success as Core replication success or
+as destination verification.
+
 ---
 
 # 60. Deduplication
@@ -4166,6 +4172,10 @@ locator durability across process restart
 provider locator contains no credentials, expiring grants, or process-local handles
 ```
 
+Replication-stage tests verify only Adapter-local transfer behavior and
+reported provider outcomes. Composition into Core's per-Resource result is
+tested by Core under Core §34 and MUST NOT be assigned to the Adapter.
+
 ---
 
 # 253. Reference failure injection
@@ -4183,6 +4193,11 @@ drop network on final chunk
 ```
 
 This will be particularly valuable for coding agents.
+
+Failure-injection scenarios used by Core replication tests SHOULD expose
+the Adapter-local facts needed to distinguish known absence of destination
+effects from uncertain or completed transfer outcomes. The injected
+Adapter result MUST NOT itself claim the composed Core outcome.
 
 ---
 

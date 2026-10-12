@@ -796,6 +796,22 @@ strength beyond the applicable verification result.
 
 ---
 
+## Resource Replication Outcome
+
+A **Resource Replication Outcome** is the Core result for one operation
+that creates another Resource Replica without removing or invalidating the
+source. Its outcome is `success`, `incomplete`, or `failed`; a non-success
+also identifies its furthest relevant operation stage, destination-effect
+classification, and registration status as defined by Core §34.
+
+`incomplete` means the operation did not satisfy the success conditions
+and destination effects may or definitely do exist. `failed` is reserved
+for a result where Core establishes no persistent destination replication
+effect. These operation outcomes are distinct from Content Verification
+outcomes (`verified`, `failed`, `indeterminate`).
+
+---
+
 ## Replica Removal
 
 A **Replica Removal** removes one known Resource Replica record from the

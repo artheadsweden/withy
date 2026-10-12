@@ -160,9 +160,10 @@ ADR-0036/0037/0038.
 DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0016 was
 authorized by the original preflight and is integrated at its bounded scope.
 WORK-0017 is verified and integrated at its bounded scope; WORK-0018 and
-WORK-0019 are VERIFIED / INTEGRATED. WORK-0020 reached preflight and is
-BLOCKED by DG-0037, which records the missing per-Resource replication
-outcome contract. WORK-0021 remains unstarted and retains its own
+WORK-0019 are VERIFIED / INTEGRATED. ADR-0043 resolves DG-0037 and defines
+the per-Resource replication outcome contract. WORK-0020 remains BLOCKED by
+DG-0038, which records the unresolved Core §69 resumability boundary for a
+single-Resource operation. WORK-0021 remains unstarted and retains its own
 implementation gate.
 
 | Work | Title | Dependency / gate |
