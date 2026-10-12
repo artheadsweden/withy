@@ -119,8 +119,9 @@ selected local adapter/storage/model/Core packages (including 8
 local-adapter tests), 378 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. Previously recorded Linux
 validation passed: 37 focused adapter tests and 407 workspace tests.
-WORK-0020–WORK-0021 remain unstarted.
-WORK-0020–WORK-0021 remain unstarted.
+WORK-0020 is BLOCKED by DG-0037, which records the missing per-Resource
+replication outcome contract; no WORK-0020 production implementation has
+started. WORK-0021 remains unstarted.
 DEC-STORAGE-013 remains OPEN; no reference designation. M3 remains IN PROGRESS.
 ADR-0039/0040/0041 resolve DEC-STORAGE-001/003/014. WORK-0019's
 Resource/Chunk byte-storage and filesystem Repository Home scopes are

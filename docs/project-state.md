@@ -130,7 +130,10 @@ selected local adapter/storage/model/Core packages (including 8
 local-adapter tests), 378 workspace tests, formatting,
 warnings-denied Clippy, and diff checks. Previously recorded Linux
 validation passed: 37 focused adapter tests and 407 workspace tests.
-WORK-0020 is next to inspect; WORK-0020–WORK-0021 remain unstarted.
+WORK-0020 preflight found DG-0037, an open BLOCKS-FEATURE gap for the
+per-Resource replication outcome contract. WORK-0020 is BLOCKED on
+`work/0020-resource-replication`; no production implementation has started.
+WORK-0021 remains unstarted.
 M3 remains IN PROGRESS.
 DEC-STORAGE-013 remains OPEN; no official reference-conformance designation.
 DEC-STORAGE-011 and DG-0034 remain OPEN and outside the bounded scope.

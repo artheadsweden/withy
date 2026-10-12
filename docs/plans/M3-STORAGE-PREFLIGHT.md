@@ -157,12 +157,13 @@ not part of that accepted implementation; it may be delivered as a small
 WORK-0016 follow-up or as the integration portion of WORK-0017 after the
 verification-result API exists. WORK-0017's semantic gates are resolved by
 ADR-0036/0037/0038.
-DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0019 waits
-for its concrete key/layout/Home decisions. WORK-0016 was authorized by the
-original preflight and is now integrated at its bounded scope. WORK-0017 is
-verified and integrated at its bounded scope; WORK-0018–0021 remain
-unstarted and retain their own implementation gates and authorization
-process.
+DEC-STORAGE-011 shared namespace claims remain excluded. WORK-0016 was
+authorized by the original preflight and is integrated at its bounded scope.
+WORK-0017 is verified and integrated at its bounded scope; WORK-0018 and
+WORK-0019 are VERIFIED / INTEGRATED. WORK-0020 reached preflight and is
+BLOCKED by DG-0037, which records the missing per-Resource replication
+outcome contract. WORK-0021 remains unstarted and retains its own
+implementation gate.
 
 | Work | Title | Dependency / gate |
 |---|---|---|

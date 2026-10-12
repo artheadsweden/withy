@@ -1,6 +1,6 @@
 # WORK-0020 — Resource replication
 
-Status: PLANNED — pending WORK-0017 verification implementation
+Status: BLOCKED — DG-0037, per-Resource replication outcome contract
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0020-resource-replication`
@@ -23,7 +23,7 @@ never remove or invalidate the source as part of replication.
 
 ## Dependencies
 
-- WORK-0015 through WORK-0017.
+- WORK-0015 through WORK-0017 are VERIFIED / INTEGRATED.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
   approved interfaces; Storage Map registration uses the Project-wide
   guarded mutation contract in ADR-0034.
@@ -77,6 +77,9 @@ never remove or invalidate the source as part of replication.
 
 ## Known Design Gaps
 
+- DG-0037 is OPEN and blocks implementation of the per-Resource replication
+  outcome, orchestration, and ordinary retry/idempotency contract. See
+  `docs/gaps/DG-0037-replication-outcome-contract.md`.
 - Destination map registration uses ADR-0034's atomic CAS contract.
 - DEC-CORE-005/008 and DEC-STORAGE-010/012 affect deletion/cleanup only,
   all of which are excluded.

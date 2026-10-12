@@ -1,6 +1,6 @@
 # WORK-0021 — Storage migration
 
-Status: PLANNED — pending WORK-0017 and WORK-0020 implementations
+Status: PLANNED — depends on WORK-0020 (BLOCKED by DG-0037)
 Owner agent: Core Engineer
 Milestone: M3
 Branch: `work/0021-storage-migration`
@@ -24,7 +24,8 @@ orchestration are explicitly excluded.
 
 ## Dependencies
 
-- WORK-0015 through WORK-0017 and WORK-0020.
+- WORK-0015 through WORK-0017 are VERIFIED / INTEGRATED; WORK-0020 remains
+  a prerequisite and is BLOCKED by DG-0037.
 - ADR-0032/0033 Replica identity and locator contracts reflected in
   approved interfaces; guarded Storage Map updates follow ADR-0034.
 - ADR-0036/0037/0038 define the chunking, verification, and destination
